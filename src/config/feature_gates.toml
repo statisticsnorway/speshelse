@@ -1,0 +1,7 @@
+[main]
+
+prod_main_control = 'dev' # Dette styrer den overordnede drift modusen ligger den i prod eller dev
+
+[feature_gate]
+
+prod_navn = 'dev' #prod

@@ -1,0 +1,30 @@
+name: $(Build.SourceBranch)-$(date:yyyyMMdd)$(rev:.r)
+
+pr:
+- prod
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.6'
+
+- script: pip install -r requirements.txt
+  displayName: 'Install requirements'
+
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      # Write your commands here
+      python -m pip install pytest
+      python -m pytest tests/remote_tests/
+  displayName: 'Run unit tests'
+
+- script: |
+    python -m pip install flake8
+    echo "this is disabeled due to uncertanty around the use of linters"
+    #flake8 .
+  displayName: 'Run lint tests'

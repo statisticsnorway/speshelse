@@ -1,0 +1,7 @@
+# Dette er en komentar
+['kilder'] # elementer i [] er sksjons indelere. Benytt disse for å sortere filster og gi oversikt til filen
+symlink = 'path' # dette er strukturern for å tildele filster. 
+
+[path] # Dette er skillet mellom utvikling og produksjons pathene. behold denne nederst i filen
+dev = '/produkt/<ditt produksjons navn>/temp/'
+prod = '/produkt/<ditt produksjons navn>/'
