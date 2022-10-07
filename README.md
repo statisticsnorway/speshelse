@@ -7,6 +7,9 @@ Spesialisthelsetjensten er inndelt i følgende statistikkområder:
 + [Personell](https://github.com/statisticsnorway/spesh-personell)
 + [Aktivitet og tjenester](https://github.com/statisticsnorway/spesh-aktivitet)
 
+I tillegg ligger programmer relatert til Geostat-prosjektet (geografiske analyser) her:
++ [Geostat - Work Package 2: Population and Health](https://github.com/statisticsnorway/geostat-wp2)
+
 ## Årshjul
 
 I dette repoet ligger hovedsakelig programmer som er felles for alle produksjonsløpene i statistikkområdene. Disse oppgavene er følgende:
