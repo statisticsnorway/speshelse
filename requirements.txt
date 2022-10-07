@@ -126,7 +126,7 @@ pycparser @ file:///home/conda/feedstock_root/build_artifacts/pycparser_15932751
 pycurl==7.43.0.5
 Pygments==2.7.4
 pyjstat==2.2.0
-PyJWT==1.7.1
+PyJWT==2.4.0
 pyOpenSSL==19.1.0
 pyparsing==2.4.7
 pyrsistent==0.16.0
