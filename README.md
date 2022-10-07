@@ -32,3 +32,7 @@ Før noen av produksjonsløpene kan kjøres må alle kodelistene som omfatter sp
 + [Korrespondanse mellom 612 og 610](https://www.ssb.no/klass/klassifikasjoner/612/korrespondanser/893)
 + [Kodeliste for fødeavdelinger](https://www.ssb.no/klass/klassifikasjoner/608)
 + [Kodeliste for fødestuer](https://www.ssb.no/klass/klassifikasjoner/609)
+
+## Opptaksområder
+
+http://htmlpreview.github.io/./images/opptaksområder_HF_test.html
