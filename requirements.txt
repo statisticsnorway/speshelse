@@ -73,7 +73,7 @@ kiwisolver==1.2.0
 koalas==1.2.0
 llvmlite==0.31.0
 locket==0.2.0
-lxml==4.6.3
+lxml==4.9.1
 Mako @ file:///home/conda/feedstock_root/build_artifacts/mako_1595925083607/work
 MarkupSafe==1.1.1
 matplotlib @ file:///home/conda/feedstock_root/build_artifacts/matplotlib-base_1592576119134/work
