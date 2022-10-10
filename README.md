@@ -35,4 +35,4 @@ Før noen av produksjonsløpene kan kjøres må alle kodelistene som omfatter sp
 
 ## Opptaksområder
 
-http://htmlpreview.github.io/./images/opptaksområder_HF_test.html
+<img src="./images/opptaksområder_HF_test.html">
