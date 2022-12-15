@@ -33,6 +33,16 @@ Før noen av produksjonsløpene kan kjøres må alle kodelistene som omfatter sp
 + [Kodeliste for fødeavdelinger](https://www.ssb.no/klass/klassifikasjoner/608)
 + [Kodeliste for fødestuer](https://www.ssb.no/klass/klassifikasjoner/609)
 
++ [Kodeliste for opptaksområder i spesialisthelsetjenesten (somatikk)](https://www.ssb.no/klass/klassifikasjoner/629)
+
+OBS: må fullføres:
++ [Kodeliste for yrkesgrupper i spesialisthelsetjenesten](https://www.ssb.no/klass/klassifikasjoner/628/koder)
++ [Korrespondanse mellom 628 og 7](https://www.ssb.no/klass/klassifikasjoner/628/korrespondanser/1007)
+
+OBS: en av disse må slettes:
++ [Kodeliste for navn på fødeinstitusjoner fra MFR](https://www.ssb.no/klass/klassifikasjoner/613)
++ [Kodeliste for fødesteder i Medisinsk fødselsregister (MFR)](https://www.ssb.no/klass/klassifikasjoner/627)
+
 ## Opptaksområder
 
 <img src="./images/opptaksområder_HF_test.html">
