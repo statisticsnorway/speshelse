@@ -14,35 +14,39 @@ I tillegg ligger programmer relatert til Geostat-prosjektet (geografiske analyse
 
 I dette repoet ligger hovedsakelig programmer som er felles for alle produksjonsløpene i statistikkområdene. Disse oppgavene er følgende:
 + [Dropplister](https://github.com/statisticsnorway/speshelse/blob/master/experimental/Droplister%20forenkling.ipynb)
++ Institusjonslister
++ Opptaksområder
 
 
 <img src="./images/Årshjul.PNG" width="1200">
 
 ## KLASS
 
-Før noen av produksjonsløpene kan kjøres må alle kodelistene som omfatter spesialisthelsetjenesten være oppdatert for statistikkåret. 
+Før noen av produksjonsløpene kan kjøres må alle kodelistene som omfatter spesialisthelsetjenesten være oppdatert for statistikkåret. Kodelistene oppdateres i [KLASS forvaltning](https://i.ssb.no/klass/admin/klassui).
 
 + [Standard for offentlige helseforetak](https://www.ssb.no/klass/klassifikasjoner/603)
 + [Standard for private helseinstitusjoner med oppdrags- og bestillerdokument](https://www.ssb.no/klass/klassifikasjoner/604)
 + [Standard for regionale og felleseide støtteforetak i spesialisthelsetjenesten](https://www.ssb.no/klass/klassifikasjoner/605)
-+ [Kodeliste for tjenesteområder i spesialisthelsetjenesten](https://www.ssb.no/klass/klassifikasjoner/610/versjon/1768/koder)
-+ [Kodeliste for funksjonskontoinndeling til helseforetakenes regnskapsdata](https://www.ssb.no/klass/klassifikasjoner/602/versjon/1757/koder)
++ [Kodeliste for funksjonskontoinndeling til helseforetakenes regnskapsdata](https://www.ssb.no/klass/klassifikasjoner/602)
 + [Kodeliste for artskontoinndeling til helseforetakenes regnskapsdata](https://www.ssb.no/klass/klassifikasjoner/606)
++ [Kodeliste for tjenesteområder i spesialisthelsetjenesten](https://www.ssb.no/klass/klassifikasjoner/610)
 + [Kodeliste for døgnplasser og sengedøgn](https://www.ssb.no/klass/klassifikasjoner/612/koder)
-+ [Korrespondanse mellom 612 og 610](https://www.ssb.no/klass/klassifikasjoner/612/korrespondanser/893)
++ [Korrespondanse: Døgnplasser og sengedøgn - Tjenesteområder i spesialisthelsetjenesten](https://www.ssb.no/klass/klassifikasjoner/612/korrespondanser/893)
 + [Kodeliste for fødeavdelinger](https://www.ssb.no/klass/klassifikasjoner/608)
 + [Kodeliste for fødestuer](https://www.ssb.no/klass/klassifikasjoner/609)
-
-+ [Kodeliste for opptaksområder i spesialisthelsetjenesten (somatikk)](https://www.ssb.no/klass/klassifikasjoner/629)
-
-OBS: må fullføres:
-+ [Kodeliste for yrkesgrupper i spesialisthelsetjenesten](https://www.ssb.no/klass/klassifikasjoner/628/koder)
-+ [Korrespondanse mellom 628 og 7](https://www.ssb.no/klass/klassifikasjoner/628/korrespondanser/1007)
 
 OBS: en av disse må slettes:
 + [Kodeliste for navn på fødeinstitusjoner fra MFR](https://www.ssb.no/klass/klassifikasjoner/613)
 + [Kodeliste for fødesteder i Medisinsk fødselsregister (MFR)](https://www.ssb.no/klass/klassifikasjoner/627)
 
-## Opptaksområder
+Opptaksområder:
++ [Kodeliste for opptaksområder i spesialisthelsetjenesten (somatikk)](https://www.ssb.no/klass/klassifikasjoner/629)
++ [Kodeliste for opptaksområder i spesialisthelsetjenesten (psykisk helsevern)](https://www.ssb.no/klass/klassifikasjoner/630)
++ [Kodeliste for opptaksområder i spesialisthelsetjenesten (rusbehandling)](https://www.ssb.no/klass/klassifikasjoner/631)
++ Kodeliste for opptaksområder i spesialisthelsetjenesten (DPS)
 
-<img src="./images/opptaksområder_HF_test.html">
+OBS: må fullføres:
++ [Kodeliste for yrkesgrupper i spesialisthelsetjenesten](https://www.ssb.no/klass/klassifikasjoner/628/koder)
++ [Korrespondanse: Yrkesgrupper i spesialisthelsetjenesten - Yrkesklassifisering 08 (STYRK-08)](https://www.ssb.no/klass/klassifikasjoner/628/korrespondanser/1007)
+
+
