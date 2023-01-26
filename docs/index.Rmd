@@ -22,11 +22,20 @@ library(tidyverse)
 
 opptaksomrader_RHF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_RHF_2022.parquet") %>%
   sf::st_transform(4326)
+
+opptaksomrader_HF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_HF_2022.parquet") %>%
+  sf::st_transform(4326)
+
+opptaksomrader_lokasjon <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_lokasjon_2022.parquet") %>%
+  sf::st_transform(4326)
+
 ```
 
-### Opptaksområder for spesialisthelsetjenesten (somatikk) - RHF
+## Opptaksområder for spesialisthelsetjenesten (somatikk) 
 
-```{r, eval=TRUE}
+### De regionale helseforetakenes opptaksområder
+
+```{r, echo=FALSE}
 ssb_farger <- klassR::GetKlass(614, output_style = "wide") %>%
   dplyr::rename(farge_nummer = code3, 
                 HEX = name3, 
@@ -37,7 +46,7 @@ ssb_farger <- klassR::GetKlass(614, output_style = "wide") %>%
 
 pal_RHF <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_RHF$NAVN_RHF))
 
-opptaksomrader_RHF_leaflet <- leaflet::leaflet(width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+opptaksomrader_RHF_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
   leaflet::addTiles() %>%
   leaflet::addPolygons(stroke = F, data = opptaksomrader_RHF,
                        # color = "green",
@@ -48,4 +57,50 @@ opptaksomrader_RHF_leaflet <- leaflet::leaflet(width = "100%", options = leaflet
   leaflet::addLegend("bottomright", pal = pal_RHF, values = as.factor(opptaksomrader_RHF$NAVN_RHF), opacity = 1)
 
 opptaksomrader_RHF_leaflet
+```
+
+### Helseforetakenes opptaksområder
+
+```{r, echo=FALSE}
+## Helseforetakenes opptaksområder
+
+pal_HF <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_HF$NAVN_HF))
+
+opptaksomrader_HF_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(stroke = F, data = opptaksomrader_HF,
+                       # color = "green",
+                       weight = 1,
+                       fillColor = pal_HF(opptaksomrader_HF$NAVN_HF),
+                       fillOpacity = 0.5, smoothFactor = 0.5,
+                       popup = paste0("Opptaksområde: ", opptaksomrader_HF$NAVN_HF, " / Befolkning: ", prettyNum(opptaksomrader_HF$PERSONER, big.mark = " ", scientific = FALSE))) # %>%
+  # leaflet::addLegend("bottomright", pal = pal_HF, values = as.factor(opptaksomrader_HF$NAVN_HF), opacity = 1)
+
+opptaksomrader_HF_leaflet
+
+# leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+#   leaflet.extras::setMapWidgetStyle(list(background= "white")) %>%
+#   leaflet::addLegend("bottomright", pal = pal_HF, values = as.factor(opptaksomrader_HF$NAVN_HF), opacity = 1)
+```
+
+
+### Lokalsykehusenes opptaksområder
+
+```{r, echo=FALSE}
+pal_lokasjon <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_lokasjon$OPPTAK))
+
+opptaksomrader_lokasjon_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(stroke = F, data = opptaksomrader_lokasjon,
+                       weight = 1,
+                       fillColor = pal_lokasjon(opptaksomrader_lokasjon$OPPTAK),
+                       fillOpacity = 0.5, smoothFactor = 0.5,
+                       popup = paste0("Opptaksområde: ", opptaksomrader_lokasjon$OPPTAK, " / Befolkning: ", prettyNum(opptaksomrader_lokasjon$PERSONER, big.mark = " ", scientific = FALSE))) # %>%
+  # leaflet::addLegend("bottomright", pal = pal_lokasjon, values = as.factor(opptaksomrader_lokasjon$OPPTAK), opacity = 1)
+
+opptaksomrader_lokasjon_leaflet
+
+# leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+#   leaflet.extras::setMapWidgetStyle(list(background= "white")) %>%
+#   leaflet::addLegend("bottomright", pal = pal_lokasjon, values = as.factor(opptaksomrader_lokasjon$OPPTAK), opacity = 1)
 ```
