@@ -1,0 +1,51 @@
+---
+title: "Opptaksområder"
+author: "Sindre Mikael Haugen"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Opptaksområder}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+```{r, include=FALSE}
+library(tidyverse)
+
+opptaksomrader_RHF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_RHF_2022.parquet") %>%
+  sf::st_transform(4326)
+```
+
+### Opptaksområder for spesialisthelsetjenesten (somatikk) - RHF
+
+```{r, eval=TRUE}
+ssb_farger <- klassR::GetKlass(614, output_style = "wide") %>%
+  dplyr::rename(farge_nummer = code3, 
+                HEX = name3, 
+                farge = name2, 
+                type = name1) %>%
+  dplyr::select(-code1, -code2) %>%
+  dplyr::filter(farge != "Hvit")
+
+pal_RHF <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_RHF$NAVN_RHF))
+
+opptaksomrader_RHF_leaflet <- leaflet::leaflet(width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(stroke = F, data = opptaksomrader_RHF,
+                       # color = "green",
+                       weight = 1,
+                       fillColor = pal_RHF(opptaksomrader_RHF$NAVN_RHF),
+                       fillOpacity = 0.5, smoothFactor = 0.5,
+                       popup = paste0("Opptaksområde: ", opptaksomrader_RHF$NAVN_RHF, " / Befolkning: ", prettyNum(opptaksomrader_RHF$PERSONER, big.mark = " ", scientific = FALSE))) %>%
+  leaflet::addLegend("bottomright", pal = pal_RHF, values = as.factor(opptaksomrader_RHF$NAVN_RHF), opacity = 1)
+
+opptaksomrader_RHF_leaflet
+```
