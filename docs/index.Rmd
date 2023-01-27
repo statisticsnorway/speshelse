@@ -47,12 +47,11 @@ opptaksomrader_TSB_HF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/O
   sf::st_transform(4326)
 
 # DPS
-# opptaksomrader_DPS_RHF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_RHF_2022.parquet") %>%
-#   sf::st_transform(4326)
+opptaksomrader_DPS_RHF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_RHF_2022.parquet") %>%
+  sf::st_transform(4326)
 
-# opptaksomrader_DPS_HF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_HF_2022.parquet") %>%
-#   sf::st_transform(4326)
-# 
+opptaksomrader_DPS_HF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_HF_2022.parquet") %>%
+  sf::st_transform(4326)
 
 opptaksomrader_DPS_DPS <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_DPS_2022.parquet") %>%
   sf::st_transform(4326)
@@ -212,7 +211,33 @@ opptaksomrader_TSB_HF_leaflet
 
 ### RHF-enes opptaksområder
 
+```{r, echo=FALSE}
+opptaksomrader_DPS_RHF_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(stroke = F, data = opptaksomrader_DPS_RHF,
+                       # color = "green",
+                       weight = 1,
+                       fillColor = pal_RHF(opptaksomrader_DPS_RHF$NAVN_RHF),
+                       fillOpacity = 0.5, smoothFactor = 0.5,
+                       popup = paste0("Opptaksområde: ", opptaksomrader_DPS_RHF$NAVN_RHF, " / Befolkning: ", prettyNum(opptaksomrader_DPS_RHF$PERSONER, big.mark = " ", scientific = FALSE))) %>%
+  leaflet::addLegend("bottomright", pal = pal_RHF, values = as.factor(opptaksomrader_DPS_RHF$NAVN_RHF), opacity = 1)
+
+opptaksomrader_DPS_RHF_leaflet
+```
+
 ### HF-enes opptaksområder
+```{r, echo=FALSE}
+opptaksomrader_DPS_HF_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(stroke = F, data = opptaksomrader_DPS_HF,
+                       # color = "green",
+                       weight = 1,
+                       fillColor = pal_HF(opptaksomrader_DPS_HF$NAVN_HF),
+                       fillOpacity = 0.5, smoothFactor = 0.5,
+                       popup = paste0("Opptaksområde: ", opptaksomrader_DPS_HF$NAVN_HF, " / Befolkning: ", prettyNum(opptaksomrader_DPS_HF$PERSONER, big.mark = " ", scientific = FALSE))) 
+
+opptaksomrader_DPS_HF_leaflet
+```
 
 ### DPS-enes opptaksområder
 
