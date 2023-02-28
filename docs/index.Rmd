@@ -1,5 +1,5 @@
 ---
-title: "Opptaksområder"
+title: "Opptaksområder for spesialisthelsetjenesten 2022"
 author: "Sindre Mikael Haugen"
 date: "`r Sys.Date()`"
 output:
@@ -136,7 +136,7 @@ opptaksomrader_SOM_lokasjon_leaflet
 
 ## Opptaksområder for spesialisthelsetjenesten (psykisk helsevern) 
 
-[Kodeliste for opptaksområder i spesialisthelsetjenesten (psykisk helsevern)](https://www.ssb.no/klass/klassifikasjoner/630)
+Kartene nedenfor er laget med utgangspunkt i [Kodeliste for opptaksområder i spesialisthelsetjenesten (psykisk helsevern)](https://www.ssb.no/klass/klassifikasjoner/630). I denne kodelisten er opptaksområdene for spesialisthelsetjenesten (innenfor psykisk helsevern) fordelt etter grunnkretser. Disse grunnkretsene blir koblet med en kartfil på grunnkretsnivå og deretter blir opptaksområdene aggregert etter ulike nivåer (RHF og HF). Befolkningsdata på grunnkretsnivå er hentet fra [statistikkbanktabell 04317](https://www.ssb.no/statbank/table/04317/) og er koblet på før aggregeringen av opptaksområdene.
 
 ### RHF-enes opptaksområder
 
@@ -172,7 +172,7 @@ opptaksomrader_PHV_HF_leaflet
 
 ## Opptaksområder for spesialisthelsetjenesten (rusbehandling) 
 
-[Kodeliste for opptaksområder i spesialisthelsetjenesten (rusbehandling)](https://www.ssb.no/klass/klassifikasjoner/631)
+Kartene nedenfor er laget med utgangspunkt i [Kodeliste for opptaksområder i spesialisthelsetjenesten (rusbehandling)](https://www.ssb.no/klass/klassifikasjoner/631). I denne kodelisten er opptaksområdene for spesialisthelsetjenesten (innenfor rusbehandling) fordelt etter grunnkretser. Disse grunnkretsene blir koblet med en kartfil på grunnkretsnivå og deretter blir opptaksområdene aggregert etter ulike nivåer (RHF og HF). Befolkningsdata på grunnkretsnivå er hentet fra [statistikkbanktabell 04317](https://www.ssb.no/statbank/table/04317/) og er koblet på før aggregeringen av opptaksområdene.
 
 ### RHF-enes opptaksområder
 
@@ -207,7 +207,7 @@ opptaksomrader_TSB_HF_leaflet
 
 ## Opptaksområder for spesialisthelsetjenesten (DPS) 
 
-[Kodeliste for opptaksområder i spesialisthelsetjenesten (DPS)](https://www.ssb.no/klass/klassifikasjoner/632)
+Kartene nedenfor er laget med utgangspunkt i [Kodeliste for opptaksområder i spesialisthelsetjenesten (DPS)](https://www.ssb.no/klass/klassifikasjoner/632). I denne kodelisten er opptaksområdene for spesialisthelsetjenesten (innenfor DPS) fordelt etter grunnkretser og postnummerområder (gjelder Trondheim og Kristiansand kommune). Områdene fordelt etter grunnkretser blir koblet med en kartfil på grunnkretsnivå og deretter blir opptaksområdene aggregert etter ulike nivåer (RHF, HF og DPS). Befolkningsdata på grunnkretsnivå er hentet fra [statistikkbanktabell 04317](https://www.ssb.no/statbank/table/04317/) og er koblet på før aggregeringen av opptaksområdene. DPS-områdene i Trondheim og Kristiansand kommune er fordelt etter postnummerområder og derfor blir befolkningstallene for disse områdene beregnet med GIS-verktøy.
 
 ### RHF-enes opptaksområder
 
