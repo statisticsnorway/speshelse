@@ -9,11 +9,17 @@
 # - Alle private foretak skal ha skjema: `"39 381 441 451 461 47"`
 
 aar4 = 2022
+aar2 = str(aar4)[-2:]
 
 import pandas as pd
 from klass import klass_df
 from klass import klass_df_wide
 from klass import klass_get
+import cx_Oracle
+import getpass
+import requests
+
+conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
 
 # ## Hjelpeforetak
 
@@ -46,61 +52,42 @@ df_rhf.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
 
 df_rhf
 
-
 # ## HF
 
-def klass_df_wide(URL):
-    df_raw = (
-        klass_get(URL,
-                  level='codes',
-                  return_df=True)
-                  [['code', 'parentCode', 'level', 'name']]
-        )
-    lowest_level = int(df_raw.level.unique().max())
-    df_list = []
-    for i in range(1, lowest_level+1):
-        temp = df_raw[df_raw['level'] == f'{i}'].copy()
-        temp.columns = [f'code_{i}', f'parentCode_{i}', 'level', f'name_{i}']
-        df_list.append(temp)
+URL = f'https://data.ssb.no/api/klass/v1/classifications/603/codes.json?from={aar4}-01-01&includeFuture=True'
+df_hf = klass_df_wide(URL)
 
-    df_wide = df_list[0].copy()
+df_hf = df_hf[['code_3', 'name_3']]
+df_hf.columns = ['ORGNR_FORETAK', 'FORETAK_NAVN']
 
-    for i in range(0, len(df_list)-1):
-        this_lvl = i+1
-        child_lvl = i+2
-        
-    # for i in range(1, len(df_list)):
-    #     parent_lvl = lowest_level - i
-    #     this_lvl = parent_lvl + 1
-    #     df_list[i] = df_list[i].drop(columns=['level'])
-    #     df_wide = pd.merge(
-    #          df_wide,
-    #          df_list[i],
-    #          how='left',
-    #          left_on=f'parentCode_{this_lvl}',
-    #          right_on=f'code_{parent_lvl}'
-    #     )
-    return df_wide
-
-
-URL = f'https://data.ssb.no/api/klass/v1/classifications/605/codes.json?from={aar4}-01-01&includeFuture=True'
-HF = klass_df_wide(URL)
-
-HF
-
-df_hf = HF.copy()
-
-df_hf['s'] = "0X 0Y 40 380 440 450 460 48"
-df_hf = df_hf[['NAVN_KLASS', 'ORGNR_FORETAK', 's']]
-df_hf.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
+df_hf['SKJEMA_TYPE'] = "0X 0Y 40 380 440 450 460 48"
+df_hf
 
 # ## Private
 
-df_p = SFUklass[SFUklass['H_VAR2_A'] == 'PRIVAT'].copy()
+sporring = f"""
+    SELECT *
+    FROM DSBBASE.DLR_ENHET_I_DELREG
+    WHERE DELREG_NR IN ('24{aar2}')
+"""
+SFU_data = pd.read_sql_query(sporring, conn)
+print(f"Rader:    {SFU_data.shape[0]}\nKolonner: {SFU_data.shape[1]}")
+SFU_data.info()
+
+foretak = SFU_data[SFU_data['H_VAR2_A'] == 'PRIVAT'][['ORGNR_FORETAK']].to_numpy()
+
+
+def lag_sql_str(arr):
+    s = "("
+    for nr in arr:
+        s += "'" + str(nr) + "',"
+    s = s[:-1] + ")"
+    return s
+
+
+lag_sql_str(foretak)
 
 df_p['s'] = "39 381 441 451 461 47"
-
-navn_orgnr_df = SFUklass[['NAVN', 'ORGNR']]
 
 sql_str = lag_sql_str(df_p.ORGNR_FORETAK.unique())
 
@@ -110,10 +97,6 @@ sporring_for = f"""
     WHERE STATUSKODE = 'B' AND ORGNR IN {sql_str}
 """
 navn_vof = pd.read_sql_query(sporring_bed, conn)
-
-rapporteringsenheter_vof[rapporteringsenheter_vof['ORGNR_FORETAK'] == "944384448"]
-
-vof[vof['ORGNR_FORETAK']=="944384448"]
 
 rapporteringsenheter_vof[rapporteringsenheter_vof['ORGNR_BEDRIFT'] == rapporteringsenheter_vof['ORGNR_FORETAK']]
 
@@ -138,16 +121,15 @@ print("Uten duplikater: ", df_p.shape)
 
 # ## Oppdrags- og bestillerdokument
 
-# +
-df_op = SFUklass[SFUklass['H_VAR2_A'] == 'OPPDRAG'].copy()
+URL = f'https://data.ssb.no/api/klass/v1/classifications/604/codes.json?from={aar4}-01-01&includeFuture=True'
+df_op = klass_df_wide(URL)
 
-df_op['s'] = "39 381 441 451 461 47 48"
-df_op['NYTT_NAVN'] = df_op['NAVN1'] + " " + df_op['NAVN2']
-df_op = df_op[['NYTT_NAVN', 'ORGNR_FORETAK', 's']]
+# +
+df_op = df_op[['name_2', 'code_2']]
+
+df_op.loc[:, 's'] = "39 381 441 451 461 47 48"
 df_op.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
-print("Med duplikater: ", df_op.shape)
-df_op = df_op.drop_duplicates(subset=['ORGNR_FORETAK'], keep='first')
-print("Uten duplikater: ", df_op.shape)
+df_op
 # -
 
 # ## Slå sammen til en dataframe som eksporteres til `.csv`

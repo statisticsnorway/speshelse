@@ -73,20 +73,22 @@ def klass_df_wide(URL):
         )
     lowest_level = int(df_raw.level.unique().max())
     df_list = []
-    for i in reversed(range(1, lowest_level+1)):
+    for i in range(1, lowest_level+1):
         temp = df_raw[df_raw['level'] == f'{i}'].copy()
         temp.columns = [f'code_{i}', f'parentCode_{i}', 'level', f'name_{i}']
+        temp = temp.drop(columns=['level'])
         df_list.append(temp)
     df_wide = df_list[0].copy()
-    for i in range(1, len(df_list)):
-        parent_lvl = lowest_level - i
-        this_lvl = parent_lvl + 1
-        df_list[i] = df_list[i].drop(columns=['level'])
+
+    for i in range(0, len(df_list)-1):
+        this_lvl = i + 1
+        child_lvl = i + 2
+
         df_wide = pd.merge(
              df_wide,
-             df_list[i],
+             df_list[i+1],
              how='left',
-             left_on=f'parentCode_{this_lvl}',
-             right_on=f'code_{parent_lvl}'
+             left_on=f'code_{this_lvl}',
+             right_on=f'parentCode_{child_lvl}'
         )
     return df_wide
