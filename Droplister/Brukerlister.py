@@ -11,6 +11,7 @@
 aar4 = 2022
 aar2 = str(aar4)[-2:]
 
+# +
 import pandas as pd
 from klass import klass_df
 from klass import klass_df_wide
@@ -18,6 +19,15 @@ from klass import klass_get
 import cx_Oracle
 import getpass
 import requests
+
+# Fjerner begrensning på antall rader og kolonner som vises av gangen
+pd.set_option("display.max_columns", None)
+pd.set_option('display.max_rows', 300)
+pd.set_option('display.max_colwidth', None)
+
+# Unngå standardform i output
+pd.set_option('display.float_format', lambda x: '%.0f' % x)
+# -
 
 conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
 
@@ -85,39 +95,26 @@ def lag_sql_str(arr):
     return s
 
 
-lag_sql_str(foretak)
-
-df_p['s'] = "39 381 441 451 461 47"
-
-sql_str = lag_sql_str(df_p.ORGNR_FORETAK.unique())
+sql_str = (
+    lag_sql_str(foretak)
+    .replace("[", "")
+    .replace("]", "")
+    .replace("''", "'")
+)
 
 sporring_for = f"""
     SELECT *
     FROM DSBBASE.SSB_FORETAK
     WHERE STATUSKODE = 'B' AND ORGNR IN {sql_str}
 """
-navn_vof = pd.read_sql_query(sporring_bed, conn)
+df_p = pd.read_sql_query(sporring_for, conn)[['NAVN', 'ORGNR']]
 
-rapporteringsenheter_vof[rapporteringsenheter_vof['ORGNR_BEDRIFT'] == rapporteringsenheter_vof['ORGNR_FORETAK']]
+df_p['s'] = "39 381 441 451 461 47"
 
-df_p = pd.merge(
-    df_p,
-    navn_vof,
-    how='left',
-    left_on='ORGNR_FORETAK',
-    right_on='ORGNR'
-)
+df_p.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
 
-df_p = df_p[['NAVN_x', 'NAVN_y', 'ORGNR_FORETAK', 's']]
-
-# +
-# df_p.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
-# -
-
-print("Med duplikater: ", df_p.shape)
-
-df_p = df_p.drop_duplicates(subset=['ORGNR_FORETAK'], keep='first')
-print("Uten duplikater: ", df_p.shape)
+print("Antall: ", df_p.shape)
+df_p.head(5)
 
 # ## Oppdrags- og bestillerdokument
 
@@ -129,11 +126,28 @@ df_op = df_op[['name_2', 'code_2']]
 
 df_op.loc[:, 's'] = "39 381 441 451 461 47 48"
 df_op.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
-df_op
+print("Antall: ", df_op.shape)
+df_op.head(5)
 # -
 
 # ## Slå sammen til en dataframe som eksporteres til `.csv`
 
 brukerliste_dfs = [df_hj, df_rhf, df_hf, df_p, df_op]
 brukerliste_df = pd.concat(brukerliste_dfs)
+print("Antall: ", brukerliste_df.shape)
+brukerliste_df.sample(5)
+
+
+brukerliste_df
+
+import os
+
+sammenlikne = pd.read_csv(r"Brukerliste_2022_061222.csv", encoding="latin1", sep=";")
+
+sammenlikne
+
+tot = pd.merge(
+    brukerliste_df,
+    sammenlikne,
+)
 
