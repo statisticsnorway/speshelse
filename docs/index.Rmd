@@ -1,5 +1,5 @@
 ---
-title: "Opptaksområder for spesialisthelsetjenesten 2022"
+title: "Opptaksområder for spesialisthelsetjenesten 2023"
 author: "Sindre Mikael Haugen"
 date: "`r Sys.Date()`"
 output:
@@ -20,40 +20,43 @@ knitr::opts_chunk$set(
 
 
 ```{r, include=FALSE}
+
+aargang <- 2023
+
 library(tidyverse)
 
 # SOM
-opptaksomrader_SOM_RHF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_RHF_2022.parquet") %>%
+opptaksomrader_SOM_RHF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_RHF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_SOM_HF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_HF_2022.parquet") %>%
+opptaksomrader_SOM_HF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_HF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_SOM_lokasjon <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_lokasjon_2022.parquet") %>%
+opptaksomrader_SOM_lokasjon <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_lokasjon_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
 # PHV
-opptaksomrader_PHV_RHF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_PHV_RHF_2022.parquet") %>%
+opptaksomrader_PHV_RHF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_PHV_RHF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_PHV_HF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_PHV_HF_2022.parquet") %>%
+opptaksomrader_PHV_HF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_PHV_HF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
 # TSB
-opptaksomrader_TSB_RHF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_TSB_RHF_2022.parquet") %>%
+opptaksomrader_TSB_RHF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_TSB_RHF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_TSB_HF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_TSB_HF_2022.parquet") %>%
+opptaksomrader_TSB_HF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_TSB_HF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
 # DPS
-opptaksomrader_DPS_RHF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_RHF_2022.parquet") %>%
+opptaksomrader_DPS_RHF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_RHF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_DPS_HF <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_HF_2022.parquet") %>%
+opptaksomrader_DPS_HF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_HF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_DPS_DPS <- sfarrow::st_read_parquet("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_DPS_2022.parquet") %>%
+opptaksomrader_DPS_DPS <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_DPS_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
 ```
