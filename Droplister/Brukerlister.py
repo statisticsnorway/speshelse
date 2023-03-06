@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # # Brukerlister
 # Dette er en oversikt over alle foretak som skal ha skjemaer og hvilke skjemaer de skal få. Også kalt _populasjonsliste_ av KOSTRA-IT.
 #
@@ -138,16 +139,18 @@ print("Antall: ", brukerliste_df.shape)
 brukerliste_df.sample(5)
 
 
-brukerliste_df
+sammenlikne = pd.read_csv(r"Brukerliste_2022_061222.csv", encoding="latin1", sep=";", dtype={'ORGNR_FORETAK': 'object'})
 
-import os
-
-sammenlikne = pd.read_csv(r"Brukerliste_2022_061222.csv", encoding="latin1", sep=";")
-
-sammenlikne
+display(brukerliste_df.info())
+display(sammenlikne.info())
 
 tot = pd.merge(
     brukerliste_df,
     sammenlikne,
+    how='outer',
+    on="ORGNR_FORETAK",
+    suffixes=("_ny", "_gml")
 )
 
+
+tot[tot['FORETAK_NAVN_ny'] != tot['FORETAK_NAVN_gml']]
