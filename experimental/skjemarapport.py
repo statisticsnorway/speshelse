@@ -22,8 +22,7 @@ aar_før4 = aar4 - 1            # året før
 aar_før2 = str(aar_før4)[-2:]
 # -
 
-# # Skjemaoversikt
-# Hvordan ligger skjemainnleveringen an?
+# # Skjema: rapporteringsoversikt
 
 # ## SFU: `dsbbase.dlr_enhet_i_delreg `
 # På enhetsnivå
@@ -35,12 +34,13 @@ sporring = f"""
 """ 
 SFU_enhet = pd.read_sql_query(sporring, conn)
 print(f"Rader:    {SFU_enhet.shape[0]}\nKolonner: {SFU_enhet.shape[1]}")
-
-
-# Enheter med verdi i 'KVITT_TYPE' filtreres ut (de er nedlagte enheter). Fjerner også enheter uten ORGNR
 SFU_enhet = SFU_enhet[SFU_enhet['ORGNR'].notnull()]
+SFU_enhet = SFU_enhet[SFU_enhet['KVITT_TYPE'].isnull()]
+print(f"Etter å ha tatt ut nullverdier i ORGNR og virksomheter som er kvittert ut:")
+print(f"Rader:    {SFU_enhet.shape[0]}")
 
-# # Skjema-SFU: `dsbbase.dlr_enhet_i_delreg_skjema `
+
+# ## Skjema-SFU: `dsbbase.dlr_enhet_i_delreg_skjema `
 
 sporring = f"""
     SELECT *
@@ -51,7 +51,7 @@ SFU_skjema = pd.read_sql_query(sporring, conn)
 print(f"Rader:    {SFU_skjema.shape[0]}\nKolonner: {SFU_skjema.shape[1]}")
 
 
-# # Kobler SFU-enhet og SFU-skjema
+# ## Kobler SFU-enhet og SFU-skjema
 
 SFU = pd.merge(
     SFU_skjema,
@@ -61,8 +61,11 @@ SFU = pd.merge(
     suffixes=("_skj","_enh")
 )
 
+# # Prosentandel av virksomheter som har levert
+#
 # Alle skjema i SFU med antall foremkomster på virksomhetsnivå:
 
+# +
 tot = (
     SFU
     .SKJEMA_TYPE_skj
@@ -80,28 +83,119 @@ ant_ikke_levert = (
     .to_dict()
 )
 
-import numpy as np
-import pandas as pd   
-from IPython.display import display, HTML
-import matplotlib.pyplot as plt
-CSS = """
-.output {
-    flex-direction: row;
-}
-"""
-display(HTML('<style>{}</style>'.format(CSS)))
-
 skjemaoversikt = pd.DataFrame([tot, ant_ikke_levert]).T
 skjemaoversikt.columns = ['tot', 'ikke_levert']
 skjemaoversikt['levert'] = skjemaoversikt['tot'] - skjemaoversikt['ikke_levert']
 skjemaoversikt['prosentandel_levert'] = round(skjemaoversikt['levert'] / skjemaoversikt['tot'] * 100)
-skjemaoversikt = skjemaoversikt.sort_values('prosentandel_levert', ascending=False)
-display(skjemaoversikt)
-skjemaoversikt.prosentandel_levert.plot(kind='bar',
-                                        grid=True,
-                                        ylim=(0,100),
-                                        title="Prosentvis andel virksomheter som har levert:"
-                                        );
+skjemaoversikt = skjemaoversikt.sort_values('prosentandel_levert',
+                                            ascending=False)
+(skjemaoversikt.style
+               .format('{:.0f}', na_rep="")
+               .background_gradient(subset=['prosentandel_levert'],
+                                    cmap="RdYlGn",
+                                    vmin=0,
+                                    vmax=100)
+               .set_properties(**{'text-align': 'center'})
+)
+# -
 
+# # Foretak med oppdrags- og bestillerdokument
+
+dh12 = SFU[(SFU['H_VAR2_A'] == 'OPPDRAG') & (SFU['SKJEMA_TYPE_skj'] != 'HELSE39')]
+
+dh12 = dh12[['NAVN', 'SKJEMA_TYPE_skj', 'ORGNR', 'ORGNR_FORETAK', 'KVITT_TYPE_enh', 'KVITT_TYPE_skj']]
+
+
+# Legger på foretaksnavn via VoF
+
+def lag_sql_str(arr):
+    s = "("
+    for nr in arr:
+        s += "'" + str(nr) + "',"
+    s = s[:-1] + ")"
+    s = (
+        s.replace("[", "")
+         .replace("]", "")
+         .replace("''", "'")
+    )
+    return s
+
+
+# +
+sql_str = lag_sql_str(dh12['ORGNR_FORETAK'].unique())
+
+sporring_for = f"""
+    SELECT *
+    FROM DSBBASE.SSB_FORETAK
+    WHERE STATUSKODE = 'B' AND ORGNR IN {sql_str}
+"""
+
+navn_foretak = pd.read_sql_query(sporring_for, conn)[['NAVN', 'ORGNR']]
+
+navn_foretak.columns = ['NAVN_FORETAK', 'ORGNR_FORETAK']
+
+dh12 = (
+    pd.merge(
+        dh12,
+        navn_foretak,
+        how='left',
+        on='ORGNR_FORETAK',
+    )
+)
+
+# +
+alle = pd.pivot_table(dh12[['NAVN_FORETAK',
+                            'SKJEMA_TYPE_skj'
+                           ]],
+                       index='NAVN_FORETAK',
+                       columns=['SKJEMA_TYPE_skj'],
+                       aggfunc=len,
+                      )
+
+K = (
+    pd.pivot_table(dh12[['NAVN_FORETAK',
+                         'KVITT_TYPE_skj',
+                         'SKJEMA_TYPE_skj',
+                       ]],
+                   index='NAVN_FORETAK',
+                   columns=['KVITT_TYPE_skj', 'SKJEMA_TYPE_skj'],
+                   aggfunc=len,
+                   fill_value=0
+                   )
+    .astype(float)
+    .droplevel(axis=1, level=0)
+)
+# -
+
+levsum = K.sum(axis=1)
+totsum = alle.sum(axis=1)
+
+df = (
+    pd.merge(
+        K,
+        pd.DataFrame(levsum,columns=['SUM LEVERT']),
+        how='left',
+        on='NAVN_FORETAK'
+    )
+)
+
+df = (
+    pd.merge(
+        df,
+        pd.DataFrame(totsum,columns=['SUM FORVENTET']),
+        how='left',
+        on='NAVN_FORETAK'
+    )
+)
+
+df['ANDEL RAPPORTERT'] = df['SUM LEVERT'] / df['SUM FORVENTET'] * 100
+
+(
+    df
+    .style
+    .format('{:.0f}', na_rep="")
+    .background_gradient(subset=['ANDEL RAPPORTERT'],cmap="RdYlGn", vmin=0, vmax=100)
+    .set_properties(**{'text-align': 'center'})
+)
 
 
