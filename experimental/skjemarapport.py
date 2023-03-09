@@ -170,6 +170,7 @@ K = (
 levsum = K.sum(axis=1)
 totsum = alle.sum(axis=1)
 
+# +
 df = (
     pd.merge(
         K,
@@ -188,6 +189,7 @@ df = (
     )
 )
 
+# +
 df['ANDEL RAPPORTERT'] = df['SUM LEVERT'] / df['SUM FORVENTET'] * 100
 
 (
@@ -197,5 +199,3 @@ df['ANDEL RAPPORTERT'] = df['SUM LEVERT'] / df['SUM FORVENTET'] * 100
     .background_gradient(subset=['ANDEL RAPPORTERT'],cmap="RdYlGn", vmin=0, vmax=100)
     .set_properties(**{'text-align': 'center'})
 )
-
-
