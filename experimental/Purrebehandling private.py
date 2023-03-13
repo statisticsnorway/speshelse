@@ -192,8 +192,34 @@ if til_lagring:
 
 # -
 
+print("Siste innkvitterte foretak:")
+(
+    altinn
+    .sort_values(
+        'DATO_INNKVITTERING'
+        , ascending=False
+    )
+    [[
+        'NAVN',
+        'ORGNR',
+        'DATO_INNKVITTERING'
+      ]]
+    .head(5)
+)
+
 print(f"Foretak ({altinn[altinn['KVITT_TYPE'].isna()].shape[0]}) som ikke har godkjent innkvittering i delreg 20877xx per {dt.date.today()}:")
-altinn[altinn['KVITT_TYPE'].isna()][['NAVN', 'ORGNR']]
+(altinn
+     [
+         altinn
+         ['KVITT_TYPE']
+         .isna()
+      ]
+     [[
+         'NAVN',
+         'ORGNR',
+         'DATO_INNKVITTERING'
+     ]]
+ )
 
 mask1 = SFU['ORGNR_FORETAK'].isin(foretak_til_purring)
 mask2 = SFU['KVITT_TYPE_skj'].isna()
