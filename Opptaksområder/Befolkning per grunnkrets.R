@@ -1,6 +1,6 @@
 # # Befolkning per grunnkrets
 
-aargang <- 2023
+aargang <- 2022
 
 suppressPackageStartupMessages({ 
 library(tidyverse)
@@ -10,14 +10,16 @@ library(lubridate)
 
 # ### Statistikkbanktabell
 
+Sys.setenv(no_proxy= "nexus.ssb.no,git-adm.ssb.no,i.test.ssb.no,i.ssb.no,data.ssb.no,github.com,api.github.com,codeload.github.com")
+
 # +
 T04317 <- PxWebApiData::ApiData(04317, ContentsCode = "Personer", 
                                 Grunnkretser = TRUE, 
                                 Tid = as.character(aargang)) [[2]] %>%
   dplyr::filter(!is.na(value)) %>%
   dplyr::rename(GRUNNKRETSNUMMER = Grunnkretser,
-                PERSONER = value) %>%
-  dplyr::select(GRUNNKRETSNUMMER, PERSONER)
+                PERSONER_STATBANK = value) %>%
+  dplyr::select(GRUNNKRETSNUMMER, PERSONER_STATBANK)
 
 # Retter opp feil i statistikkbanktabellen
 if (aargang == 2018){
@@ -29,17 +31,71 @@ T04317 <- T04317 %>%
 }
 # -
 
+sum(T04317$PERSONER)
+
 # ### Laster inn bereg fra Linux
 
 # +
 # bereg_filsti <- paste0("/ssb/stamme04/bereg/person/wk24/bosatte_koorfil_g", aargang, "m01d01eslep.sas7bdat")
 # bereg_koorfil <- haven::read_sas(bereg_filsti)
 # nrow(bereg_koorfil) # 2023: 5483128
+
+# +
+bosatt_filsti <- paste0("/ssb/stamme03/bestat/folkem/wk14/bosatt/g", aargang, "m01d01.sas7bdat")
+bosatte_koorfil <- haven::read_sas(bosatt_filsti) %>%
+dplyr::rename_all(toupper)
+
+nrow(bosatte_koorfil)
+
+# +
+# bosatte_koorfil <- bosatte_koorfil %>%
+# dplyr::rename_all(toupper)
+
+# +
+# Lager aldersvariabel per 1. januar
+x_date   <- as.Date(paste0(aargang, "-01-01"))
+
+bosatte_koorfil_fix <- bosatte_koorfil %>%
+dplyr::mutate(GRUNNKRETSNUMMER = paste0(KOMMNR, GKRETS)) %>%
+select(GRUNNKRETSNUMMER, FOEDSELSDATO) %>%
+ dplyr::mutate(FOEDSELSDATO = as.Date(FOEDSELSDATO, "%Y%m%d"),
+               ALDER = trunc((FOEDSELSDATO %--% x_date) / lubridate::years(1)))
+
+# +
+arbeidsmappe <- paste0("/ssb/stamme01/fylkhels/speshelse/felles/opptaksomrader/", aargang, "/")
+
+filsti <- paste0(arbeidsmappe, "befolkning_per_grunnkrets_", aargang, ".parquet")
+filsti
+
+# +
+T04317_egen <- bosatte_koorfil_fix %>%
+dplyr::group_by(ALDER, GRUNNKRETSNUMMER) %>%
+dplyr::tally(name = "PERSONER")
+
+# Lagrer filen
+arrow::write_parquet(T04317_egen, filsti)
+
+T04317_egen %>%
+head()
 # -
 
-bosatt_filsti <- paste0("/ssb/stamme03/bestat/folkem/wk14/bosatt/g", aargang, "m01d01.sas7bdat")
-bosatte_koorfil <- haven::read_sas(bosatt_filsti)
-nrow(bosatte_koorfil)
+nrow(bosatte_koorfil_fix)
+sum(T04317_egen$PERSONER)
+
+# +
+T04317_egen_agg <- T04317_egen %>%
+dplyr::group_by(GRUNNKRETSNUMMER) %>%
+dplyr::summarise(PERSONER = sum(PERSONER))
+
+sum(T04317_egen_agg$PERSONER)
+# -
+
+T04317_egen_agg <- T04317_egen_agg %>%
+dplyr::left_join(T04317, by = "GRUNNKRETSNUMMER")
+
+T04317_egen_agg %>%
+dplyr::mutate(diff = PERSONER-PERSONER_STATBANK) %>%
+dplyr::filter(diff > 0)
 
 # +
 # bereg_koorfil <- bereg_koorfil %>%
@@ -66,20 +122,18 @@ nrow(bosatte_koorfil)
 # head(bereg_koorfil)
 
 # +
-# sum(T04317$PERSONER)
-# -
-
-nrow(bereg_koorfil) # 2023: 5483128
+# nrow(bereg_koorfil) # 2023: 5483128
 
 # +
-T04317_egen <- bereg_koorfil %>%
-dplyr::group_by(ALDER, GRUNNKRETS) %>%
-dplyr::tally(name = "PERSONER")
+# T04317_egen <- bereg_koorfil %>%
+# dplyr::group_by(ALDER, GRUNNKRETS) %>%
+# dplyr::tally(name = "PERSONER")
 
-T04317_egen %>%
-head()
+# T04317_egen %>%
+# head()
+
+# +
+# sum(T04317_egen$PERSONER)
 # -
-
-sum(T04317_egen$PERSONER)
 
 
