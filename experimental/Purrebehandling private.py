@@ -7,7 +7,7 @@ from db1p import query_db1p
 import getpass
 import datetime as dt
 
-til_lagring = False # Sett til True, hvis du skal gjøre endringer i Databasen
+til_lagring = True # Sett til True, hvis du skal gjøre endringer i Databasen
 # -
 
 pd.set_option("display.max_columns", None)
@@ -133,7 +133,7 @@ print("Foretak som nå har levert, men som enda ikke er innkvittert i databasen:
       'ORGNR',
       'KVITT_TYPE'
      ]]
-    .head(5)
+    .head(10)
 )
 
 # +
@@ -185,12 +185,21 @@ cur = conn.cursor()
 rows = [tuple(x) for x in foretak_til_innkvittering_df.values]
 
 # Hvis til_lagring = True kjøres SQL-inserten
-if til_lagring:
+if til_lagring and len(rows) != 0:
     cur.executemany(sql_ins, rows)
     conn.commit()
-    print("Endringene er gjort. Kontroller i SFU.")
+    print(f"Det er gjort {len(rows)} radendringer. Kontroller i SFU.")
 
 # -
+
+sporring = f"""
+    SELECT *
+    FROM DSBBASE.DLR_ENHET_I_DELREG
+    WHERE DELREG_NR IN ('20877{aar2}')
+"""
+altinn = pd.read_sql_query(sporring, conn)
+print(f"Rader:    {altinn.shape[0]}\nKolonner: {altinn.shape[1]}")
+
 
 print("Siste innkvitterte foretak:")
 (
@@ -231,5 +240,3 @@ SFU[mask1 & mask2 & mask3][['NAVN',
                             'SKJEMA_TYPE_skj',
                             'KVITT_TYPE_skj'
                             ]].sort_values('ORGNR_FORETAK')
-
-
