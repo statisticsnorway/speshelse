@@ -221,12 +221,17 @@ def lag_epostliste(liste_med_skjema):
     ingen_info = list(purre_df[purre_df.KONTAKTPERSON.isna()].NAVN.unique())
     epostliste = list(temp_df.EPOSTADR.dropna().unique())
     epostlistestr = '; '.join(map(str, epostliste))
+    offepostliste = list(temp_df.OFF_EPOST.dropna().unique())
+    offepostlistestr = '; '.join(map(str, offepostliste))
     print("Disse har vi ingen tidligere kontaktinformasjon fra: ", ingen_info)
-
     print()
-
     print("Her er epostliste med kontaktinformasjon fra skjema ", liste_med_skjema)
     print(epostlistestr)
+    print()
+    print("Her er epostliste med offisielt oppgitt kontaktinformasjon",
+          liste_med_skjema)
+    print(offepostlistestr)
+
 
 
 lag_epostliste(['HELSE0X'])
