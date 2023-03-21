@@ -47,10 +47,14 @@ tabellnavn = (
     .TABLE_NAME.unique()
 )
 
+# `tabeller` inneholder alle tabellene i Oracle. Den er som et oppslagsverk for å finne hvor hvordan man skrive SQL-spørringer. Filtrerer ut tabellene i tråd med navnsystemet beskrevet over.
+
 mask_kostra = tabeller['OWNER'] == "KOSTRA_EXP"
 mask_helse = tabeller['TABLE_NAME'].str.startswith("HELSE")
 mask_årgang = tabeller['TABLE_NAME'].str.endswith(str(år_før4))
 skjemaer = tabeller[mask_kostra & mask_helse & mask_årgang].TABLE_NAME.unique()
+
+# Velger ut de kolonnene jeg ønsker å ha med videre, men ser at kolonnenavnene ikke er likt på tvers av skjemaene. Har dermed manuelt gått gjennom tabellene og sett hva de heter. Legger til slutt en dictionary med oversikt over hvilke skjemaer som har hvilke kolonnenavn.
 
 utkols_o = ["FORETAKETS_ORGNR", "FORETAKETS_NAVN", "HELSEREGION_UTFYLT",
             "HELSEREGION_EPOST", "SKJEMA_TYPE", "AARGANG"]
@@ -69,16 +73,37 @@ utkols_48 = ['FORETAKETS_ORGNR',
              'AARGANG']
 
 utkols_46P = ['FORETAK_ORGNR',
-             'FORETAK_NAVN',
-             'HELSEREGION_UTFYLT',
-             'HELSEREGION_EPOST',
-             'SKJEMA_TYPE',
-             'AARGANG']
+              'FORETAK_NAVN',
+              'HELSEREGION_UTFYLT',
+              'HELSEREGION_EPOST',
+              'SKJEMA_TYPE',
+              'AARGANG']
 
-kontakt_df = pd.DataFrame()
+skj_kol_dict = {
+    'HELSE0X':  utkols_0X0Y,
+    'HELSE0Y':  utkols_0X0Y,
+    'HELSE38O': utkols_o,
+    'HELSE38P': utkols_o,
+    'HELSE39':  utkols_o,
+    'HELSE40':  utkols_o,
+    'HELSE41':  utkols_o,
+    'HELSE44O': utkols_o,
+    'HELSE44P': utkols_o,
+    'HELSE45O': utkols_o,
+    'HELSE45P': utkols_o,
+    'HELSE46O': utkols_o,
+    'HELSE46P': utkols_46P,
+    'HELSE46':  utkols_o,
+    'HELSE47':  utkols_o,
+    'HELSE48':  utkols_48,
+}
 
 
 def hent_skjema(s):
+    """
+    Funksjon som henter inn alle variable fra angitt tabell s.
+    """
+
     sporring = f"""
     SELECT *
     FROM KOSTRA_EXP.{s}
@@ -87,52 +112,29 @@ def hent_skjema(s):
     return df
 
 
+# tar bort årgang fra tabellnavnet
 skj_dict = {}
 for skj in skjemaer:
     df = hent_skjema(skj)
-    s = skj.replace("_" + str(år_før4),"")
+    s = skj.replace("_" + str(år_før4), "")
     skj_dict[s] = df
 
-skjemaer_med_utkols_o = []
-for skj in skj_dict:
-    alle_true = True
-    for kol in utkols_o:
-        er_inne = kol in skj_dict[skj].columns
-        if not er_inne:
-            alle_true = False
-    if alle_true:
-        skjemaer_med_utkols_o.append(skj)
-
-skjemaer_med_andre_kol_navn = list(set(skj_dict.keys())-set(skjemaer_med_utkols_o))
-
-skj_kol_dict = {
-    'HELSE0X': utkols_0X0Y,
-    'HELSE0Y': utkols_0X0Y,
-    'HELSE38O': utkols_o,
-    'HELSE38P': utkols_o,
-    'HELSE39': utkols_o,
-    'HELSE40': utkols_o,
-    'HELSE41': utkols_o,
-    'HELSE44O': utkols_o,
-    'HELSE44P': utkols_o,
-    'HELSE45O': utkols_o,
-    'HELSE45P': utkols_o,
-    'HELSE46O': utkols_o,
-    'HELSE46P': utkols_46P,
-    'HELSE46': utkols_o,
-    'HELSE47': utkols_o,
-    'HELSE48': utkols_48,
-}
-
+# lager en tom dataframe setter sammen til en stor mastertabell
 kontakt_df = pd.DataFrame()
 
 for skj in skj_dict:
     kolonner_temp = skj_kol_dict[skj]
     df_temp = skj_dict[skj][kolonner_temp].copy()
-    
-    # Har nå forsikret meg om at kolonnerekkefølgen er riktig og gjør endring basert på rekkefølge
+
+    if skj == "HELSE0X" or skj == "HELSE0Y":
+        # brukte denne variabelen som dummy-variabel, fordi navn på foretak ikke
+        # var med i denne tabellen
+        df_temp['KVARTAL'] = ""
+
+    # Har nå forsikret meg om at kolonnerekkefølgen er lik for alle tabeller
+    # og gjør navneendring basert på rekkefølge
     df_temp.columns = ['ORGNR_FORETAK', 'NAVN_FORETAK', 'KONTAKTPERSON', 'EPOSTADR', 'SKJEMA_TYPE', 'AARGANG']
-    
+
     kontakt_df = pd.concat([kontakt_df, df_temp])
 
 
