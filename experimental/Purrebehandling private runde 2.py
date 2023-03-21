@@ -11,6 +11,11 @@ til_lagring = True # Sett til True, hvis du skal gjøre endringer i Databasen
 import warnings
 warnings.filterwarnings('ignore')
 
+
+def print_size(df):
+    print(f"Rader:    {df.shape[0]}\nKolonner: {df.shape[1]}")
+
+
 pd.set_option("display.max_columns", None)
 pd.set_option('display.max_rows', 300)
 pd.set_option('display.max_colwidth', None)
@@ -39,7 +44,7 @@ FROM all_tables
 ORDER BY table_name ASC
 """
 tabeller = pd.read_sql_query(sporring, conn)
-print(f"Rader:    {tabeller.shape[0]}\nKolonner: {tabeller.shape[1]}")
+print_size(tabeller)
 
 tabellnavn = (
     tabeller
@@ -140,6 +145,91 @@ for skj in skj_dict:
 
 kontakt_df = kontakt_df.drop_duplicates()
 
-kontakt_df.sample(10)
+print_size(kontakt_df)
+display(kontakt_df.sample(3))
+
+# # Vanlig SFU: `dsbbase.dlr_enhet_i_delreg `
+# På enhetsnivå
+
+sporring = f"""
+    SELECT *
+    FROM DSBBASE.DLR_ENHET_I_DELREG
+    WHERE DELREG_NR IN ('24{år2}')
+""" 
+SFU_enhet = pd.read_sql_query(sporring, conn)
+print_size(SFU_enhet)
+
+
+# Fjerner enheter uten ORGNR
+SFU_enhet = SFU_enhet[SFU_enhet['ORGNR'].notnull()]
+
+# # Skjema-SFU: `dsbbase.dlr_enhet_i_delreg_skjema `
+
+sporring = f"""
+    SELECT *
+    FROM DSBBASE.DLR_ENHET_I_DELREG_SKJEMA
+    WHERE DELREG_NR IN ('24{år2}')
+"""
+SFU_skjema = pd.read_sql_query(sporring, conn)
+print_size(SFU_skjema)
+
+
+SFU = pd.merge(
+    SFU_skjema,
+    SFU_enhet,
+    how='left',
+    on='IDENT_NR',
+    suffixes=("_skj","_enh")
+)
+
+# ## Setter sammen en tabell med kontaktinformasjon på alle som ikke har levert
+
+visningskolonner = ['ORGNR_FORETAK', 'ORGNR', 'NAVN',
+                    'SKJEMA_TYPE_skj', 'E_POST']
+
+ikke_levert_mask = SFU['KVITT_TYPE_skj'].isnull()
+ikke_skjema39_eller_ambu = ~SFU['SKJEMA_TYPE_skj'].isin(["HELSE39", "RA-0595"])
+
+# +
+purre_df = SFU[ikke_levert_mask & ikke_skjema39_eller_ambu][visningskolonner].copy()
+purre_df = purre_df.rename(
+    columns={'E_POST': 'OFF_EPOST',
+             'SKJEMA_TYPE_skj': 'SKJEMA_TYPE'
+             }
+)
+
+purre_df = (
+    pd.merge(
+        purre_df,
+        kontakt_df,
+        how='left',
+        on='ORGNR_FORETAK',
+        suffixes=("_purre", "_kontakt")
+    )
+)
+purre_df.sample(3)
+# -
+
+print("Skjematyper ikke alt er levert i:")
+print(list(purre_df.SKJEMA_TYPE_purre.unique()))
+
+
+def lag_epostliste(liste_med_skjema):
+
+    temp_df = purre_df[purre_df['SKJEMA_TYPE_purre'].isin(liste_med_skjema)]
+
+    ingen_info = list(purre_df[purre_df.KONTAKTPERSON.isna()].NAVN.unique())
+    epostliste = list(temp_df.EPOSTADR.dropna().unique())
+    epostlistestr = '; '.join(map(str, epostliste))
+    print("Disse har vi ingen tidligere kontaktinformasjon fra: ", ingen_info)
+
+    print()
+
+    print("Her er epostliste med kontaktinformasjon fra skjema ", liste_med_skjema)
+    print(epostlistestr)
+
+
+lag_epostliste(['HELSE0X'])
+
 
 
