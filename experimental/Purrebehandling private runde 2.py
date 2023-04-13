@@ -5,7 +5,7 @@ from db1p import query_db1p
 import getpass
 import datetime as dt
 
-til_lagring = True # Sett til True, hvis du skal gjøre endringer i Databasen
+til_lagring = False # Sett til True, hvis du skal gjøre endringer i Databasen
 # -
 
 import warnings

@@ -6,6 +6,9 @@ import cx_Oracle
 from db1p import query_db1p
 import getpass
 import datetime as dt
+import warnings
+warnings.filterwarnings("ignore")
+
 
 til_lagring = True # Sett til True, hvis du skal gjøre endringer i Databasen
 # -
@@ -189,8 +192,11 @@ if til_lagring and len(rows) != 0:
     cur.executemany(sql_ins, rows)
     conn.commit()
     print(f"Det er gjort {len(rows)} radendringer. Kontroller i SFU.")
+    input("Sett:")
 
 # -
+
+input("Sett:")
 
 sporring = f"""
     SELECT *
@@ -240,3 +246,14 @@ SFU[mask1 & mask2 & mask3][['NAVN',
                             'SKJEMA_TYPE_skj',
                             'KVITT_TYPE_skj'
                             ]].sort_values('ORGNR_FORETAK')
+
+SFU[['NAVN',
+                            'ORGNR',
+                            'ORGNR_FORETAK',
+                            'SKJEMA_TYPE_skj',
+                            'KVITT_TYPE_skj'
+                            ]]
+
+test = SFU[['ORGNR','ORGNR_FORETAK','H_VAR1_A']]
+
+SFU_skjema[SFU_skjema['SKJEMA_TYPE'] == "HELSE47"]
