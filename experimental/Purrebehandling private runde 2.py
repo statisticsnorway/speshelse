@@ -238,3 +238,32 @@ lag_epostliste(['HELSE0X'])
 
 
 
+
+# ## Purring skjema 39
+
+ikke_levert_mask = SFU['KVITT_TYPE_skj'].isnull()
+skjema39_mask = SFU['SKJEMA_TYPE_skj'].isin(["HELSE39"])
+
+# +
+purre_df = SFU[ikke_levert_mask & skjema39_mask][visningskolonner].copy()
+purre_df = purre_df.rename(
+    columns={'E_POST': 'OFF_EPOST',
+             'SKJEMA_TYPE_skj': 'SKJEMA_TYPE'
+             }
+)
+
+purre_df = (
+    pd.merge(
+        purre_df,
+        kontakt_df,
+        how='left',
+        on='ORGNR_FORETAK',
+        suffixes=("_purre", "_kontakt")
+    )
+)
+
+# -
+
+lag_epostliste(['HELSE39'])
+
+s39 = purre_df[purre_df['SKJEMA_TYPE_kontakt'] == "HELSE39"].drop_duplicates("KONTAKTPERSON")
