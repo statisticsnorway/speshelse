@@ -196,8 +196,6 @@ if til_lagring and len(rows) != 0:
 
 # -
 
-input("Sett:")
-
 sporring = f"""
     SELECT *
     FROM DSBBASE.DLR_ENHET_I_DELREG
