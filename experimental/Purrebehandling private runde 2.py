@@ -61,14 +61,38 @@ skjemaer = tabeller[mask_kostra & mask_helse & mask_årgang].TABLE_NAME.unique()
 
 # Velger ut de kolonnene jeg ønsker å ha med videre, men ser at kolonnenavnene ikke er likt på tvers av skjemaene. Har dermed manuelt gått gjennom tabellene og sett hva de heter. Legger til slutt en dictionary med oversikt over hvilke skjemaer som har hvilke kolonnenavn.
 
-utkols_o = ["FORETAKETS_ORGNR", "FORETAKETS_NAVN", "HELSEREGION_UTFYLT",
-            "HELSEREGION_EPOST", "SKJEMA_TYPE", "AARGANG"] # Legge på FINST_ORGNR og FINST_NAVN
+utkols_o = ["FORETAKETS_ORGNR",
+            "FORETAKETS_NAVN",
+            "HELSEREGION_UTFYLT",
+            "HELSEREGION_EPOST",
+            "SKJEMA_TYPE",
+            "AARGANG"]
+
+utkols_p = ["FORETAKETS_ORGNR",
+            "FORETAKETS_NAVN",
+            "FINST_ORGNR", ## tillegg
+            "FINST_NAVN", ## tillegg
+            "HELSEREGION_UTFYLT",
+            "HELSEREGION_EPOST",
+            "SKJEMA_TYPE",
+            "AARGANG"]
 
 # Mangler FORETAKETS_NAVN i registeret (Vurdere å kople på). Setter inn 
 # tom variabel KVARTAL og sletter denne senere
-utkols_0X0Y = ["ORG_NR", "KVARTAL", "SKJEMA_UTFYLT",
-               "EPOSTADR", "SKJEMA_TYPE",
+utkols_0X0Y = ["ORG_NR",
+               "SKJEMA_UTFYLT",
+               "EPOSTADR",
+               "SKJEMA_TYPE",
                "AARGANG"]
+
+utkols_46P = ['FORETAK_ORGNR',
+              'FORETAK_NAVN',
+              'FINST_ORGNR', ## tillegg
+              'FINST_NAVN', ## tillegg
+              'HELSEREGION_UTFYLT',
+              'HELSEREGION_EPOST',
+              'SKJEMA_TYPE',
+              'AARGANG']
 
 utkols_48 = ['FORETAKETS_ORGNR',
              'FORETAKETS_NAVN',
@@ -77,29 +101,46 @@ utkols_48 = ['FORETAKETS_ORGNR',
              'SKJEMA_TYPE',
              'AARGANG']
 
-utkols_46P = ['FORETAK_ORGNR',
-              'FORETAK_NAVN',
-              'HELSEREGION_UTFYLT',
-              'HELSEREGION_EPOST',
-              'SKJEMA_TYPE',
-              'AARGANG'] # Legge på FINST_ORGNR og FINST_NAVN
+felles_kols_ut = ['ORGNR_FORETAK',
+                  'NAVN_FORETAK',
+                  'ORGNR_VIRKSOMHET',
+                  'NAVN_VIRKSOMHET',
+                  'KONTAKTPERSON',
+                  'EPOSTADR',
+                  'SKJEMA_TYPE',
+                  'AARGANG']
+
+kolonne_oversettelse = {
+    "FORETAKETS_ORGNR":          "ORGNR_FORETAK",
+    "FORETAK_ORGNR":             "ORGNR_FORETAK",
+    "ORG_NR":                    "ORGNR_FORETAK",
+    "FORETAK_NAVN":              "NAVN_FORETAK",
+    "FORETAKETS_NAVN":           "NAVN_FORETAK",
+    "FINST_ORGNR":               "ORGNR_VIRKSOMHET",
+    "FINST_NAVN":                "NAVN_VIRKSOMHET",
+    "HELSEREGION_KONTAKTPERSON": "KONTAKTPERSON",
+    "HELSEREGION_UTFYLT":        "KONTAKTPERSON",
+    "SKJEMA_UTFYLT":             "KONTAKTPERSON",
+    "HELSEREGION_EPOST":         "EPOSTADR",
+    "HELSEREGION_EPOST":         "EPOSTADR",
+}
 
 skj_kol_dict = {
     'HELSE0X':  utkols_0X0Y,
     'HELSE0Y':  utkols_0X0Y,
     'HELSE38O': utkols_o,
-    'HELSE38P': utkols_o,
-    'HELSE39':  utkols_o,
+    'HELSE38P': utkols_p,
+    'HELSE39':  utkols_p,
     'HELSE40':  utkols_o,
     'HELSE41':  utkols_o,
     'HELSE44O': utkols_o,
-    'HELSE44P': utkols_o,
+    'HELSE44P': utkols_p,
     'HELSE45O': utkols_o,
-    'HELSE45P': utkols_o,
+    'HELSE45P': utkols_p,
     'HELSE46O': utkols_o,
     'HELSE46P': utkols_46P,
     'HELSE46':  utkols_o,
-    'HELSE47':  utkols_o,
+    'HELSE47':  utkols_p,
     'HELSE48':  utkols_48,
 }
 
@@ -131,19 +172,24 @@ for skj in skj_dict:
     kolonner_temp = skj_kol_dict[skj]
     df_temp = skj_dict[skj][kolonner_temp].copy()
 
-    if skj == "HELSE0X" or skj == "HELSE0Y":
-        # brukte denne variabelen som dummy-variabel, fordi navn på foretak ikke
-        # var med i denne tabellen
-        df_temp['KVARTAL'] = ""
+    df_temp = df_temp.rename(columns=kolonne_oversettelse)
 
-    # Har nå forsikret meg om at kolonnerekkefølgen er lik for alle tabeller
-    # og gjør navneendring basert på rekkefølge
-    df_temp.columns = ['ORGNR_FORETAK', 'NAVN_FORETAK', 'KONTAKTPERSON', 'EPOSTADR', 'SKJEMA_TYPE', 'AARGANG']
+    kols_som_mangler = list(
+        set(felles_kols_ut) -
+        set(df_temp.columns)
+    )
+
+    for kol in kols_som_mangler:
+        df_temp[kol] = ""
+
+    df_temp = df_temp.reindex(columns=felles_kols_ut)
 
     kontakt_df = pd.concat([kontakt_df, df_temp])
 
 
 kontakt_df = kontakt_df.drop_duplicates()
+
+kontakt_df.SKJEMA_TYPE.value_counts()
 
 print_size(kontakt_df)
 display(kontakt_df.sample(3))
@@ -227,13 +273,10 @@ purre_2 = (
         purre_2,
         kontakt_df,
         how='left',
-        on='ORGNR_FORETAK',
-        suffixes=("_purre", "_kontakt")
+        left_on="ORGNR",
+        right_on='ORGNR_VIRKSOMHET',
+        suffixes=("_sfu", "_kontakt")
     )
 )
 
-purre_2.to_csv("s39.csv")
-
 purre_2
-
-kontakt_df
