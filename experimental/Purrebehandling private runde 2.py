@@ -62,7 +62,7 @@ skjemaer = tabeller[mask_kostra & mask_helse & mask_årgang].TABLE_NAME.unique()
 # Velger ut de kolonnene jeg ønsker å ha med videre, men ser at kolonnenavnene ikke er likt på tvers av skjemaene. Har dermed manuelt gått gjennom tabellene og sett hva de heter. Legger til slutt en dictionary med oversikt over hvilke skjemaer som har hvilke kolonnenavn.
 
 utkols_o = ["FORETAKETS_ORGNR", "FORETAKETS_NAVN", "HELSEREGION_UTFYLT",
-            "HELSEREGION_EPOST", "SKJEMA_TYPE", "AARGANG"]
+            "HELSEREGION_EPOST", "SKJEMA_TYPE", "AARGANG"] # Legge på FINST_ORGNR og FINST_NAVN
 
 # Mangler FORETAKETS_NAVN i registeret (Vurdere å kople på). Setter inn 
 # tom variabel KVARTAL og sletter denne senere
@@ -82,7 +82,7 @@ utkols_46P = ['FORETAK_ORGNR',
               'HELSEREGION_UTFYLT',
               'HELSEREGION_EPOST',
               'SKJEMA_TYPE',
-              'AARGANG']
+              'AARGANG'] # Legge på FINST_ORGNR og FINST_NAVN
 
 skj_kol_dict = {
     'HELSE0X':  utkols_0X0Y,
@@ -191,70 +191,40 @@ ikke_levert_mask = SFU['KVITT_TYPE_skj'].isnull()
 ikke_skjema39_eller_ambu = ~SFU['SKJEMA_TYPE_skj'].isin(["HELSE39", "RA-0595"])
 
 # +
-purre_df = SFU[ikke_levert_mask & ikke_skjema39_eller_ambu][visningskolonner].copy()
-purre_df = purre_df.rename(
+purre_1 = SFU[ikke_levert_mask & ikke_skjema39_eller_ambu][visningskolonner].copy()
+purre_1 = purre_1.rename(
     columns={'E_POST': 'OFF_EPOST',
              'SKJEMA_TYPE_skj': 'SKJEMA_TYPE'
              }
 )
 
-purre_df = (
+purre_1 = (
     pd.merge(
-        purre_df,
+        purre_1,
         kontakt_df,
         how='left',
         on='ORGNR_FORETAK',
         suffixes=("_purre", "_kontakt")
     )
 )
-purre_df.sample(3)
+purre_1.sample(3)
 # -
-
-print("Skjematyper ikke alt er levert i:")
-print(list(purre_df.SKJEMA_TYPE_purre.unique()))
-
-
-def lag_epostliste(liste_med_skjema):
-
-    temp_df = purre_df[purre_df['SKJEMA_TYPE_purre'].isin(liste_med_skjema)]
-
-    ingen_info = list(purre_df[purre_df.KONTAKTPERSON.isna()].NAVN.unique())
-    epostliste = list(temp_df.EPOSTADR.dropna().unique())
-    epostlistestr = '; '.join(map(str, epostliste))
-    offepostliste = list(temp_df.OFF_EPOST.dropna().unique())
-    offepostlistestr = '; '.join(map(str, offepostliste))
-    print("Disse har vi ingen tidligere kontaktinformasjon fra: ", ingen_info)
-    print()
-    print("Her er epostliste med kontaktinformasjon fra skjema ", liste_med_skjema)
-    print(epostlistestr)
-    print()
-    print("Her er epostliste med offisielt oppgitt kontaktinformasjon",
-          liste_med_skjema)
-    print(offepostlistestr)
-
-
-
-lag_epostliste(['HELSE0X'])
-
-
-
 
 # ## Purring skjema 39
 
 ikke_levert_mask = SFU['KVITT_TYPE_skj'].isnull()
 skjema39_mask = SFU['SKJEMA_TYPE_skj'].isin(["HELSE39"])
 
-# +
-purre_df = SFU[ikke_levert_mask & skjema39_mask][visningskolonner].copy()
-purre_df = purre_df.rename(
+purre_2 = SFU[ikke_levert_mask & skjema39_mask][visningskolonner].copy()
+purre_2 = purre_2.rename(
     columns={'E_POST': 'OFF_EPOST',
              'SKJEMA_TYPE_skj': 'SKJEMA_TYPE'
              }
 )
 
-purre_df = (
+purre_2 = (
     pd.merge(
-        purre_df,
+        purre_2,
         kontakt_df,
         how='left',
         on='ORGNR_FORETAK',
@@ -262,8 +232,8 @@ purre_df = (
     )
 )
 
-# -
+purre_2.to_csv("s39.csv")
 
-lag_epostliste(['HELSE39'])
+purre_2
 
-s39 = purre_df[purre_df['SKJEMA_TYPE_kontakt'] == "HELSE39"].drop_duplicates("KONTAKTPERSON")
+kontakt_df
