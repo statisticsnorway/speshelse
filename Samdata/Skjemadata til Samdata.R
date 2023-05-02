@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # # Skjemadata til Samdata
 
+# ### Velger årgang
+
 aargang <- 2022
 
 # +
@@ -23,6 +25,8 @@ encoding <- "latin1"
 # -
 
 # ### Lager årgangsmappe
+#
+# Skjemaene lagres i mappen `aargangsmappe` (se under). Disse må flyttes over fra Linux til X-disken for å kunne sendes via filslusen. 
 
 # +
 arbeidsmappe <- "/ssb/stamme01/fylkhels/speshelse/felles/samdata/"
@@ -31,6 +35,8 @@ aargangsmappe <- paste0(arbeidsmappe, aargang, "/")
 if (file.exists(aargangsmappe)==FALSE) {
   dir.create(aargangsmappe)
 }
+
+aargangsmappe
 # -
 
 datomarkering <- toupper(format(Sys.Date(), "%d%b%y"))
@@ -381,6 +387,20 @@ skjema0X_skjema <- dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
                             # dublettsjekk = c("ENHETS_ID", "FORETAKSNR", "ART_SEKTOR", "FUNKSJON_KAPITTEL"),
                             con_ask = FALSE)
 
+unique(skjema0X_skjema$REGION)
+
+# +
+skjema0X_skjema_2021 <- dynarev_uttrekk(delregnr = paste0(24, substr(2019, 3, 4)),
+                            skjema = "HELSE0X",
+                            skjema_cols = TRUE,
+                            sfu_cols = c("NAVN"),
+                            skjema_sfu_merge = TRUE,
+                            # dublettsjekk = c("ENHETS_ID", "FORETAKSNR", "ART_SEKTOR", "FUNKSJON_KAPITTEL"),
+                            con_ask = FALSE)
+
+unique(skjema0X_skjema_2021$REGION)
+# -
+
 skjema0X_skjema_2 <- dplyr::full_join(skjema0X_skjema, artskontokoder, by = "ART_SEKTOR")
 
 skjema0X_data_long <- skjema0X_skjema_2 %>%
@@ -412,3 +432,5 @@ write.table(skjema0X_data_long, skjema0X_filsti,
             dec = ",",
             quote = F)
 }
+
+skjema0X_filsti

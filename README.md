@@ -15,6 +15,7 @@ I tillegg ligger programmer relatert til Geostat-prosjektet (geografiske analyse
 I dette repoet ligger hovedsakelig programmer som er felles for alle produksjonsløpene i statistikkområdene. Disse oppgavene er følgende:
 + [Dropplister](https://github.com/statisticsnorway/speshelse/blob/master/experimental/Droplister%20forenkling.ipynb)
 + [Institusjonslister](https://github.com/statisticsnorway/speshelse/blob/master/Institusjonslister/Institusjonslister.ipynb)
++ [Overføring av skjemadata til Samdata](https://github.com/statisticsnorway/speshelse/tree/master/Samdata)
 
 <img src="./images/Årshjul.PNG" width="1200">
 
@@ -23,14 +24,15 @@ I dette repoet ligger hovedsakelig programmer som er felles for alle produksjons
 
 Før noen av produksjonsløpene kan kjøres må alle kodelistene som omfatter spesialisthelsetjenesten være oppdatert for statistikkåret. 
 
-OBS: denne må slettes! https://www.ssb.no/klass/klassifikasjoner/207
-
 ### Felles
 + `KLASS 603`: [Standard for offentlige helseforetak](https://www.ssb.no/klass/klassifikasjoner/603)
 + `KLASS 604`: [Standard for private helseinstitusjoner med oppdrags- og bestillerdokument](https://www.ssb.no/klass/klassifikasjoner/604)
 + `KLASS 605`: [Kodeliste for regionale og felleseide støtteforetak i spesialisthelsetjenesten](https://www.ssb.no/klass/klassifikasjoner/605)
 + `KLASS 610`: [Kodeliste for tjenesteområder i spesialisthelsetjenesten](https://www.ssb.no/klass/klassifikasjoner/610)
 + [Korrespondansetabell mellom `KLASS 610` og `KLASS 6`](https://www.ssb.no/klass/klassifikasjoner/610/korrespondanser/898)
++ [Korrespondansetabell mellom `KLASS 610` og `KLASS 603`](https://www.ssb.no/klass/klassifikasjoner/603/korrespondanser/1320)
++ [Korrespondansetabell mellom `KLASS 610` og `KLASS 604`](https://www.ssb.no/klass/klassifikasjoner/604/versjon/1721/korrespondanser/1262)
++ Korrespondansetabell mellom `KLASS 610` og `KLASS 605`
 
 ### Regnskap
 + `KLASS 602`: [Kodeliste for funksjonskontoinndeling til helseforetakenes regnskapsdata](https://www.ssb.no/klass/klassifikasjoner/602/)

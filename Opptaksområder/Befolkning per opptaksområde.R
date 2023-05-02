@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 # # Befolkning per opptaksområde
+#
+# OK
+# + 2021-2023
+#
+# OBS: kjør Befolkning per grunnkrets.R dersom filen ikke finnes?
+#
+# Gjør programmet kjørbart på Dapla? Krever pseudonomisert befolkningsfil
 
-aargang <- 2020
+aargang <- 2023
 
 # +
 # renv::restore("/ssb/bruker/rdn/speshelse")
@@ -480,3 +487,12 @@ filter(ALDER_KODE == "999", KJOENN == 0) %>%
 group_by(TJENESTE, LEVEL, ALDER_KODE, KJOENN) %>%
 summarise(PERSONER = sum(PERSONER)) %>%
 mutate(PERSONER_STATBANK = sum(T07459$value))
+
+befolkning_per_opptaksomrade_masterfil_filsti
+
+head(befolkning_per_opptaksomrade)
+
+befolkning_per_opptaksomrade %>%
+filter(TJENESTE == "SOM", LEVEL == "HF", ALDER_KODE != "999", KJOENN != "0") %>%
+group_by(ORGNR_RHF, NAVN_RHF, ORGNR_HF, NAVN_HF) %>%
+summarise(PERSONER = sum(PERSONER))
