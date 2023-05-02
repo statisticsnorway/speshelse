@@ -432,3 +432,5 @@ write.table(skjema0X_data_long, skjema0X_filsti,
             dec = ",",
             quote = F)
 }
+
+skjema0X_filsti
