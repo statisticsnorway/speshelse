@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-aargang <- 2019
+aargang <- 2016
 
 # +
 options(repr.matrix.max.rows=600, repr.matrix.max.cols=2000)
@@ -46,38 +46,17 @@ dplyr::mutate(OPPTAK_NUMMER = "S14",
     }
 
 # ### Gulen
-#
-# Gulen har blitt kategorisert under Haraldsplass sitt opptaksområde. Skal dette endres til Helse Førde? Hvilket lokalsykehus i så fall?
 
-# +
-# if (aargang %in% 2015:2019){
-# opptaksomrader_KLASS_gulen <- opptaksomrader_KLASS %>%
-# filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1411")) %>%
-# dplyr::mutate(OPPTAK_NUMMER = "S19", 
-#               OPPTAK = "Førde", 
-#               ORGNR_HF = "983974732", 
-#              NAVN_HF = "HELSE FØRDE HF", 
-#              ORGNR_RHF = "983658725", 
-#              NAVN_RHF = "HELSE VEST RHF")
-#     }
-# -
-
-# ### Eidfjord
-
-# +
-# if (aargang %in% 2015:2019){
-# opptaksomrader_KLASS_eidfjord <- opptaksomrader_KLASS %>%
-# filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("4619", "1232")) # %>%
-# # dplyr::mutate(OPPTAK_NUMMER = "", 
-# #               OPPTAK = "", 
-# #               ORGNR_HF = "", 
-# #              NAVN_HF = "", 
-# #              ORGNR_RHF = "", 
-# #              NAVN_RHF = "")
-#     }
-
-# opptaksomrader_KLASS_eidfjord
-# -
+if (aargang %in% 2015){
+opptaksomrader_KLASS_gulen <- opptaksomrader_KLASS %>%
+filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1411")) %>%
+dplyr::mutate(OPPTAK_NUMMER = "S19", 
+              OPPTAK = "Førde", 
+              ORGNR_HF = "983974732", 
+             NAVN_HF = "HELSE FØRDE HF", 
+             ORGNR_RHF = "983658725", 
+             NAVN_RHF = "HELSE VEST RHF")
+    }
 
 # ### Hornindal
 
@@ -92,7 +71,7 @@ dplyr::mutate(OPPTAK_NUMMER = "S21",
              NAVN_RHF = "HELSE VEST RHF")
 }
 
-# ## HELSE SØR_ØST RHF
+# ## HELSE SØR-ØST RHF
 
 # ### Vestby
 
@@ -100,8 +79,8 @@ dplyr::mutate(OPPTAK_NUMMER = "S21",
 if (aargang %in% 2015:2018){
 opptaksomrader_KLASS_vestby <- opptaksomrader_KLASS %>%
 filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("0211")) %>%
-dplyr::mutate(OPPTAK_NUMMER = "",  # ???
-              OPPTAK = "",  # ??? AHUS?
+dplyr::mutate(OPPTAK_NUMMER = "S36", 
+              OPPTAK = "Akershus", 
               ORGNR_HF = "983971636", 
              NAVN_HF = "AKERSHUS UNIVERSITETSSYKEHUS HF", 
              ORGNR_RHF = "991324968", 
@@ -124,27 +103,17 @@ dplyr::mutate(ORGNR_HF = "983971709",
     head(opptaksomrader_KLASS_kongsvinger)
     }
 
-# ### Nes
+# ## HELSE MIDT-NORGE RHF
 
-# +
-# opptaksomrader_KLASS %>%
-# filter(substr(GRUNNKRETSNUMMER, 1, 4) == "0236") %>%
-# head()
+# ### Halsa
 
-# +
-# if (aargang %in% 2015:2018){
-# opptaksomrader_KLASS_nes <- opptaksomrader_KLASS %>%
-# filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("0236")) %>%
-# dplyr::mutate(OPPTAK_NUMMER = "", 
-#               OPPTAK = "", 
-#               ORGNR_HF = "983971709", 
-#              NAVN_HF = "SYKEHUSET INNLANDET HF", 
-#              ORGNR_RHF = "991324968", 
-#              NAVN_RHF = "HELSE SØR-ØST RHF")
+# ### Roan
 
-# opptaksomrader_KLASS_nes
-#     }
-# -
+# ### Verran 
+
+# ### Osen 
+
+# ### Leksvik 
 
 # ## Lager fil med fix
 
@@ -161,6 +130,10 @@ if (aargang %in% 2015:2018){
 opptaksomrader_KLASS_uten_fix <- opptaksomrader_KLASS %>%
 filter(!substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1231", "1444", "0211", "4619", "1232"), # Legg til flere?
       OPPTAK != "Kongsvinger") 
+    
+# OBS: Gulen kun for 2015
+# Lage kopi av 2015:2018, endre den ene til 2016:2018 og den andre til 2015 og legge til Gulen for 2015?
+# 1411
 
 opptaksomrader_KLASS_med_fix <- rbind(opptaksomrader_KLASS_uten_fix, opptaksomrader_KLASS_ullensvang, opptaksomrader_KLASS_hornindal, 
                                      opptaksomrader_KLASS_kongsvinger, opptaksomrader_KLASS_vestby) # Legg til flere

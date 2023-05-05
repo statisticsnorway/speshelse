@@ -5,7 +5,9 @@
 
 # 1. Velg årgang og skjema i prompt
 # 2. Rapport i Excel-format lagres i mappen:
-# X:/330/Speshelse/1. Avklare behov/Samarbeid_eksternt/SINTEF/20XX/Endringslogg
+# `/ssb/stamme01/fylkhels/speshelse/felles/samdata/20XX/Endringslogg`
+#
+# OBS: kjør denne automatisk etter at scriptet Skjemadata til Samdata.R kjøres?
 
 # ### Laster inn pakkene som brukes i scriptet
 
@@ -16,7 +18,7 @@ suppressPackageStartupMessages({
 })
 
 
-# ### Angir aargang, skjema og dato til filene (i prompt, default angir kun standardverdi)
+# ### Angir årgang, skjema og dato til filene (i prompt, default angir kun standardverdi)
 
 # +
 aargang <- 2022

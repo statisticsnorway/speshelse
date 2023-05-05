@@ -13,12 +13,12 @@ options(repr.matrix.max.rows=600, repr.matrix.max.cols=2000)
 
 suppressPackageStartupMessages({
   library(tidyverse)
-  # library(fellesr)
+  library(fellesr)
   library(klassR)
 })
 
 # OBS: erstatt med fellesr når den er installert på nytt!
-source("/ssb/bruker/rdn/fellesr/R/dynarev_uttrekk.R")
+# source("/ssb/bruker/rdn/fellesr/R/dynarev_uttrekk.R")
 
 # encoding <- "UTF-8"
 encoding <- "latin1"
@@ -57,7 +57,9 @@ skjema0X_filsti <- paste0(aargangsmappe, "Skj0X_", datomarkering, ".txt")
 # ### Logger på Oracle
 
 # Logg på for å få tilgang til Oracle
+if (exists("con") == FALSE) {
 con <- dynarev_uttrekk(con_ask = "con")
+    }
 
 # ### Kodeliste for tjenesteområder i spesialisthelsetjenesten
 
@@ -434,3 +436,5 @@ write.table(skjema0X_data_long, skjema0X_filsti,
 }
 
 skjema0X_filsti
+
+
