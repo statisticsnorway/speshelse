@@ -18,7 +18,7 @@ tjeneste <- "SOM"
 # ## Flate eller utenhav
 
 # +
-utenhav <- TRUE
+utenhav <- FALSE
 
 if (utenhav == TRUE) {
 filsti_med_uten_hav <- "utenhav"
@@ -34,6 +34,8 @@ filsti_med_uten_hav
 # +
 sf::sf_use_s2(FALSE)
 CRS <- 25833
+
+renv::autoload()
 
 suppressPackageStartupMessages({ 
 library(tidyverse)
