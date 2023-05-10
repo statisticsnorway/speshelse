@@ -18,20 +18,26 @@ sf::sf_use_s2(FALSE)
 CRS <- 4326
 # -
 
-renv::autoload()
+# ### Laster inn pakker
 
 # +
+renv::load()
+# renv::autoload()
+
 suppressPackageStartupMessages({ 
+library(arrow)
+library(sf)
+library(sfarrow)
 library(tidyverse)
 library(readxl)
 library(klassR)
-library(sf)
 library(leaflet)
 library(sfarrow)  
 library(cowplot)
 library(fellesr)
         })
 
+# OBS: legg til open_dataset under NAMESPACE + export i fellesr
 # source("/home/jovyan/fellesr/R/DAPLA_funcs.R")
 
   rename_geometry <- function(g, name){
@@ -47,13 +53,13 @@ arbeidsmappe_kart <- paste0("ssb-prod-dapla-felles-data-delt/GIS/Kart/", aargang
 
 # grunnkrets_kart_filsti <- paste0(arbeidsmappe_kart, "ABAS_grunnkrets_utenhav_", aargang, "/")
 
-opptaksomrader_SOM_RHF_filsti <- paste0("ssb-prod-helse-speshelse-data-kilde/felles/Kart/", aargang, "/Opptaksområder/opptaksomrader_SOM_RHF_", filsti_med_uten_hav, "_", aargang, "/")
+opptaksomrader_SOM_RHF_filsti <- paste0("ssb-prod-helse-speshelse-data-kilde/felles/Kart/", aargang, "/Opptaksområder/opptaksomrader_SOM_RHF_", filsti_med_uten_hav, "_", aargang, "/opptaksomrader_SOM_RHF_", filsti_med_uten_hav, "_", aargang, ".parquet")
 opptaksomrader_SOM_RHF_filsti
 
-opptaksomrader_SOM_HF_filsti <- paste0("ssb-prod-helse-speshelse-data-kilde/felles/Kart/", aargang, "/Opptaksområder/opptaksomrader_SOM_HF_", filsti_med_uten_hav, "_", aargang, "/")
+opptaksomrader_SOM_HF_filsti <- paste0("ssb-prod-helse-speshelse-data-kilde/felles/Kart/", aargang, "/Opptaksområder/opptaksomrader_SOM_HF_", filsti_med_uten_hav, "_", aargang, "/opptaksomrader_SOM_HF_", filsti_med_uten_hav, "_", aargang, ".parquet")
 opptaksomrader_SOM_HF_filsti
 
-opptaksomrader_SOM_lokasjon_filsti <- paste0("ssb-prod-helse-speshelse-data-kilde/felles/Kart/", aargang, "/Opptaksområder/opptaksomrader_SOM_lokasjon_", filsti_med_uten_hav, "_", aargang, "/")
+opptaksomrader_SOM_lokasjon_filsti <- paste0("ssb-prod-helse-speshelse-data-kilde/felles/Kart/", aargang, "/Opptaksområder/opptaksomrader_SOM_lokasjon_", filsti_med_uten_hav, "_", aargang, "/opptaksomrader_SOM_lokasjon_", filsti_med_uten_hav, "_", aargang, ".parquet")
 opptaksomrader_SOM_lokasjon_filsti
 # -
 
@@ -62,23 +68,20 @@ opptaksomrader_SOM_lokasjon_filsti
 opptaksomrader_SOM_RHF_filsti
 
 # +
-opptaksomrader_SOM_RHF <- open_dataset(opptaksomrader_SOM_RHF_filsti) %>%
-    sfarrow::read_sf_dataset() # %>%
-    # sf::st_simplify(preserveTopology = FALSE, dTolerance = 1000)
+opptaksomrader_SOM_RHF <- fellesr::read_SSB(opptaksomrader_SOM_RHF_filsti, sf = TRUE) 
+# sf::st_simplify(preserveTopology = FALSE, dTolerance = 1000)
 
-opptaksomrader_SOM_HF <- open_dataset(opptaksomrader_SOM_HF_filsti) %>%
-    sfarrow::read_sf_dataset() # %>%
-    # sf::st_simplify(preserveTopology = FALSE, dTolerance = 1000)
+opptaksomrader_SOM_HF <- fellesr::read_SSB(opptaksomrader_SOM_HF_filsti, sf = TRUE) 
+# sf::st_simplify(preserveTopology = FALSE, dTolerance = 1000)
 
-opptaksomrader_SOM_lokasjon <- open_dataset(opptaksomrader_SOM_lokasjon_filsti) %>%
-    sfarrow::read_sf_dataset() # %>%
-    # sf::st_simplify(preserveTopology = FALSE, dTolerance = 1000)
+opptaksomrader_SOM_lokasjon <- fellesr::read_SSB(opptaksomrader_SOM_lokasjon_filsti, sf = TRUE) 
+# sf::st_simplify(preserveTopology = FALSE, dTolerance = 1000)
 # -
 
 # ### Laster inn kommunekart
 
-kommunekart <- open_dataset("ssb-prod-dapla-felles-data-delt/GIS/2022/") %>%
-    sfarrow::read_sf_dataset()
+# kommunekart <- fellesr::read_SSB("ssb-prod-dapla-felles-data-delt/GIS/2022/ABAS_kommune_flate_2022.parquet", sf = TRUE) 
+kommunekart <- fellesr::read_SSB(paste0("ssb-prod-kart-data-delt/kartdata_analyse/klargjorte-data/2023/ABAS_kommune_flate_p", aargang, "_v1.parquet"), sf = TRUE) 
 
 kommunekart_oslo <- kommunekart %>%
 filter(KOMMUNENR == "0301") %>%
@@ -101,13 +104,16 @@ ssb_farger <- klassR::GetKlass(614, output_style = "wide") %>%
 ssb_farger_blaa <- ssb_farger %>%
 dplyr::filter(farge_nummer == "SSB Blå 2")
 
-ssb_farger
+# ssb_farger
 
 ssb_farger_oslo <- ssb_farger %>%
 dplyr::filter(farge_nummer %in% c("SSB Grønn 1", "SSB Blå 1", "SSB Gul 1", "SSB Rød 1"))
 # -
 
-# ## Alle regioner
+# ## HF (alle regioner)
+#
+# TO DO
+# + Legg til navn på HF (en versjon med og uten) + inset map for Oslo
 
 # +
 # ggplot() + 
@@ -118,11 +124,75 @@ dplyr::filter(farge_nummer %in% c("SSB Grønn 1", "SSB Blå 1", "SSB Gul 1", "SS
 
 # ggplot() + 
 # geom_sf(data = opptaksomrader_SOM_lokasjon)
+
+# +
+sf_use_s2(FALSE)
+options(repr.plot.width=20, repr.plot.height=20)
+
+opptaksomrader_SOM_HF_test <- opptaksomrader_SOM_HF %>%
+# filter(!NAVN_RHF %in% c("HELSE VEST RHF")) %>%
+dplyr::mutate(farge_nummer = case_when(NAVN_HF == "FINNMARKSSYKEHUSET HF" ~ "SSB Blå 2", 
+                                       NAVN_HF == "UNIVERSITETSSYKEHUSET NORD-NORGE HF" ~ "SSB Blå 3",
+                                       NAVN_HF == "NORDLANDSSYKEHUSET HF" ~ "SSB Blå 4", 
+                                       NAVN_HF == "HELGELANDSSYKEHUSET HF" ~ "SSB Blå 5", 
+                                       NAVN_HF == "HELSE NORD-TRØNDELAG HF" ~ "SSB Grønn 2", 
+                                       NAVN_HF == "ST OLAVS HOSPITAL HF" ~ "SSB Grønn 3", 
+                                       NAVN_HF == "HELSE MØRE OG ROMSDAL HF" ~ "SSB Grønn 4", 
+                                       NAVN_HF == "SØRLANDET SYKEHUS HF" ~ "SSB Lilla 1", 
+                                       NAVN_HF == "SYKEHUSET TELEMARK HF" ~ "SSB Lilla 2", 
+                                       NAVN_HF == "VESTRE VIKEN HF" ~ "SSB Lilla 3", 
+                                       NAVN_HF == "SYKEHUSET INNLANDET HF" ~ "SSB Lilla 4", 
+                                       NAVN_HF == "AKERSHUS UNIVERSITETSSYKEHUS HF" ~ "SSB Lilla 5",
+                                       NAVN_HF == "OSLO UNIVERSITETSSYKEHUS HF" ~ "SSB Rød 1", 
+                                       NAVN_HF == "LOVISENBERG DIAKONALE SYKEHUS AS" ~ "SSB Rød 2", 
+                                       NAVN_HF == "DIAKONHJEMMET SYKEHUS AS" ~ "SSB Rød 3", 
+                                       NAVN_HF == "SYKEHUSET I VESTFOLD HF" ~ "SSB Rød 4", 
+                                       NAVN_HF == "SYKEHUSET ØSTFOLD HF" ~ "SSB Rød 5", 
+                                       NAVN_HF == "HELSE FØRDE HF" ~ "SSB Gul 1", 
+                                        NAVN_HF == "HELSE BERGEN HF" ~ "SSB Gul 2", 
+                                       NAVN_HF == "HELSE FONNA HF" ~ "SSB Gul 3", 
+                                       NAVN_HF == "HELSE STAVANGER HF" ~ "SSB Gul 4",
+                                        TRUE ~ "")) %>%
+dplyr::left_join(ssb_farger, by = "farge_nummer")
+
+farger_HF <- as.character(opptaksomrader_SOM_HF_test$HEX)
+names(farger_HF) <- opptaksomrader_SOM_HF_test$NAVN_HF
+
+HF_kart <- ggplot() + 
+geom_sf(data = opptaksomrader_SOM_HF_test, aes(fill = NAVN_HF), color = "white", lwd = 1) +
+scale_fill_manual(values = farger_HF) + 
+theme(legend.position = "none") +
+theme_void()
+
+# geom_sf(data = opptaksomrader_SOM_HF_test, 
+#         # fill = ssb_farger_blaa$HEX, 
+#         color = "white", 
+#         lwd = 1) +
+# geom_sf(data = point_both, color = "black", lwd = 0.1) +
+# coord_sf(expand = FALSE) +
+# geom_point(data = opptaksomrader_SOM_HF_H12_coords, aes(x = X, y = Y), colour = "white", size = 2) +
+# geom_text(data = opptaksomrader_SOM_HF_H12_coords_right, aes(X, Y, label = NAVN_HF), colour = "black", hjust  = 0, check_overlap = F, size = 5) +
+# geom_text(data = opptaksomrader_SOM_HF_H12_coords_left, aes(X, Y, label = NAVN_HF), colour = "black", 
+#           hjust  = 1, 
+#           # hjust  = 0, 
+#           check_overlap = F, size = 5) +
+# coord_sf(xlim=c(2, 17), ylim=c(57.5, 63), expand = TRUE) +
+
+# if (utenhav == TRUE){
+# Lagrer kartet som .png
+png(filename = paste0("/home/jovyan/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_", aargang, ".png"), width = 2000, height = 2000)
+HF_kart
+dev.off()
+#     }
+
+HF_kart
 # -
 
-# ## Per RHF
+paste0("/home/jovyan/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_", aargang, ".png")
+
+# # HF (per RHF)
 #
-# ### Helse Sør-Øst
+# ## Helse Sør-Øst
 
 # +
 # opptaksomrader_SOM_RHF_H12 <- opptaksomrader_SOM_RHF %>%
@@ -130,12 +200,6 @@ dplyr::filter(farge_nummer %in% c("SSB Grønn 1", "SSB Blå 1", "SSB Gul 1", "SS
 
 # ggplot() + 
 # geom_sf(data = opptaksomrader_SOM_RHF_H12)
-
-
-# +
-# X_left <- 4.3
-X_left <- 6.3
-X_right <- 13
 
 # OBS:
 opptaksomrader_SOM_HF_H12 <- opptaksomrader_SOM_HF %>%
@@ -148,6 +212,31 @@ filter(NAVN_RHF == "HELSE SØR-ØST RHF") %>%
 dplyr::mutate(NAVN_HF = gsub(" AS", "", NAVN_HF)) %>%
 dplyr::mutate(NAVN_HF = gsub(" HF", "", NAVN_HF)) %>%
 sf::st_transform(crs = 4326)
+
+# -
+
+
+# ### HF uten navn
+
+# +
+HSØ_uten_navn <- ggplot() + 
+geom_sf(data = opptaksomrader_SOM_HF_H12, fill = ssb_farger_blaa$HEX, color = "white", lwd = 1) +
+theme_void()
+
+# if (utenhav == TRUE){
+# Lagrer kartet som .png
+png(filename = paste0("/home/jovyan/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_HSØ_", aargang, "_uten_navn.png"), width = 2000, height = 2000)
+HSØ_uten_navn
+dev.off()
+   #  }
+# -
+
+# ### HF med navn
+
+# +
+# X_left <- 4.3
+X_left <- 6.3
+X_right <- 13
 
 opptaksomrader_SOM_HF_H12_points <- sf::st_point_on_surface(opptaksomrader_SOM_HF_H12) %>%
 sf::st_coordinates(NAVN_HF = case_when()) %>%
@@ -226,10 +315,12 @@ theme_void()
 
 main_map
 
-# # Lagrer kartet som .png
-# png(filename = paste0("/home/jovyan/speshelse/Opptaksområder/images/HSØ_", aargang, ".png"), width = 2000, height = 2000)
-# main_map
-# dev.off()
+# if (utenhav == TRUE){
+# Lagrer kartet som .png
+png(filename = paste0("/home/jovyan/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_HSØ_", aargang, "_med_navn.png"), width = 2000, height = 2000)
+main_map
+dev.off()
+   #  }
 # -
 
 # ### Legger til inset plot med Oslo
@@ -305,7 +396,9 @@ helse_sor_ost_med_oslo <- main_map_2 %>%
 
 helse_sor_ost_med_oslo
 
-# # Lagrer kartet som .png
-# png(filename = paste0("/home/jovyan/speshelse/Opptaksområder/images/HSØ_", aargang, "_med_Oslo.png"), width = 2000, height = 2000*0.7)
-# helse_sor_ost_med_oslo
-# dev.off()
+# if (utenhav == TRUE){
+# Lagrer kartet som .png
+png(filename = paste0("/home/jovyan/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_HSØ_", aargang, "_med_Oslo.png"), width = 2000, height = 2000*0.7)
+helse_sor_ost_med_oslo
+dev.off()
+#     }

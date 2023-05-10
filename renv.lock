@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "4.2.3",
+    "Version": "4.3.0",
     "Repositories": [
       {
         "Name": "RSTUDIO",
@@ -717,14 +717,14 @@
     },
     "fellesr": {
       "Package": "fellesr",
-      "Version": "0.1.4",
+      "Version": "0.1.6",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteUsername": "statisticsnorway",
       "RemoteRepo": "fellesr",
       "RemoteRef": "main",
-      "RemoteSha": "2818f7affc89f112e8b23cc28cdb843ed69cf132",
+      "RemoteSha": "035923b60f65adb6b05573fe8959347f60c64780",
       "Requirements": [
         "DBI",
         "RCurl",
@@ -749,7 +749,7 @@
         "shiny",
         "tidyr"
       ],
-      "Hash": "18f61218aae372172d0cbc07aa566ef2"
+      "Hash": "dbef1086d39e05400742937907d6e020"
     },
     "fontawesome": {
       "Package": "fontawesome",
