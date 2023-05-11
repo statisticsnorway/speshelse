@@ -99,18 +99,18 @@ ssb_farger <- klassR::GetKlass(614, output_style = "wide") %>%
                 farge = name2, 
                 type = name1) %>%
   dplyr::select(-code1, -code2) %>%
-  dplyr::filter(farge != "Hvit")
-
-ssb_farger_blaa <- ssb_farger %>%
-dplyr::filter(farge_nummer == "SSB Blå 2")
-
+  dplyr::filter(farge != "Hvit") %>%
+add_row(farge_nummer = "Lilla 1.1", HEX = "#d9d1e5", farge = "Lilla", type = "egen") %>% #  
+add_row(farge_nummer = "Lilla 2.1", HEX = "#7b68ad", farge = "Lilla", type = "egen") %>% #  
+add_row(farge_nummer = "Lilla 3.1", HEX = "#9f8ec1", farge = "Lilla", type = "egen")
+ 
 # ssb_farger
 
 ssb_farger_oslo <- ssb_farger %>%
 dplyr::filter(farge_nummer %in% c("SSB Grønn 1", "SSB Blå 1", "SSB Gul 1", "SSB Rød 1"))
 # -
 
-# ## HF (alle regioner)
+# # HF (alle regioner)
 #
 # TO DO
 # + Legg til navn på HF (en versjon med og uten) + inset map for Oslo
@@ -126,10 +126,12 @@ dplyr::filter(farge_nummer %in% c("SSB Grønn 1", "SSB Blå 1", "SSB Gul 1", "SS
 # geom_sf(data = opptaksomrader_SOM_lokasjon)
 
 # +
-sf_use_s2(FALSE)
-options(repr.plot.width=20, repr.plot.height=20)
+X_left <- 2
+X_right <- 18.7
+
 
 opptaksomrader_SOM_HF_test <- opptaksomrader_SOM_HF %>%
+sf::st_transform(crs = 4326) %>%
 # filter(!NAVN_RHF %in% c("HELSE VEST RHF")) %>%
 dplyr::mutate(farge_nummer = case_when(NAVN_HF == "FINNMARKSSYKEHUSET HF" ~ "SSB Blå 2", 
                                        NAVN_HF == "UNIVERSITETSSYKEHUSET NORD-NORGE HF" ~ "SSB Blå 3",
@@ -138,16 +140,18 @@ dplyr::mutate(farge_nummer = case_when(NAVN_HF == "FINNMARKSSYKEHUSET HF" ~ "SSB
                                        NAVN_HF == "HELSE NORD-TRØNDELAG HF" ~ "SSB Grønn 2", 
                                        NAVN_HF == "ST OLAVS HOSPITAL HF" ~ "SSB Grønn 3", 
                                        NAVN_HF == "HELSE MØRE OG ROMSDAL HF" ~ "SSB Grønn 4", 
-                                       NAVN_HF == "SØRLANDET SYKEHUS HF" ~ "SSB Lilla 1", 
+                                       NAVN_HF == "SØRLANDET SYKEHUS HF" ~ "Lilla 1.1", 
                                        NAVN_HF == "SYKEHUSET TELEMARK HF" ~ "SSB Lilla 2", 
-                                       NAVN_HF == "VESTRE VIKEN HF" ~ "SSB Lilla 3", 
-                                       NAVN_HF == "SYKEHUSET INNLANDET HF" ~ "SSB Lilla 4", 
-                                       NAVN_HF == "AKERSHUS UNIVERSITETSSYKEHUS HF" ~ "SSB Lilla 5",
+                                       NAVN_HF == "VESTRE VIKEN HF" ~ "Lilla 3.1", # Lilla 3.1
+                                       NAVN_HF == "SYKEHUSET INNLANDET HF" ~ "SSB Lilla 3", # SSB Lilla 3
+                                       NAVN_HF == "AKERSHUS UNIVERSITETSSYKEHUS HF" ~ "SSB Lilla 4", # SSB Lilla 4
                                        NAVN_HF == "OSLO UNIVERSITETSSYKEHUS HF" ~ "SSB Rød 1", 
                                        NAVN_HF == "LOVISENBERG DIAKONALE SYKEHUS AS" ~ "SSB Rød 2", 
                                        NAVN_HF == "DIAKONHJEMMET SYKEHUS AS" ~ "SSB Rød 3", 
-                                       NAVN_HF == "SYKEHUSET I VESTFOLD HF" ~ "SSB Rød 4", 
-                                       NAVN_HF == "SYKEHUSET ØSTFOLD HF" ~ "SSB Rød 5", 
+                                       # NAVN_HF == "SYKEHUSET I VESTFOLD HF" ~ "SSB Rød 4", 
+                                       # NAVN_HF == "SYKEHUSET ØSTFOLD HF" ~ "SSB Rød 5", 
+                                        NAVN_HF == "SYKEHUSET I VESTFOLD HF" ~ "Lilla 2.1", 
+                                       NAVN_HF == "SYKEHUSET ØSTFOLD HF" ~ "SSB Lilla 5", 
                                        NAVN_HF == "HELSE FØRDE HF" ~ "SSB Gul 1", 
                                         NAVN_HF == "HELSE BERGEN HF" ~ "SSB Gul 2", 
                                        NAVN_HF == "HELSE FONNA HF" ~ "SSB Gul 3", 
@@ -157,38 +161,145 @@ dplyr::left_join(ssb_farger, by = "farge_nummer")
 
 farger_HF <- as.character(opptaksomrader_SOM_HF_test$HEX)
 names(farger_HF) <- opptaksomrader_SOM_HF_test$NAVN_HF
+# -
 
-HF_kart <- ggplot() + 
-geom_sf(data = opptaksomrader_SOM_HF_test, aes(fill = NAVN_HF), color = "white", lwd = 1) +
+# ## HF uten navn
+
+# +
+HF_uten_navn <- ggplot() + 
+# geom_sf(data = opptaksomrader_SOM_HF_test, fill = ssb_farger_blaa$HEX, color = "white", lwd = 1) +
+geom_sf(data = opptaksomrader_SOM_HF_test, aes(fill = NAVN_HF), color = "white", lwd = 1, show.legend = FALSE) +
 scale_fill_manual(values = farger_HF) + 
-theme(legend.position = "none") +
+coord_sf(crs = st_crs(25833)) +
 theme_void()
-
-# geom_sf(data = opptaksomrader_SOM_HF_test, 
-#         # fill = ssb_farger_blaa$HEX, 
-#         color = "white", 
-#         lwd = 1) +
-# geom_sf(data = point_both, color = "black", lwd = 0.1) +
-# coord_sf(expand = FALSE) +
-# geom_point(data = opptaksomrader_SOM_HF_H12_coords, aes(x = X, y = Y), colour = "white", size = 2) +
-# geom_text(data = opptaksomrader_SOM_HF_H12_coords_right, aes(X, Y, label = NAVN_HF), colour = "black", hjust  = 0, check_overlap = F, size = 5) +
-# geom_text(data = opptaksomrader_SOM_HF_H12_coords_left, aes(X, Y, label = NAVN_HF), colour = "black", 
-#           hjust  = 1, 
-#           # hjust  = 0, 
-#           check_overlap = F, size = 5) +
-# coord_sf(xlim=c(2, 17), ylim=c(57.5, 63), expand = TRUE) +
 
 # if (utenhav == TRUE){
 # Lagrer kartet som .png
-png(filename = paste0("/home/jovyan/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_", aargang, ".png"), width = 2000, height = 2000)
+png(filename = paste0("/home/jovyan/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_", aargang, "_uten_navn.png"), width = 2000, height = 2000)
+HF_uten_navn
+dev.off()
+   #  }
+
+HF_uten_navn
+
+# +
+#############
+opptaksomrader_SOM_HF_points <- sf::st_point_on_surface(opptaksomrader_SOM_HF_test) %>%
+# sf::st_coordinates(NAVN_HF = case_when()) %>%
+sf::st_coordinates() %>%
+data.frame()
+
+opptaksomrader_SOM_HF_df <- opptaksomrader_SOM_HF_test %>% data.frame() %>% select(NAVN_HF)
+opptaksomrader_SOM_HF_points <- cbind(opptaksomrader_SOM_HF_df, opptaksomrader_SOM_HF_points) %>%
+mutate(Y = case_when(NAVN_HF == "NORDLANDSSYKEHUSET HF" ~ Y-1.1, 
+                     NAVN_HF == "AKERSHUS UNIVERSITETSSYKEHUS HF" ~ Y+0.25, 
+                     NAVN_HF == "HELSE BERGEN HF" ~ Y+0.2, 
+                     # NAVN_HF == "HELSE STAVANGER HF" ~ Y-0.06, 
+                     NAVN_HF == "VESTRE VIKEN HF" ~ Y+0.07, 
+                     NAVN_HF == "ST OLAVS HOSPITAL HF" ~ Y-0.3, 
+                     NAVN_HF == "SØRLANDET SYKEHUS HF" ~ Y-0.2, 
+                     NAVN_HF == "SYKEHUSET I VESTFOLD HF" ~ Y-0.3, 
+                     NAVN_HF == "SYKEHUSET TELEMARK HF" ~ Y-0.3, 
+                     NAVN_HF == "HELSE FONNA HF" ~ Y-0.25,  
+                     NAVN_HF == "LOVISENBERG DIAKONALE SYKEHUS AS" ~ Y-0.1, 
+                     NAVN_HF == "FINNMARKSSYKEHUSET HF" ~ Y-0.9, 
+                     NAVN_HF == "UNIVERSITETSSYKEHUSET NORD-NORGE HF" ~ Y-0.5, 
+                     TRUE ~ Y), 
+      X = case_when(NAVN_HF == "AKERSHUS UNIVERSITETSSYKEHUS HF" ~ X+0.18, 
+                    NAVN_HF == "FINNMARKSSYKEHUSET HF" ~ X-0.7, 
+                    # NAVN_HF == "UNIVERSITETSSYKEHUSET NORD-NORGE HF" ~ X-1.7, 
+                    NAVN_HF == "UNIVERSITETSSYKEHUSET NORD-NORGE HF" ~ X-0.9, 
+                     TRUE ~ X))
+
+opptaksomrader_SOM_HF_coords <- opptaksomrader_SOM_HF_points
+opptaksomrader_SOM_HF_coords$NAVN_HF <- opptaksomrader_SOM_HF_test$NAVN_HF
+
+opptaksomrader_SOM_HF_coords_left <- opptaksomrader_SOM_HF_coords %>%
+filter(NAVN_HF %in% c("HELSE MØRE OG ROMSDAL HF", "HELSE FØRDE HF", "HELSE BERGEN HF", "HELSE FONNA HF", "HELSE STAVANGER HF", 
+                      "SYKEHUSET TELEMARK HF", "VESTRE VIKEN HF", "DIAKONHJEMMET SYKEHUS AS")) %>%
+# dplyr::mutate(X = 6.3)
+dplyr::mutate(X = X_left)
+
+opptaksomrader_SOM_HF_coords_right <- opptaksomrader_SOM_HF_coords %>%
+filter(!NAVN_HF %in% c("HELSE MØRE OG ROMSDAL HF", "HELSE FØRDE HF", "HELSE BERGEN HF", "HELSE FONNA HF", "HELSE STAVANGER HF", 
+                      "SYKEHUSET TELEMARK HF", "VESTRE VIKEN HF", "DIAKONHJEMMET SYKEHUS AS")) %>%
+dplyr::mutate(X = X_right) %>%
+dplyr::mutate(Y = case_when(NAVN_HF %in% c("FINNMARKSSYKEHUSET HF") ~ Y-1, 
+                            NAVN_HF %in% c("UNIVERSITETSSYKEHUSET NORD-NORGE HF") ~ Y-1.3, 
+                            TRUE ~ Y))
+
+opptaksomrader_SOM_HF_coords_both <- rbind(opptaksomrader_SOM_HF_coords_left, opptaksomrader_SOM_HF_coords_right)
+
+point_map <- opptaksomrader_SOM_HF_points %>%
+sf::st_as_sf(coords = c("X", "Y")) %>%
+select(NAVN_HF, geometry) %>%
+st_set_crs(4326)
+# data.frame()
+
+# ggplot() + 
+# geom_sf(data = point_map)
+
+point_name <- opptaksomrader_SOM_HF_coords_both %>%
+mutate(X = case_when(X == X_left ~ X_left+0.1, 
+                     X == X_right ~ X_right-0.1, 
+                     TRUE ~ X)) %>%
+dplyr::mutate(X = case_when(NAVN_HF == "FINNMARKSSYKEHUSET HF" ~ X+5.5, TRUE ~ X), 
+             Y = case_when(NAVN_HF == "FINNMARKSSYKEHUSET HF" ~ Y+0.13, TRUE ~ Y)) %>%
+sf::st_as_sf(coords = c("X", "Y")) %>%
+select(NAVN_HF, geometry) %>%
+st_set_crs(4326)
+
+point_both <- rbind(point_map, point_name) %>%
+group_by(NAVN_HF) %>%
+summarise(do_union=F) %>% st_cast("LINESTRING") %>%
+sf::st_transform(crs = 4326)
+
+#############
+
+sf_use_s2(FALSE)
+options(repr.plot.width=20, repr.plot.height=20)
+
+# valgt_crs <- 25833
+# valgt_crs <- 4326
+
+# opptaksomrader_SOM_HF_test <- opptaksomrader_SOM_HF_test %>%
+# sf::st_transform(crs = valgt_crs)
+
+# point_both <- point_both %>%
+# sf::st_transform(crs = valgt_crs)
+
+# opptaksomrader_SOM_HF_coords <- opptaksomrader_SOM_HF_coords %>%
+# sf::st_transform(crs = valgt_crs)
+
+# opptaksomrader_SOM_HF_coords_right <- opptaksomrader_SOM_HF_coords_right %>%
+# sf::st_transform(crs = valgt_crs)
+
+# opptaksomrader_SOM_HF_coords_left <- opptaksomrader_SOM_HF_coords_left %>%
+# sf::st_transform(crs = valgt_crs)
+
+HF_kart <- ggplot() + 
+geom_sf(data = opptaksomrader_SOM_HF_test, aes(fill = NAVN_HF), color = "white", lwd = 1, show.legend = FALSE) +
+geom_sf(data = point_both, color = "lightblue", lwd = 0.5) +
+# geom_point(data = opptaksomrader_SOM_HF_points, aes(x = X, y = Y), colour = "red", size = 2) +
+geom_point(data = opptaksomrader_SOM_HF_coords, aes(x = X, y = Y), colour = "white", size = 2) +
+geom_text(data = opptaksomrader_SOM_HF_coords_right, aes(X, Y, label = NAVN_HF), colour = "black", hjust  = 0, check_overlap = F, size = 5) +
+geom_text(data = opptaksomrader_SOM_HF_coords_left, aes(X, Y, label = NAVN_HF), colour = "black", 
+          hjust  = 1, 
+          # hjust  = 0, 
+          check_overlap = F, size = 5) +
+coord_sf(xlim=c(-3.1, 35), ylim=c(57.5, 72), expand = TRUE) +
+scale_fill_manual(values = farger_HF) + 
+theme_void()
+
+# if (utenhav == TRUE){
+# Lagrer kartet som .png
+png(filename = paste0("/home/jovyan/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_", aargang, "_med_navn.png"), width = 2000, height = 2000)
 HF_kart
 dev.off()
 #     }
 
 HF_kart
 # -
-
-paste0("/home/jovyan/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_", aargang, ".png")
 
 # # HF (per RHF)
 #
