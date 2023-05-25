@@ -172,7 +172,7 @@ threadpoolctl @ file:///tmp/tmp79xdzxkt/threadpoolctl-2.1.0-py3-none-any.whl
 tifffile @ file:///home/conda/feedstock_root/build_artifacts/tifffile_1595673894086/work
 toml==0.10.1
 toolz==0.10.0
-tornado==6.0.4
+tornado==6.3.2
 tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1596476591553/work
 traitlets==4.3.3
 typed-ast==1.4.1
