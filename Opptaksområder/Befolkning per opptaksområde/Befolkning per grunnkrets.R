@@ -18,7 +18,7 @@ suppressPackageStartupMessages({
 # Sys.setenv(no_proxy= "nexus.ssb.no,git-adm.ssb.no,i.test.ssb.no,i.ssb.no,data.ssb.no,github.com,api.github.com,codeload.github.com")
 # -
 
-aargang <- 2022
+# aargang <- 2019
 
 # +
 T04317 <- PxWebApiData::ApiData(04317, ContentsCode = "Personer",
@@ -67,13 +67,13 @@ bosatte_koorfil_fix <- bosatte_koorfil %>%
   dplyr::mutate(GRUNNKRETSNUMMER = paste0(KOMMNR, GKRETS)) %>%
   select(GRUNNKRETSNUMMER, KJOENN, FOEDSELSDATO) %>%
   dplyr::mutate(FOEDSELSDATO = as.Date(FOEDSELSDATO, "%Y%m%d"),
-                ALDER = trunc((FOEDSELSDATO %--% x_date) / lubridate::years(1))) 
+                ALDER = trunc((FOEDSELSDATO %--% x_date) / lubridate::years(1)))
 
 # +
 # # OBS: Frydenlund ble splittet i 2021
 # if (aargang == 2022) {
 # bosatte_koorfil_fix <- bosatte_koorfil_fix %>%
-# mutate(GRUNNKRETSNUMMER = case_when(GRUNNKRETSNUMMER == "30490109" ~ "30490113", TRUE ~ GRUNNKRETSNUMMER))  
+# mutate(GRUNNKRETSNUMMER = case_when(GRUNNKRETSNUMMER == "30490109" ~ "30490113", TRUE ~ GRUNNKRETSNUMMER))
 #     }
 
 # +

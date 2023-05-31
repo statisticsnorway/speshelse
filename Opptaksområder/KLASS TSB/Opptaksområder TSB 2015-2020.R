@@ -114,10 +114,29 @@ nrow(opptaksomrader_KLASS_SOM)
 # +
 opptaksomrader_KLASS_TSB_alle <- rbind(opptaksomrader_KLASS_SOM, opptaksomrader_KLASS_TSB)
 
+if (aargang %in% 2015:2019){
+  opptaksomrader_KLASS_TSB_alle <- opptaksomrader_KLASS_TSB_alle %>%
+    dplyr::mutate(ORGNR_HF = case_when(substr(GRUNNKRETSNUMMER, 1, 4) == "5019" ~ "883974832", TRUE ~ ORGNR_HF), 
+                NAVN_HF = case_when(substr(GRUNNKRETSNUMMER, 1, 4) == "5019" ~ "ST OLAVS HOSPITAL HF", TRUE ~ NAVN_HF))
+}
+
+if (aargang %in% 2015:2018){
+  opptaksomrader_KLASS_TSB_alle <- opptaksomrader_KLASS_TSB_alle %>%
+    dplyr::mutate(ORGNR_HF = case_when(substr(GRUNNKRETSNUMMER, 1, 4) == "0236" ~ "983971636", TRUE ~ ORGNR_HF), 
+                NAVN_HF = case_when(substr(GRUNNKRETSNUMMER, 1, 4) == "0236" ~ "AKERSHUS UNIVERSITETSSYKEHUS HF", TRUE ~ NAVN_HF))
+}
+
 openxlsx::write.xlsx(opptaksomrader_KLASS_TSB_alle, file = paste0("/home/rdn/speshelse/Opptaksområder/KLASS TSB/OPPTAK_TSB_GRUNNKRETS_", aargang, ".xlsx"),
                      rowNames = FALSE,
                      showNA = FALSE,
                      overwrite=T) # T = overskriver dersom filen allerede finnes, F = gir feilmelding dersom filen finnes
+
+# +
+# opptaksomrader_KLASS_TSB_alle %>%
+# filter(substr(GRUNNKRETSNUMMER, 1, 4) == "1633")
+
+# opptaksomrader_KLASS_TSB_alle %>%
+# filter(substr(GRUNNKRETSNUMMER, 1, 4) == "5020")
 # -
 
 nrow(opptaksomrader_KLASS_TSB_alle)
@@ -127,6 +146,44 @@ dplyr::mutate(KOMMUNE = substr(GRUNNKRETSNUMMER, 1, 4)) %>%
 distinct(KOMMUNE, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF)
 
 openxlsx::write.xlsx(opptaksomrader_KLASS_TSB_alle_kommune, file = paste0("/home/rdn/speshelse/Opptaksområder/KLASS TSB/OPPTAK_TSB_", aargang, ".xlsx"),
+                     rowNames = FALSE,
+                     showNA = FALSE,
+                     overwrite=T) # T = overskriver dersom filen allerede finnes, F = gir feilmelding dersom filen finnes
+
+# ## Lager KLASS-fil
+
+# +
+test <- opptaksomrader_KLASS_TSB_alle %>%
+  dplyr::mutate(TOM_FORELDER = "") %>%
+  # dplyr::filter(opptak %in% c("Stavanger", "Ålesund")) %>%
+  dplyr::select(GRUNNKRETSNUMMER, GRUNNKRETS_NAVN, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF, TOM_FORELDER)
+
+level_1 <- test %>%
+  dplyr::select(ORGNR_RHF, TOM_FORELDER, NAVN_RHF) %>%
+  dplyr::distinct() %>%
+  dplyr::rename('ns1:kode' = ORGNR_RHF, 
+                'ns1:forelder' = TOM_FORELDER, 
+                'ns1:navn_bokmål' = NAVN_RHF)
+
+level_2 <- test %>%
+  dplyr::select(ORGNR_HF, ORGNR_RHF, NAVN_HF) %>%
+  dplyr::rename('ns1:kode' = ORGNR_HF, 
+                'ns1:forelder' = ORGNR_RHF, 
+                'ns1:navn_bokmål' = NAVN_HF) %>%
+  dplyr::distinct()
+
+level_3 <- test %>%
+  dplyr::select(GRUNNKRETSNUMMER, ORGNR_HF, GRUNNKRETS_NAVN) %>%
+  dplyr::rename('ns1:kode' = GRUNNKRETSNUMMER, 
+                'ns1:forelder' = ORGNR_HF, 
+                'ns1:navn_bokmål' = GRUNNKRETS_NAVN) %>%
+  dplyr::distinct()
+
+opptaksomrader_KLASS_med_fix_KLASS <- rbind(level_1, level_2, level_3)
+
+# opptaksomrader_KLASS_med_fix_KLASS
+
+openxlsx::write.xlsx(opptaksomrader_KLASS_med_fix_KLASS, file = paste0("/home/rdn/speshelse/Opptaksområder/KLASS TSB/KLASS_OPPTAK_TSB_GRUNNKRETS_", aargang, ".xlsx"),
                      rowNames = FALSE,
                      showNA = FALSE,
                      overwrite=T) # T = overskriver dersom filen allerede finnes, F = gir feilmelding dersom filen finnes

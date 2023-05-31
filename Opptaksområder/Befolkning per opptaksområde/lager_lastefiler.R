@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-aargang <- 2021
+# +
+# aargang <- 2015
 
 # +
 # renv::restore("/ssb/bruker/rdn/speshelse")
@@ -20,6 +21,10 @@ befolkning_per_opptaksomrade_masterfil_filsti <- paste0(arbeidsmappe, "masterfil
 
 statbank_mappe <- paste0(arbeidsmappe, "statbank/")
 statbank_mappe
+
+if (file.exists(statbank_mappe)==FALSE) {
+dir.create(statbank_mappe)
+}
 # -
 
 befolkning_per_opptaksomrade_masterfil <- arrow::read_parquet(befolkning_per_opptaksomrade_masterfil_filsti)
@@ -128,17 +133,17 @@ arrow::write_parquet(speshelse144, paste0(statbank_mappe, "speshelse144.parquet"
 # speshelse145.dat (13982: Spesialisthelsetjenesten. Befolkning per opptaksområde. Opptaksområde dps)
 
 # +
-speshelse145 <- befolkning_per_opptaksomrade_masterfil %>%
-filter(LEVEL == "DPS", 
-       # TJENESTE == "DPS", # Legg til egen for VOP/BUP 
-       # KJOENN == "0", 
-       ALDER_KODE != "999") %>%
-filter(!is.na(ALDER_KODE)) %>%
-group_by(OPPTAK_NUMMER, TJENESTE, KJOENN, ALDER_KODE) %>%
-summarise(PERSONER = sum(PERSONER), .groups = "drop") %>%
-mutate(TID = aargang, PERSONER_SPES = "") %>%
-select(OPPTAK_NUMMER, TJENESTE, KJOENN, ALDER_KODE, TID, PERSONER, PERSONER_SPES)
+# speshelse145 <- befolkning_per_opptaksomrade_masterfil %>%
+# filter(LEVEL == "DPS", 
+#        # TJENESTE == "DPS", # Legg til egen for VOP/BUP 
+#        # KJOENN == "0", 
+#        ALDER_KODE != "999") %>%
+# filter(!is.na(ALDER_KODE)) %>%
+# group_by(OPPTAK_NUMMER, TJENESTE, KJOENN, ALDER_KODE) %>%
+# summarise(PERSONER = sum(PERSONER), .groups = "drop") %>%
+# mutate(TID = aargang, PERSONER_SPES = "") %>%
+# select(OPPTAK_NUMMER, TJENESTE, KJOENN, ALDER_KODE, TID, PERSONER, PERSONER_SPES)
 
-head(speshelse145)
+# head(speshelse145)
 
-arrow::write_parquet(speshelse145, paste0(statbank_mappe, "speshelse145.parquet"))
+# arrow::write_parquet(speshelse145, paste0(statbank_mappe, "speshelse145.parquet"))

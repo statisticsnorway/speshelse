@@ -1,14 +1,13 @@
-aargang <- 2023
+# aargang <- 2023
 
-publiseringsdato <- "2023-06-21"
-lastebruker <- "LAST330"
+
 
 # +
-last_opp_til_statbank <- TRUE
+# last_opp_til_statbank <- TRUE
 
-if (last_opp_til_statbank == TRUE & exists("username_encryptedpassword") == FALSE){
-  username_encryptedpassword <- fellesr:::statbank_encrypt_request(laste_bruker = lastebruker)
-}
+# if (last_opp_til_statbank == TRUE & exists("username_encryptedpassword") == FALSE){
+#   username_encryptedpassword <- fellesr:::statbank_encrypt_request(laste_bruker = lastebruker)
+# }
 
 # +
 # renv::restore("/ssb/bruker/rdn/speshelse")
@@ -53,11 +52,12 @@ speshelse141 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse141.parquet
 speshelse142 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse142.parquet"))
 speshelse143 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse143.parquet"))
 speshelse144 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse144.parquet"))
-speshelse145 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse145.parquet"))
+# speshelse145 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse145.parquet"))
 
 # +
-transfer_log_speshelse14 <- statbank_lasting(lastefil = list(speshelse141, speshelse142, speshelse143, speshelse144, speshelse145),
-                                 tabell_id = "13982",
+# transfer_log_speshelse14 <- statbank_lasting(lastefil = list(speshelse141, speshelse142, speshelse143, speshelse144, speshelse145),
+transfer_log_speshelse14 <- statbank_lasting(lastefil = list(speshelse141, speshelse142, speshelse143, speshelse144),
+                                 tabell_id = tabellid,
                                  laste_bruker = lastebruker,
                                  publiseringsdato = publiseringsdato,
                                  validering = TRUE,
