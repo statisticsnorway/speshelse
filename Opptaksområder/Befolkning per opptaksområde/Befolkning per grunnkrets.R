@@ -18,7 +18,10 @@ suppressPackageStartupMessages({
 # Sys.setenv(no_proxy= "nexus.ssb.no,git-adm.ssb.no,i.test.ssb.no,i.ssb.no,data.ssb.no,github.com,api.github.com,codeload.github.com")
 # -
 
-# aargang <- 2019
+# aargang <- 2016
+if (exists("aargang_master")==TRUE){
+aargang <- aargang_master    
+}
 
 # +
 T04317 <- PxWebApiData::ApiData(04317, ContentsCode = "Personer",

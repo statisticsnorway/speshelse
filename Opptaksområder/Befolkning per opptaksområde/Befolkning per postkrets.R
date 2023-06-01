@@ -20,8 +20,11 @@ suppressPackageStartupMessages({
 ### Statistikkbanktabell
 # -
 
-# Kjør 2016 + 2017
-# aargang <- 2015
+# Kjør 2017
+# aargang <- 2017
+if (exists("aargang_master")==TRUE){
+aargang <- aargang_master    
+}
 
 if (aargang >= 2020){
   kristiansand_kommnr <- "4204"

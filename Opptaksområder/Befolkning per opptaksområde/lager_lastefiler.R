@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # +
-# aargang <- 2015
+# aargang <- 2021
+if (exists("aargang_master")==TRUE){
+aargang <- aargang_master    
+}
 
 # +
 # renv::restore("/ssb/bruker/rdn/speshelse")
@@ -146,4 +149,8 @@ arrow::write_parquet(speshelse144, paste0(statbank_mappe, "speshelse144.parquet"
 
 # head(speshelse145)
 
-# arrow::write_parquet(speshelse145, paste0(statbank_mappe, "speshelse145.parquet"))
+
+speshelse145 <- data.frame(OPPTAK_NUMMER = "D69",  TJENESTE = "VOP", KJOENN = "2", ALDER_KODE = "105+", TID = aargang, PERSONER = "", PERSONER_SPES = "")
+speshelse145
+
+arrow::write_parquet(speshelse145, paste0(statbank_mappe, "speshelse145.parquet"))

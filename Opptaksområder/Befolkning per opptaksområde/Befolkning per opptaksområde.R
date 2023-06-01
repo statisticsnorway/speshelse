@@ -2,11 +2,18 @@
 # # Befolkning per opptaksområde
 #
 # Gjør programmet kjørbart på Dapla? Krever pseudonomisert befolkningsfil
-
-aargang <- 2018
+#
+# Dersom programmet må kjøres for ny årgang (og `befolkning_per_grunnkrets` og `befolkning_per_postkrets` ikke finnes) må programmet kjøres i RStudio for å ikke kræsje!
+#
+# Kjør 2015-2017 på nytt!
 
 # +
-last_opp_til_statbank <- FALSE
+aargang <- 2015
+
+aargang <- aargang_master # aargang_master overskriver aargang dersom denne er definert i script som kjøres i produksjonsløpet
+
+# +
+last_opp_til_statbank <- TRUE
 
 publiseringsdato <- "2023-06-22"
 tabellid <- "13982"
@@ -17,16 +24,6 @@ if (last_opp_til_statbank == TRUE & exists("username_encryptedpassword") == FALS
 }
 
 # +
-# if (aargang >= 2020){
-#   kristiansand_kommnr <- "4204"
-#   trondheim_kommnr <- "5001"
-# }
-
-# if (aargang %in% 2015:2019){
-#   kristiansand_kommnr <- "1001"
-#   trondheim_kommnr <- "5001"
-# }
-
 if (aargang >= 2020){
   kristiansand_kommnr <- "4204"
   trondheim_kommnr <- "5001"

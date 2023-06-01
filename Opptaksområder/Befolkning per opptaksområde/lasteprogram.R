@@ -1,4 +1,9 @@
+# +
 # aargang <- 2023
+if (exists("aargang_master")==TRUE){
+aargang <- aargang_master    
+}
+# -
 
 
 
@@ -52,11 +57,11 @@ speshelse141 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse141.parquet
 speshelse142 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse142.parquet"))
 speshelse143 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse143.parquet"))
 speshelse144 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse144.parquet"))
-# speshelse145 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse145.parquet"))
+speshelse145 <- arrow::read_parquet(paste0(statbank_mappe, "speshelse145.parquet"))
 
 # +
-# transfer_log_speshelse14 <- statbank_lasting(lastefil = list(speshelse141, speshelse142, speshelse143, speshelse144, speshelse145),
-transfer_log_speshelse14 <- statbank_lasting(lastefil = list(speshelse141, speshelse142, speshelse143, speshelse144),
+transfer_log_speshelse14 <- statbank_lasting(lastefil = list(speshelse141, speshelse142, speshelse143, speshelse144, speshelse145),
+# transfer_log_speshelse14 <- statbank_lasting(lastefil = list(speshelse141, speshelse142, speshelse143, speshelse144),
                                  tabell_id = tabellid,
                                  laste_bruker = lastebruker,
                                  publiseringsdato = publiseringsdato,
