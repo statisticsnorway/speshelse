@@ -1,11 +1,15 @@
 # Data types
 *.parquet
+*.feather
 *.csv
 *.log
 *.tmp
 *.sas7bdat
 *.jpeg
 *.dat
+*.txt
+*.xlsx
+*.tsv
 
 # Notebook ceckpoints
 .ipynb_checkpoints
