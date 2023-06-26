@@ -8,14 +8,17 @@
 # Kjør 2015-2017 på nytt!
 
 # +
-aargang <- 2015
+aargang_master <- 2021
 
 aargang <- aargang_master # aargang_master overskriver aargang dersom denne er definert i script som kjøres i produksjonsløpet
+# -
+
+DPS_OK <- 2021:2023
 
 # +
 last_opp_til_statbank <- TRUE
 
-publiseringsdato <- "2023-06-22"
+publiseringsdato <- "2023-06-26"
 tabellid <- "13982"
 lastebruker <- "LAST330"
 
@@ -487,144 +490,148 @@ befolkning_per_opptaksomrade_TSB <- rbind(befolkning_per_opptaksomrade_TSB_HF, b
 # ### Kodeliste for opptaksområder i spesialisthelsetjenesten (DPS)
 
 # +
-# diff_postkrets_2 <- diff_postkrets %>%
-# select(Region, OPPTAK_NUMMER, OPPTAK, Alder, Kjonn, diff) %>%
-# dplyr::rename(KJOENN = Kjonn,
-#              ALDER = Alder,
-#              GRUNNKRETSNUMMER = Region,
-#              PERSONER = diff) %>%
-# dplyr::mutate(ORGNR_HF = case_when(GRUNNKRETSNUMMER == kristiansand_kommnr ~ "983975240",
-#                                   GRUNNKRETSNUMMER == trondheim_kommnr ~ "883974832"),
-#              NAVN_HF = case_when(GRUNNKRETSNUMMER == kristiansand_kommnr ~ "SØRLANDET SYKEHUS HF",
-#                                   GRUNNKRETSNUMMER == trondheim_kommnr ~ "ST OLAVS HOSPITAL HF"),
-#              ORGNR_RHF = case_when(GRUNNKRETSNUMMER == kristiansand_kommnr ~ "991324968",
-#                                   GRUNNKRETSNUMMER == trondheim_kommnr ~ "983658776"),
-#              NAVN_RHF = case_when(GRUNNKRETSNUMMER == kristiansand_kommnr ~ "HELSE SØR-ØST RHF",
-#                                   GRUNNKRETSNUMMER == trondheim_kommnr ~ "HELSE MIDT-NORGE RHF"))
+if (aargang %in% DPS_OK){
+diff_postkrets_2 <- diff_postkrets %>%
+select(Region, OPPTAK_NUMMER, OPPTAK, Alder, Kjonn, diff) %>%
+dplyr::rename(KJOENN = Kjonn,
+             ALDER = Alder,
+             GRUNNKRETSNUMMER = Region,
+             PERSONER = diff) %>%
+dplyr::mutate(ORGNR_HF = case_when(GRUNNKRETSNUMMER == kristiansand_kommnr ~ "983975240",
+                                  GRUNNKRETSNUMMER == trondheim_kommnr ~ "883974832"),
+             NAVN_HF = case_when(GRUNNKRETSNUMMER == kristiansand_kommnr ~ "SØRLANDET SYKEHUS HF",
+                                  GRUNNKRETSNUMMER == trondheim_kommnr ~ "ST OLAVS HOSPITAL HF"),
+             ORGNR_RHF = case_when(GRUNNKRETSNUMMER == kristiansand_kommnr ~ "991324968",
+                                  GRUNNKRETSNUMMER == trondheim_kommnr ~ "983658776"),
+             NAVN_RHF = case_when(GRUNNKRETSNUMMER == kristiansand_kommnr ~ "HELSE SØR-ØST RHF",
+                                  GRUNNKRETSNUMMER == trondheim_kommnr ~ "HELSE MIDT-NORGE RHF"))
 
-# +
-# befolkning_per_postkrets <- befolkning_per_postkrets %>%
-# ungroup() %>%
-# select(-KOMMUNENR)
+befolkning_per_postkrets <- befolkning_per_postkrets %>%
+ungroup() %>%
+select(-KOMMUNENR)
 
-# +
-# opptaksomrader_DPS_KLASS <- klassR::GetKlass(632, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
-# dplyr::rename(GRUNNKRETSNUMMER = code4,
-#              GRUNNKRETS_NAVN = name4,
-#              OPPTAK_NUMMER = code3,
-#              OPPTAK = name3,
-#              ORGNR_HF = code2,
-#              NAVN_HF = name2,
-#              ORGNR_RHF = code1,
-#              NAVN_RHF = name1)
+opptaksomrader_DPS_KLASS <- klassR::GetKlass(632, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
+dplyr::rename(GRUNNKRETSNUMMER = code4,
+             GRUNNKRETS_NAVN = name4,
+             OPPTAK_NUMMER = code3,
+             OPPTAK = name3,
+             ORGNR_HF = code2,
+             NAVN_HF = name2,
+             ORGNR_RHF = code1,
+             NAVN_RHF = name1)
 
-# # kristiansand <- opptaksomrader_DPS_KLASS %>%
-# #   filter(GRUNNKRETSNUMMER == "4608")
-# # unique(kristiansand$GRUNNKRETSNUMMER)
+# kristiansand <- opptaksomrader_DPS_KLASS %>%
+#   filter(GRUNNKRETSNUMMER == "4608")
+# unique(kristiansand$GRUNNKRETSNUMMER)
 
-# befolkning_per_grunnkrets_postkrets <- befolkning_per_grunnkrets %>%
-# filter(!substr(GRUNNKRETSNUMMER, 1, 4) %in% c(kristiansand_kommnr, trondheim_kommnr))
+befolkning_per_grunnkrets_postkrets <- befolkning_per_grunnkrets %>%
+filter(!substr(GRUNNKRETSNUMMER, 1, 4) %in% c(kristiansand_kommnr, trondheim_kommnr))
 
-# befolkning_per_grunnkrets_postkrets <- rbind(befolkning_per_grunnkrets_postkrets, befolkning_per_postkrets)
+befolkning_per_grunnkrets_postkrets <- rbind(befolkning_per_grunnkrets_postkrets, befolkning_per_postkrets)
 
-# opptaksomrader_DPS_KLASS <- dplyr::left_join(befolkning_per_grunnkrets_postkrets, opptaksomrader_DPS_KLASS, by = "GRUNNKRETSNUMMER")
-# sum(T07459$value)-sum(opptaksomrader_DPS_KLASS$PERSONER)
+opptaksomrader_DPS_KLASS <- dplyr::left_join(befolkning_per_grunnkrets_postkrets, opptaksomrader_DPS_KLASS, by = "GRUNNKRETSNUMMER")
+sum(T07459$value)-sum(opptaksomrader_DPS_KLASS$PERSONER)
 
-# +
-# obs <- opptaksomrader_DPS_KLASS %>%
+obs <- opptaksomrader_DPS_KLASS %>%
+filter(is.na(OPPTAK_NUMMER))
+
+obs
+
+unique(obs$GRUNNKRETSNUMMER)
+
+# opptaksomrader_DPS_KLASS %>%
 # filter(is.na(OPPTAK_NUMMER))
 
-# obs
+opptaksomrader_DPS_KLASS <- rbind(opptaksomrader_DPS_KLASS, diff_postkrets_2)
+sum(T07459$value)-sum(opptaksomrader_DPS_KLASS$PERSONER)
 
-# unique(obs$GRUNNKRETSNUMMER)
+unique(opptaksomrader_DPS_KLASS$OPPTAK_NUMMER)
 
-# # opptaksomrader_DPS_KLASS %>%
-# # filter(is.na(OPPTAK_NUMMER))
+test <- opptaksomrader_DPS_KLASS %>%
+group_by(OPPTAK_NUMMER, OPPTAK, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
+tally() %>%
+ungroup() %>%
+arrange(OPPTAK_NUMMER)
 
-# +
-# opptaksomrader_DPS_KLASS <- rbind(opptaksomrader_DPS_KLASS, diff_postkrets_2)
-# sum(T07459$value)-sum(opptaksomrader_DPS_KLASS$PERSONER)
-
-# +
-# unique(opptaksomrader_DPS_KLASS$OPPTAK_NUMMER)
-
-# +
-# test <- opptaksomrader_DPS_KLASS %>%
-# group_by(OPPTAK_NUMMER, OPPTAK, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
-# tally() %>%
-# ungroup() %>%
-# arrange(OPPTAK_NUMMER)
-
-# test
+test
+    }
 # -
 
 # ### Lager befolkningstall per DPS-område
 
 # +
-# befolkning_per_opptaksomrade_DPS_TOT <- opptaksomrader_DPS_KLASS %>%
-#   dplyr::group_by(OPPTAK_NUMMER, OPPTAK, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
-#   dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
-#   dplyr::mutate(ALDER = "999",
-#                 ALDER_KODE = "999",
-#                 KJOENN = "0") %>%
-#   dplyr::arrange(PERSONER)
+if (aargang %in% DPS_OK){
+befolkning_per_opptaksomrade_DPS_TOT <- opptaksomrader_DPS_KLASS %>%
+  dplyr::group_by(OPPTAK_NUMMER, OPPTAK, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
+  dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
+  dplyr::mutate(ALDER = "999",
+                ALDER_KODE = "999",
+                KJOENN = "0") %>%
+  dplyr::arrange(PERSONER)
 
-# befolkning_per_opptaksomrade_DPS_kjonn <- opptaksomrader_DPS_KLASS %>%
-#   dplyr::group_by(KJOENN, OPPTAK_NUMMER, OPPTAK, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
-#   dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
-#   dplyr::mutate(ALDER = "999",
-#                 ALDER_KODE = "999",) %>%
-#   dplyr::arrange(PERSONER)
+befolkning_per_opptaksomrade_DPS_kjonn <- opptaksomrader_DPS_KLASS %>%
+  dplyr::group_by(KJOENN, OPPTAK_NUMMER, OPPTAK, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
+  dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
+  dplyr::mutate(ALDER = "999",
+                ALDER_KODE = "999",) %>%
+  dplyr::arrange(PERSONER)
 
-# befolkning_per_opptaksomrade_DPS_alder <- opptaksomrader_DPS_KLASS %>%
-#   dplyr::group_by(ALDER, OPPTAK_NUMMER, OPPTAK, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
-#   dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
-#   dplyr::mutate(KJOENN = "0",
-#                 ALDER_KODE = stringr::str_pad(ALDER, width = 3, "left", pad = "0"),
-#                 ALDER_KODE = dplyr::case_when(as.numeric(ALDER_KODE) >= 105 ~ "105+", TRUE ~ ALDER_KODE)) %>%
-#   dplyr::arrange(PERSONER)
+befolkning_per_opptaksomrade_DPS_alder <- opptaksomrader_DPS_KLASS %>%
+  dplyr::group_by(ALDER, OPPTAK_NUMMER, OPPTAK, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
+  dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
+  dplyr::mutate(KJOENN = "0",
+                ALDER_KODE = stringr::str_pad(ALDER, width = 3, "left", pad = "0"),
+                ALDER_KODE = dplyr::case_when(as.numeric(ALDER_KODE) >= 105 ~ "105+", TRUE ~ ALDER_KODE)) %>%
+  dplyr::arrange(PERSONER)
 
-# befolkning_per_opptaksomrade_DPS_kjonn_alder <- opptaksomrader_DPS_KLASS %>%
-#   dplyr::group_by(KJOENN, ALDER, OPPTAK_NUMMER, OPPTAK, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
-#   dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
-#   dplyr::mutate(ALDER_KODE = stringr::str_pad(ALDER, width = 3, "left", pad = "0"),
-#                 ALDER_KODE = dplyr::case_when(as.numeric(ALDER_KODE) >= 105 ~ "105+", TRUE ~ ALDER_KODE)) %>%
-#   dplyr::arrange(PERSONER)
+befolkning_per_opptaksomrade_DPS_kjonn_alder <- opptaksomrader_DPS_KLASS %>%
+  dplyr::group_by(KJOENN, ALDER, OPPTAK_NUMMER, OPPTAK, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
+  dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
+  dplyr::mutate(ALDER_KODE = stringr::str_pad(ALDER, width = 3, "left", pad = "0"),
+                ALDER_KODE = dplyr::case_when(as.numeric(ALDER_KODE) >= 105 ~ "105+", TRUE ~ ALDER_KODE)) %>%
+  dplyr::arrange(PERSONER)
 
-# befolkning_per_opptaksomrade_DPS_DPS <- rbind(befolkning_per_opptaksomrade_DPS_TOT, befolkning_per_opptaksomrade_DPS_kjonn, befolkning_per_opptaksomrade_DPS_alder, befolkning_per_opptaksomrade_DPS_kjonn_alder) %>%
-# dplyr::select(-ALDER) %>%
-# dplyr::mutate(TJENESTE = "DPS",
-#                LEVEL = "DPS")
+befolkning_per_opptaksomrade_DPS_DPS <- rbind(befolkning_per_opptaksomrade_DPS_TOT, befolkning_per_opptaksomrade_DPS_kjonn, befolkning_per_opptaksomrade_DPS_alder, befolkning_per_opptaksomrade_DPS_kjonn_alder) %>%
+dplyr::select(-ALDER) %>%
+dplyr::mutate(TJENESTE = "DPS",
+               LEVEL = "DPS")
+    }
 # -
 
 # ### Aggregerer til HF- og RHF-nivå
 
 # +
-# befolkning_per_opptaksomrade_DPS_HF <- befolkning_per_opptaksomrade_DPS_DPS %>%
-#   dplyr::group_by(TJENESTE, KJOENN, ALDER_KODE, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
-#   dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
-#   dplyr::mutate(OPPTAK_NUMMER = "",
-#                 OPPTAK = "",
-#                 LEVEL = "HF")
+if (aargang %in% DPS_OK){
+befolkning_per_opptaksomrade_DPS_HF <- befolkning_per_opptaksomrade_DPS_DPS %>%
+  dplyr::group_by(TJENESTE, KJOENN, ALDER_KODE, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF) %>%
+  dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
+  dplyr::mutate(OPPTAK_NUMMER = "",
+                OPPTAK = "",
+                LEVEL = "HF")
 
-# befolkning_per_opptaksomrade_DPS_RHF <- befolkning_per_opptaksomrade_DPS_DPS %>%
-#   dplyr::group_by(TJENESTE, KJOENN, ALDER_KODE, ORGNR_RHF, NAVN_RHF) %>%
-#   dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
-#   dplyr::mutate(ORGNR_HF = "",
-#                 NAVN_HF = "",
-#                 OPPTAK_NUMMER = "",
-#                 OPPTAK = "",
-#                 LEVEL = "RHF")
+befolkning_per_opptaksomrade_DPS_RHF <- befolkning_per_opptaksomrade_DPS_DPS %>%
+  dplyr::group_by(TJENESTE, KJOENN, ALDER_KODE, ORGNR_RHF, NAVN_RHF) %>%
+  dplyr::summarise(PERSONER = sum(PERSONER), .groups = 'drop') %>%
+  dplyr::mutate(ORGNR_HF = "",
+                NAVN_HF = "",
+                OPPTAK_NUMMER = "",
+                OPPTAK = "",
+                LEVEL = "RHF")
 
-# befolkning_per_opptaksomrade_DPS <- rbind(befolkning_per_opptaksomrade_DPS_DPS, befolkning_per_opptaksomrade_DPS_HF, befolkning_per_opptaksomrade_DPS_RHF)
+befolkning_per_opptaksomrade_DPS <- rbind(befolkning_per_opptaksomrade_DPS_DPS, befolkning_per_opptaksomrade_DPS_HF, befolkning_per_opptaksomrade_DPS_RHF)
+    }
 # -
 
 # ### Legger sammen alle opptaksområdene
 
 # +
-# befolkning_per_opptaksomrade <- rbind(befolkning_per_opptaksomrade_SOM, befolkning_per_opptaksomrade_PHV, befolkning_per_opptaksomrade_TSB, befolkning_per_opptaksomrade_DPS)
-
+if (!aargang %in% DPS_OK){
 befolkning_per_opptaksomrade <- rbind(befolkning_per_opptaksomrade_SOM, befolkning_per_opptaksomrade_PHV, befolkning_per_opptaksomrade_TSB)
+    }
+
+if (aargang %in% DPS_OK){
+befolkning_per_opptaksomrade <- rbind(befolkning_per_opptaksomrade_SOM, befolkning_per_opptaksomrade_PHV, befolkning_per_opptaksomrade_TSB, befolkning_per_opptaksomrade_DPS)
+    }
 # -
 
 # ### Lagrer filen

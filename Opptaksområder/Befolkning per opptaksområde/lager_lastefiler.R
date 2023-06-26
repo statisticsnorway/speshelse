@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# +
 # aargang <- 2021
 if (exists("aargang_master")==TRUE){
 aargang <- aargang_master    
@@ -136,21 +135,22 @@ arrow::write_parquet(speshelse144, paste0(statbank_mappe, "speshelse144.parquet"
 # speshelse145.dat (13982: Spesialisthelsetjenesten. Befolkning per opptaksområde. Opptaksområde dps)
 
 # +
-# speshelse145 <- befolkning_per_opptaksomrade_masterfil %>%
-# filter(LEVEL == "DPS", 
-#        # TJENESTE == "DPS", # Legg til egen for VOP/BUP 
-#        # KJOENN == "0", 
-#        ALDER_KODE != "999") %>%
-# filter(!is.na(ALDER_KODE)) %>%
-# group_by(OPPTAK_NUMMER, TJENESTE, KJOENN, ALDER_KODE) %>%
-# summarise(PERSONER = sum(PERSONER), .groups = "drop") %>%
-# mutate(TID = aargang, PERSONER_SPES = "") %>%
-# select(OPPTAK_NUMMER, TJENESTE, KJOENN, ALDER_KODE, TID, PERSONER, PERSONER_SPES)
+if (aargang %in% DPS_OK){
+speshelse145 <- befolkning_per_opptaksomrade_masterfil %>%
+filter(LEVEL == "DPS", 
+       # TJENESTE == "DPS", # Legg til egen for VOP/BUP 
+       # KJOENN == "0", 
+       ALDER_KODE != "999") %>%
+filter(!is.na(ALDER_KODE)) %>%
+group_by(OPPTAK_NUMMER, TJENESTE, KJOENN, ALDER_KODE) %>%
+summarise(PERSONER = sum(PERSONER), .groups = "drop") %>%
+mutate(TID = aargang, PERSONER_SPES = "") %>%
+select(OPPTAK_NUMMER, TJENESTE, KJOENN, ALDER_KODE, TID, PERSONER, PERSONER_SPES)
+}
 
-# head(speshelse145)
-
-
+if (!aargang %in% DPS_OK){
 speshelse145 <- data.frame(OPPTAK_NUMMER = "D69",  TJENESTE = "VOP", KJOENN = "2", ALDER_KODE = "105+", TID = aargang, PERSONER = "", PERSONER_SPES = "")
 speshelse145
+    }
 
 arrow::write_parquet(speshelse145, paste0(statbank_mappe, "speshelse145.parquet"))
