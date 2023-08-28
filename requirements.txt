@@ -81,7 +81,7 @@ metakernel==0.24.4
 mistune==0.8.4
 mock @ file:///home/conda/feedstock_root/build_artifacts/mock_1588618856961/work
 more-itertools==8.5.0
-mpmath==1.1.0
+mpmath==1.3.0
 msgpack==1.0.0
 multidict==4.7.6
 mypy-extensions==0.4.3
