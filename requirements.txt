@@ -1,4 +1,4 @@
-aiohttp==3.7.4
+aiohttp==3.8.5
 alembic==1.4.2
 ansiwrap==0.8.4
 appdirs==1.4.4
@@ -15,7 +15,7 @@ bokeh @ file:///home/conda/feedstock_root/build_artifacts/bokeh_1592869569111/wo
 Bottleneck==1.3.2
 brotlipy==0.7.0
 cachetools==4.1.1
-certifi==2020.6.20
+certifi==2023.7.22
 certipy==0.1.3
 cffi @ file:///home/conda/feedstock_root/build_artifacts/cffi_1595805769248/work
 chardet==3.0.4
@@ -39,7 +39,7 @@ findspark==1.3.0
 fsspec @ file:///home/conda/feedstock_root/build_artifacts/fsspec_1596221475257/work
 gcsfs==0.6.2
 gitdb==4.0.5
-GitPython==3.1.8
+GitPython==3.1.32
 gmpy2==2.1.0b1
 google-auth==1.21.1
 google-auth-oauthlib==0.4.1
@@ -62,7 +62,7 @@ joblib @ file:///home/conda/feedstock_root/build_artifacts/joblib_1593624380152/
 json5 @ file:///home/conda/feedstock_root/build_artifacts/json5_1591810480056/work
 jsonschema==3.2.0
 jupyter-client @ file:///home/conda/feedstock_root/build_artifacts/jupyter_client_1594732094290/work
-jupyter-core==4.6.3
+jupyter-core==4.11.2
 jupyter-server-proxy==3.2.1
 jupyter-telemetry==0.0.5
 jupyterhub @ file:///home/conda/feedstock_root/build_artifacts/jupyterhub-feedstock_1596084592517/work
@@ -73,7 +73,7 @@ kiwisolver==1.2.0
 koalas==1.2.0
 llvmlite==0.31.0
 locket==0.2.0
-lxml==4.6.3
+lxml==4.9.1
 Mako @ file:///home/conda/feedstock_root/build_artifacts/mako_1595925083607/work
 MarkupSafe==1.1.1
 matplotlib @ file:///home/conda/feedstock_root/build_artifacts/matplotlib-base_1592576119134/work
@@ -81,12 +81,12 @@ metakernel==0.24.4
 mistune==0.8.4
 mock @ file:///home/conda/feedstock_root/build_artifacts/mock_1588618856961/work
 more-itertools==8.5.0
-mpmath==1.1.0
+mpmath==1.3.0
 msgpack==1.0.0
 multidict==4.7.6
 mypy-extensions==0.4.3
 nbclient==0.5.0
-nbconvert==5.6.1
+nbconvert==6.5.1
 nbdime==2.1.1
 nbformat @ file:///home/conda/feedstock_root/build_artifacts/nbformat_1594060262917/work
 nbstripout==0.3.9
@@ -114,7 +114,7 @@ pluggy==0.13.1
 portalocker==1.7.0
 prometheus-client @ file:///home/conda/feedstock_root/build_artifacts/prometheus_client_1590412252446/work
 prompt-toolkit @ file:///home/conda/feedstock_root/build_artifacts/prompt-toolkit_1592500439797/work
-protobuf==3.12.4
+protobuf==3.18.3
 psutil @ file:///home/conda/feedstock_root/build_artifacts/psutil_1594826931824/work
 ptyprocess==0.6.0
 py==1.10.0
@@ -124,7 +124,7 @@ pyasn1-modules==0.2.8
 pycosat==0.6.3
 pycparser @ file:///home/conda/feedstock_root/build_artifacts/pycparser_1593275161868/work
 pycurl==7.43.0.5
-Pygments==2.7.4
+Pygments==2.15.0
 pyjstat==2.2.0
 PyJWT==1.7.1
 pyOpenSSL==19.1.0
@@ -172,7 +172,7 @@ threadpoolctl @ file:///tmp/tmp79xdzxkt/threadpoolctl-2.1.0-py3-none-any.whl
 tifffile @ file:///home/conda/feedstock_root/build_artifacts/tifffile_1595673894086/work
 toml==0.10.1
 toolz==0.10.0
-tornado==6.0.4
+tornado==6.3.3
 tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1596476591553/work
 traitlets==4.3.3
 typed-ast==1.4.1
