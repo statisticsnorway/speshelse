@@ -90,91 +90,96 @@ SFU_enhet.shape
 
 SFU_enhet[['STATUS']].value_counts()
 
-SFU_enhet.sample(1)
-
 # # Laste inn data
 
 # ##  fra KLASS
 
 # ### Offentlige helseforetak
 
-# +
-URL = f'http://data.ssb.no/api/klass/v1/classifications/603/codes.json?from={aar4}-01-01&includeFuture=True'
-r = requests.get(url = URL)
-offhelse_df = pd.read_json(r.text)
-offhelse_df = pd.json_normalize(offhelse_df['codes'])
-
-RHF_kode_klass = offhelse_df.query('level=="1"')[['code','name']]
-RHF_kode_klass = RHF_kode_klass.rename(columns = {'code':'HELSEREGION', 'name': 'RHF'})
-
-lvl2 = offhelse_df.query("level == '2'")
-RHF_kode_klass = pd.merge(RHF_kode_klass, lvl2, how="left", left_on="HELSEREGION", right_on="parentCode")
-RHF_kode_klass = RHF_kode_klass.rename(columns = {'code': 'ORGNR_FORETAK'})
-RHF_kode_klass = RHF_kode_klass[['HELSEREGION', 'RHF', 'ORGNR_FORETAK']]
-
-lvl2 = offhelse_df.query("level == '2'")
-lvl3 = offhelse_df.query("level == '3'")
-lvl2 = lvl2[['code', 'parentCode', 'name']]
-lvl3 = lvl3[['code', 'parentCode', 'name']]
-
-lvl2 = lvl2.rename(columns = {'parentCode':'HELSEREGION', 'name': 'RHF'})
-lvl3 = lvl3.rename(columns = {'code':'ORGNR_FORETAK', 'name': 'NAVN_KLASS'})
+from klass import get_classification
 
 # +
-HF = pd.merge(lvl3, lvl2, how="left", left_on="parentCode", right_on="code")
-HF = HF[['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION', 'RHF']]
+klass_offentlige_helseforetak = get_classification(603).get_codes()
 
-RHF_kode_klass['RHF'] = RHF_kode_klass['RHF'] + " RHF"
-RHF_kode_klass['NAVN_KLASS'] = RHF_kode_klass['RHF']
+HF = klass_offentlige_helseforetak.pivot_level()
+HF = (
+    HF.rename(columns={
+        'code_1': 'HELSEREGION',
+        'name_2': 'RHF',
+        'code_3': 'ORGNR_FORETAK',
+        'name_3': 'NAVN_KLASS'
+    }
+             )
+    [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION', 'RHF']]
+)
 # -
+
+RHF = klass_offentlige_helseforetak.pivot_level()
+
+RHF = (
+    RHF[['code_1', 'name_2', 'code_2']]
+    .drop_duplicates()
+    .rename(columns={'code_1': 'HELSEREGION',
+                     'name_2': 'NAVN_KLASS',
+                     'code_2': 'ORGNR_FORETAK'})
+)
+RHF['RHF'] = RHF['NAVN_KLASS']
 
 # ### Private helseinstitusjoner med oppdrags- og bestillerdokument
 
-# +
-URL = f'http://data.ssb.no/api/klass/v1/classifications/604/codes.json?from={aar4}-01-01&includeFuture=True'
-r = requests.get(url = URL)
-privhelse_df = pd.read_json(r.text)
-privhelse_df = pd.json_normalize(privhelse_df['codes'])
+klass_priv_frtk_ob = get_classification(604).get_codes()
 
-temp = privhelse_df.query("level == '2'")
-temp = temp[['code', 'parentCode', 'name']]
-temp = temp.rename(columns = {'code':'ORGNR_FORETAK','parentCode':'HELSEREGION', 'name': 'NAVN_KLASS'})
-temp = pd.merge(temp, RHF_kode_klass, how="left")
+phob = klass_priv_frtk_ob.pivot_level()
 
-rapporteringsenheter = pd.concat([HF,temp])
-rapporteringsenheter = pd.concat([rapporteringsenheter,RHF_kode_klass])
-# -
+phob = (
+    phob.rename(columns={
+        'code_1': 'HELSEREGION',
+        'code_2': 'ORGNR_FORETAK',
+        'name_2': 'NAVN_KLASS'
+    }
+             )
+    [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
+)
+phob['RHF'] = None
 
 # ### Regionale og felleseide støtteforetak i spesialisthelsetjenesten
 
-# +
-URL = f'http://data.ssb.no/api/klass/v1/classifications/605/codes.json?from={aar4}-01-01&includeFuture=True'
-r = requests.get(url = URL)
-regfel_df = pd.read_json(r.text)
-regfel_df = pd.json_normalize(regfel_df['codes'])
+klass_rfss = get_classification(605).get_codes()
 
-lvl2o = regfel_df.query("level == '2' & parentCode != '99'")
-lvl3o = regfel_df.query("level == '3'")
-lvl2o = lvl2o[['code', 'parentCode', 'name']]
-lvl3o = lvl3o[['code', 'parentCode', 'name']]
-lvl2o = lvl2o.rename(columns = {'parentCode':'HELSEREGION',
-                                'name': 'RHF'})
-lvl3o = lvl3o.rename(columns = {'code': 'ORGNR_FORETAK',
-                                'name': 'NAVN_KLASS'})
+rfss = klass_rfss.pivot_level()
 
-temp = pd.merge(lvl3o, lvl2o, how="left", left_on="parentCode", right_on="code")
-temp = temp[['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION', 'RHF']]
+rfss = (
+    rfss.rename(columns={
+        'code_1': 'HELSEREGION',
+        'name_2': 'RHF',
+        'code_3': 'ORGNR_FORETAK',
+        'name_3': 'NAVN_KLASS'
+    }
+             )
+    [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION', 'RHF']]
+)
 
-# +
-rapporteringsenheter = pd.concat([rapporteringsenheter, temp])
+rfss
 
-temp = regfel_df.query("level == '2' & parentCode == '99'")
-temp = temp.rename(columns = {'code':'ORGNR_FORETAK', 'name': 'NAVN_KLASS', 'parentCode': 'HELSEREGION'})
-temp['RHF'] = "FELLESEIDE STØTTEFORETAK"
-temp = temp[['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION', 'RHF']]
-# -
+rfss2 = (
+    get_classification(605)
+    .get_codes()
+    .data.query("level == '2' & parentCode == '99'")
+    [['code', 'parentCode', 'name']]
+    .rename(columns={
+        'code': 'ORGNR_FORETAK',
+        'parentCode': 'HELSEREGION',
+        'name': 'NAVN_KLASS'
+    }
+            )
+)
+rfss2['RHF'] = "FELLESEIDE STØTTEFORETAK"
 
-rapporteringsenheter = pd.concat([rapporteringsenheter, temp])
+rfss2
+
+rapporteringsenheter = pd.concat(
+    [HF, RHF, phob, rfss, rfss2]
+)
 
 # ## Private virksomheter
 
