@@ -2,13 +2,16 @@
 # +
 import pandas as pd
 import cx_Oracle
-from db1p import query_db1p
+# from db1p import query_db1p
 import getpass
 import datetime as dt
 import requests
 
 til_lagring = False # Sett til True, hvis du skal gjøre endringer i Databasen
 # -
+
+import re
+import os
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -22,6 +25,47 @@ aar2 = str(aar4)[-2:]
 aar_før4 = aar4 - 1            # året før
 aar_før2 = str(aar_før4)[-2:]
 # -
+
+idag = dt.date.today().strftime("%Y%m%d")
+filsti_output = f"/ssb/stamme01/fylkhels/speshelse/felles/droplister/2023/nytt_delreg/sammenlikne_vof_sfu_{idag}.xlsx"
+
+
+def lagre_excel(dfs, sti):
+    """
+    Lagrer en eller flere DataFrames i en Excel-fil på den angitte banen (sti).
+
+    Args:
+        dfs (dict): En dictionary der nøklene er arknavn og verdiene er DataFrames som skal lagres i Excel-filen.
+        sti (str): Stien til Excel-filen der DataFrames skal lagres.
+
+    Eksempel:
+        For å lagre to DataFrames 'df1' og 'df2' i en Excel-fil 'eksempel.xlsx' på stien '/sti/til/fil/eksempel.xlsx':
+
+        >>> import pandas as pd
+        >>> data1 = {'A': [1, 2, 3], 'B': [4, 5, 6]}
+        >>> data2 = {'X': [7, 8, 9], 'Y': [10, 11, 12]}
+        >>> df1 = pd.DataFrame(data1)
+        >>> df2 = pd.DataFrame(data2)
+        >>> dataframes = {'Ark1': df1, 'Ark2': df2}
+        >>> sti_til_fil = '/sti/til/fil/eksempel.xlsx'
+        >>> lagre_excel(dataframes, sti_til_fil)
+
+        Funksjonen vil opprette en Excel-fil på '/sti/til/fil/eksempel.xlsx' og lagre 'df1' i 'Ark1'-arket og 'df2' i 'Ark2'-arket i filen.
+    """
+    if not os.path.exists(sti):
+        print("Filen eksisterer ikke. Oppretter tom fil å skrive til.")
+        null_df = pd.DataFrame()
+        null_df.to_excel(sti)
+    with pd.ExcelWriter(
+        sti,
+        engine="openpyxl",
+    ) as writer:
+        for arknavn in dfs:
+            dfs[arknavn].to_excel(writer, sheet_name=arknavn, index=False)
+            print(f"Arkfanen '{arknavn}' er lagret i filen.")
+
+    print(sti)
+
 
 sporring = f"""
     SELECT *
@@ -48,7 +92,7 @@ SFU_enhet[['STATUS']].value_counts()
 
 SFU_enhet.sample(1)
 
-# # Henter data
+# # Laste inn data
 
 # ##  fra KLASS
 
@@ -122,7 +166,7 @@ temp = pd.merge(lvl3o, lvl2o, how="left", left_on="parentCode", right_on="code")
 temp = temp[['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION', 'RHF']]
 
 # +
-rapporteringsenheter = pd.concat([rapporteringsenheter,temp])
+rapporteringsenheter = pd.concat([rapporteringsenheter, temp])
 
 temp = regfel_df.query("level == '2' & parentCode == '99'")
 temp = temp.rename(columns = {'code':'ORGNR_FORETAK', 'name': 'NAVN_KLASS', 'parentCode': 'HELSEREGION'})
@@ -130,9 +174,9 @@ temp['RHF'] = "FELLESEIDE STØTTEFORETAK"
 temp = temp[['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION', 'RHF']]
 # -
 
-rapporteringsenheter = pd.concat([rapporteringsenheter,temp])
+rapporteringsenheter = pd.concat([rapporteringsenheter, temp])
 
-# # Private virksomheter
+# ## Private virksomheter
 
 # Delreg 20877xx er et register med formål å kommunisere med private virksomheter via altinn. Det kan hende at dette ikke er godt nok oppdatert.
 
@@ -200,7 +244,6 @@ sporring_bed = f"""
         NAVN,
         BEDRIFTS_NR_GDATO,
         TILSTAND,
-        STATUSKODE,
         SN07_1,
         SN07_2,
         SN07_3,
@@ -219,7 +262,6 @@ sporring_bed_uten_private = f"""
         NAVN,
         BEDRIFTS_NR_GDATO,
         TILSTAND,
-        STATUSKODE,
         SN07_1,
         SN07_2,
         SN07_3,
@@ -229,25 +271,30 @@ sporring_bed_uten_private = f"""
 """
 vof_bdr_uten_private = pd.read_sql_query(sporring_bed_uten_private, conn)
 
-
+vof_bdr_uten_private.shape
 
 
 
 # Ta vare på virksomheter med SN07 start fom. 86 tom 89
 # NB: TILSTAND/STATUS == S har ikke SN07_1
 # Husk å sjekke SN07_2 og SN07_3
-vof_bdr.SN07_1.str.split(".").apply(lambda x: x[0] if x is not None else None)
+(
+    vof_bdr
+    .SN07_1
+    .str.split(".")
+    .apply(lambda x: x[0] if x is not None else None)
+)
 
-print("Antall prosent rader uten missing i SN07_1:", round(vof_bdr.SN07_1.notnull().sum()/vof_bdr.shape[0] * 100,2), "%")
-print("Antall prosent rader uten missing i SN07_2:", round(vof_bdr.SN07_2.notnull().sum()/vof_bdr.shape[0] * 100,2), "%")
-print("Antall prosent rader uten missing i SN07_3:", round(vof_bdr.SN07_3.notnull().sum()/vof_bdr.shape[0] * 100,2), "%")
+print("Prosent rader med missing i SN07_1:", round(vof_bdr.SN07_1.isnull().sum()/vof_bdr.shape[0] * 100, 2), "%")
+print("Prosent rader med missing i SN07_2:", round(vof_bdr.SN07_2.isnull().sum()/vof_bdr.shape[0] * 100, 2), "%")
+print("Prosent rader med missing i SN07_3:", round(vof_bdr.SN07_3.isnull().sum()/vof_bdr.shape[0] * 100, 2), "%")
 
 # # Sammenlikne data
-# - Filtrere bort STATUS/STATUSKODE != 'B'
+# - Filtrere bort STATUS/STATUSKODE != 'B'?
 
-import re
+rapportsamling = {}
 
-SFU_enhet['NAVN_HEL'] = (
+SFU_enhet['NAVN_HEL_SFU'] = (
     SFU_enhet['NAVN1'].fillna("") + " " +
     SFU_enhet['NAVN2'].fillna("") + " " +
     SFU_enhet['NAVN3'].fillna("") + " " +
@@ -271,43 +318,60 @@ felles_variabelnavn
 
 vof_tilstand = vof_bdr[felles_variabelnavn + ['STATUSKODE']].copy()
 vof_tilstand_uten_private = vof_bdr_uten_private[felles_variabelnavn + ['STATUSKODE']].copy()
-SFU_tilstand = SFU_virk[felles_variabelnavn + ['STATUS', 'NAVN_HEL']].copy()
+SFU_tilstand = SFU_virk[felles_variabelnavn + ['STATUS', 'NAVN_HEL_SFU']].copy()
 
 SFU_tilstand.shape
 
 vof_tilstand.shape
 
-# ## Sammenlikne virksomheter: SFU -> VOF
+# ## Enhetsanalyse
+
+# ### Sammenlikne virksomheter: SFU -> VOF
 
 orgnr_i_SFU_ikke_VOF = list(set(SFU_tilstand.ORGNR) - set(vof_tilstand.ORGNR))
 
 print("Antall virksomheter som ikke har registrerte foretak i delreg 2423:")
 SFU_tilstand[SFU_tilstand.ORGNR.isin(orgnr_i_SFU_ikke_VOF)].shape[0]
 
-orgnr_i_VOF_ikke_SFU = list(set(vof_tilstand.ORGNR) - set(SFU_tilstand.ORGNR))
+ut = SFU_tilstand[SFU_tilstand['ORGNR'].isin(orgnr_i_SFU_ikke_VOF)][['ORGNR', 'NAVN', 'STATUS']]
 
-# ## Sammenlikne virksomheter: VOF -> SFU
+rapportsamling['enheter ikke i VOF'] = ut
+
+# ### Sammenlikne virksomheter: VOF -> SFU
+
+orgnr_i_VOF_ikke_SFU = list(set(vof_tilstand.ORGNR) - set(SFU_tilstand.ORGNR))
 
 print("Antall virksomheter som ligger under alle offentlige og private helseforetak,")
 print("men som ikke har match i SFU:")
 vof_tilstand[vof_tilstand.ORGNR.isin(orgnr_i_VOF_ikke_SFU)].shape[0]
 
-vof_tilstand[vof_tilstand.ORGNR.isin(orgnr_i_VOF_ikke_SFU)].sample(5)
+ut = vof_tilstand[vof_tilstand['ORGNR'].isin(orgnr_i_VOF_ikke_SFU)][['ORGNR', 'NAVN', 'STATUSKODE', 'SN07_1']]
 
-# ## Sammenlikne virksomheter: SFU -> VOF (uten private)
+rapportsamling['enheter ikke i SFU'] = ut
+
+# ### Sammenlikne virksomheter: SFU -> VOF (uten private)
 
 orgnr_i_VOF_ikke_SFU_uten_private = list(set(vof_tilstand_uten_private.ORGNR) - set(SFU_tilstand.ORGNR))
 
-print("Antall virksomheter som ligger under alle offentlige og private helseforetak,")
+print("Antall virksomheter som ligger under alle offentlige helseforetak,")
 print("men som ikke har match i SFU:")
 vof_tilstand_uten_private[vof_tilstand_uten_private.ORGNR.isin(orgnr_i_VOF_ikke_SFU_uten_private)].shape[0]
 
-vof_tilstand_uten_private[vof_tilstand_uten_private['ORGNR'].isin(orgnr_i_VOF_ikke_SFU_uten_private)].sample(5)
+ut = (
+    vof_tilstand_uten_private[
+        vof_tilstand_uten_private['ORGNR']
+        .isin(orgnr_i_VOF_ikke_SFU_uten_private)
+    ]
+    [['ORGNR', 'NAVN', 'STATUSKODE', 'SN07_1']]
+)
+
+rapportsamling['enheter ikke i SFU (u. priv)'] = ut
 
 # ### Funn
 
-# - 97 virksomheter som ikke har registrerte foretak i delreg 2423
-# - 309 virksomheter i VOF som ikke er i delreg 2423
+# - Det er 97 virksomheter som ikke har registrerte foretak i delreg 2423
+# - Motsatt er det 309 virksomheter i VOF som ikke er i delreg 2423 (når virksomeheter under private foretak er filtrert ut)
+# - Med private foretak er det 1076 virksomheter i VOF som ikke er i delreg 2423
 
 
 
@@ -319,25 +383,87 @@ vof_tilstand_uten_private[vof_tilstand_uten_private['ORGNR'].isin(orgnr_i_VOF_ik
 
 
 
-# # Noe annet (se på senere)
+# # Sammenlikne STATUS og SN07 i VOF og SFU
+
+# ### Enheter som finnes både i VOF og SFU
 
 sammenlikne_tilstand = pd.merge(
     SFU_enhet,
-    vof_bdr,
-    how='left',
+    vof_tilstand,
+    how='inner',
     on='ORGNR',
     suffixes=('_SFU', '_VOF')
 )
 
+sammenlikne_tilstand = sammenlikne_tilstand.rename(columns={'STATUSKODE': 'STATUS_VOF', 'STATUS': 'STATUS_SFU'})
+
 kolonner = (
-    ['NAVN_HEL', 'NAVN_VOF'] +
-    [x for x in sammenlikne_tilstand.columns if "SN07_1" in x] +
+    ['NAVN_HEL_SFU', 'NAVN_VOF'] +
+    [x for x in sammenlikne_tilstand.columns if "SN07_" in x] +
     [x for x in sammenlikne_tilstand.columns if "TILSTAND" in x] +
     [x for x in sammenlikne_tilstand.columns if "STATUS" in x]
 )
 
-sammenlikne_tilstand[kolonner].sample(1).T
+# ### SN07
+
+# Sammenlikner SN07 i begge datasett og filtrerer ut tilfeller der de er ulike. Tar bort tilfeller hvor begge er har missing-verdier.
+
+# +
+mask_sn071 = (
+    ~((sammenlikne_tilstand['SN07_1_SFU'].isna()) & sammenlikne_tilstand['SN07_1_VOF'].isna()) &
+    (sammenlikne_tilstand['SN07_1_SFU'] != sammenlikne_tilstand['SN07_1_VOF'])
+)
+mask_sn072 = (
+    ~((sammenlikne_tilstand['SN07_2_SFU'].isna()) & sammenlikne_tilstand['SN07_2_VOF'].isna()) &
+    (sammenlikne_tilstand['SN07_2_SFU'] != sammenlikne_tilstand['SN07_2_VOF'])
+)
+
+mask_sn073 = (
+    ~((sammenlikne_tilstand['SN07_3_SFU'].isna()) & sammenlikne_tilstand['SN07_3_VOF'].isna()) &
+    (sammenlikne_tilstand['SN07_3_SFU'] != sammenlikne_tilstand['SN07_3_VOF'])
+)
+
+mask_tilstand = sammenlikne_tilstand['TILSTAND_SFU'] != sammenlikne_tilstand['TILSTAND_VOF']
+mask_status = sammenlikne_tilstand['STATUS_SFU'] != sammenlikne_tilstand['STATUS_VOF']
+
+# +
+# sammenlikne_tilstand[mask_sn072][['SN07_2_SFU', 'SN07_2_VOF']]
+# -
+
+print("Antall med avvik på SN07_1:", sammenlikne_tilstand[mask_sn071][kolonner].shape[0])
+print("Antall med avvik på SN07_2:", sammenlikne_tilstand[mask_sn072][kolonner].shape[0])
+print("Antall med avvik på SN07_3:", sammenlikne_tilstand[mask_sn073][kolonner].shape[0])
+
+ut = sammenlikne_tilstand[mask_sn071 | mask_sn072 | mask_sn073][kolonner]
+
+rapportsamling['avvik SN07_X'] = ut
+
+# ### Tilstand
+
+print("Antall med avvik på TILSTAND:", sammenlikne_tilstand[mask_tilstand][kolonner].shape[0])
+
+ut = sammenlikne_tilstand[mask_tilstand][['NAVN_HEL_SFU', 'ORGNR', 'TILSTAND_SFU', 'TILSTAND_VOF']]
+
+rapportsamling['avvik TILSTAND'] = ut
+
+# ### Status
+#
+
+print("Antall med avvik på STATUS:", sammenlikne_tilstand[mask_status][kolonner].shape[0])
+
+ut = sammenlikne_tilstand[mask_status][['NAVN_HEL_SFU', 'ORGNR', 'STATUS_SFU', 'STATUS_VOF']]
+
+rapportsamling['avvik STATUS'] = ut
+
+# ### Tilstand og status
+
+print("Antall med avvik på STATUS og TILSTAND:", sammenlikne_tilstand[mask_status & mask_tilstand][kolonner].shape[0])
+
+ut = sammenlikne_tilstand[mask_status][['NAVN_HEL_SFU', 'ORGNR', 'STATUS_SFU', 'STATUS_VOF', 'TILSTAND_SFU', 'TILSTAND_VOF']]
+
+rapportsamling['avvik STATUS og TILSTAND'] = ut
 
 
 
-
+if til_lagring:
+    lagre_excel(rapportsamling, filsti_output)
