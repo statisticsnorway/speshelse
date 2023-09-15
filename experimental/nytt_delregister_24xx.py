@@ -29,6 +29,8 @@ aar_før2 = str(aar_før4)[-2:]
 idag = dt.date.today().strftime("%Y%m%d")
 filsti_output = f"/ssb/stamme01/fylkhels/speshelse/felles/droplister/2023/nytt_delreg/sammenlikne_vof_sfu_{idag}.xlsx"
 
+rapportsamling = {} # variabel som til slutt inneholder alt som skal lagres i Excel-fil
+
 
 def lagre_excel(dfs, sti):
     """
@@ -83,6 +85,10 @@ print(f"Rader:    {SFU_enhet.shape[0]}\nKolonner: {SFU_enhet.shape[1]}")
 #     - D: slettet som dublett
 #     - F: slette for sammenslåing
 
+ut = SFU_enhet[SFU_enhet['ORGNR'].isna()]
+
+rapportsamling['rad i SFU uten ORGNR'] = ut
+
 # Fjerner enheter uten ORGNR
 SFU_enhet = SFU_enhet[SFU_enhet['ORGNR'].notnull()]
 
@@ -125,6 +131,8 @@ RHF = (
 )
 RHF['RHF'] = RHF['NAVN_KLASS']
 
+RHF
+
 # ### Private helseinstitusjoner med oppdrags- og bestillerdokument
 
 klass_priv_frtk_ob = get_classification(604).get_codes()
@@ -159,8 +167,6 @@ rfss = (
     [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION', 'RHF']]
 )
 
-rfss
-
 rfss2 = (
     get_classification(605)
     .get_codes()
@@ -175,10 +181,22 @@ rfss2 = (
 )
 rfss2['RHF'] = "FELLESEIDE STØTTEFORETAK"
 
-rfss2
+rfss3 = (
+    get_classification(605)
+    .get_codes()
+    .data.query("level == '2' & parentCode != '99'")
+    [['code', 'parentCode', 'name']]
+    .rename(columns={
+        'code': 'ORGNR_FORETAK',
+        'parentCode': 'HELSEREGION',
+        'name': 'NAVN_KLASS'
+    }
+            )
+)
+rfss3['RHF'] = None
 
 rapporteringsenheter = pd.concat(
-    [HF, RHF, phob, rfss, rfss2]
+    [HF, RHF, phob, rfss, rfss2, rfss3]
 )
 
 # ## Private virksomheter
@@ -197,13 +215,19 @@ orgnr_priv_sfu = list(SFU_priv['ORGNR'])
 
 orgnr_priv_ikke_sfu = list(set(orgnr_priv_sfu) - set(SFU_enhet['ORGNR']))
 
-SFU_priv = SFU_priv[~SFU_priv['ORGNR'].isin(orgnr_priv_ikke_sfu)]
+ut = SFU_priv[SFU_priv['ORGNR'].isin(orgnr_priv_ikke_sfu)][['ORGNR', 'NAVN', 'SN07_1', 'STATUS', 'TILSTAND']]
+
+rapportsamling['priv. med i 2087722, ikke 2423'] = ut
+
+# +
+# SFU_priv = SFU_priv[~SFU_priv['ORGNR'].isin(orgnr_priv_ikke_sfu)] # for å ta ut de som ikke er 2423
+# -
 
 orgnr_foretak_priv_sfu = list(SFU_priv['ORGNR']) # liste over private virksomheter som ligger i SFU
 
 # ## VOF: liste over alle helseforetak
 
-rapporteringsenheter_uten_RHF = rapporteringsenheter.query('~NAVN_KLASS.str.endswith("RHF")',engine="python")
+rapporteringsenheter_uten_RHF = rapporteringsenheter.query('~NAVN_KLASS.str.endswith("RHF")', engine="python")
 
 r_orgnr = rapporteringsenheter_uten_RHF.ORGNR_FORETAK.to_numpy()
 
@@ -220,7 +244,7 @@ sql_str_med_private = lag_sql_str(list(r_orgnr) + list(orgnr_foretak_priv_sfu))
 sql_str_uten_private = lag_sql_str(list(r_orgnr))
 
 sporring_for = f"""
-    SELECT FORETAKS_NR, ORGNR, NAVN, STATUSKODE
+    SELECT FORETAKS_NR, ORGNR, NAVN, STATUSKODE, TILSTAND, SN07_1, SN07_2, SN07_3
     FROM DSBBASE.SSB_FORETAK
     WHERE ORGNR IN {sql_str_med_private}
 """
@@ -247,7 +271,6 @@ sporring_bed = f"""
         ORGNR,
         FORETAKS_NR,
         NAVN,
-        BEDRIFTS_NR_GDATO,
         TILSTAND,
         SN07_1,
         SN07_2,
@@ -265,7 +288,6 @@ sporring_bed_uten_private = f"""
         ORGNR,
         FORETAKS_NR,
         NAVN,
-        BEDRIFTS_NR_GDATO,
         TILSTAND,
         SN07_1,
         SN07_2,
@@ -278,26 +300,38 @@ vof_bdr_uten_private = pd.read_sql_query(sporring_bed_uten_private, conn)
 
 vof_bdr_uten_private.shape
 
+# ## Slå sammen VOF-foretak og -virksomhet
+# - Skiller også på med- og uten virksomheter som ligger under private foretak
 
+vof_bdr.sample(1)
 
+vof_for.sample(1)
+
+vof = pd.concat([vof_for, vof_bdr])
+vof_uten_private = pd.concat([vof_for, vof_bdr_uten_private])
+
+print(vof.shape)
+print(vof_uten_private.shape)
+
+# +
 # Ta vare på virksomheter med SN07 start fom. 86 tom 89
 # NB: TILSTAND/STATUS == S har ikke SN07_1
 # Husk å sjekke SN07_2 og SN07_3
-(
-    vof_bdr
-    .SN07_1
-    .str.split(".")
-    .apply(lambda x: x[0] if x is not None else None)
-)
+# (
+#     vof_bdr
+#     .SN07_1
+#     .str.split(".")
+#     .apply(lambda x: x[0] if x is not None else None)
+# )
+# -
 
-print("Prosent rader med missing i SN07_1:", round(vof_bdr.SN07_1.isnull().sum()/vof_bdr.shape[0] * 100, 2), "%")
-print("Prosent rader med missing i SN07_2:", round(vof_bdr.SN07_2.isnull().sum()/vof_bdr.shape[0] * 100, 2), "%")
-print("Prosent rader med missing i SN07_3:", round(vof_bdr.SN07_3.isnull().sum()/vof_bdr.shape[0] * 100, 2), "%")
+print("For VOF med alle helseforetak og virksomheter under helseforetak:")
+print("Prosent rader med missing i SN07_1:", round(vof.SN07_1.isnull().sum()/vof.shape[0] * 100, 2), "%")
+print("Prosent rader med missing i SN07_2:", round(vof.SN07_2.isnull().sum()/vof.shape[0] * 100, 2), "%")
+print("Prosent rader med missing i SN07_3:", round(vof.SN07_3.isnull().sum()/vof.shape[0] * 100, 2), "%")
 
 # # Sammenlikne data
 # - Filtrere bort STATUS/STATUSKODE != 'B'?
-
-rapportsamling = {}
 
 SFU_enhet['NAVN_HEL_SFU'] = (
     SFU_enhet['NAVN1'].fillna("") + " " +
@@ -317,26 +351,30 @@ SFU_virk = SFU_enhet[~mask].copy()
 
 SFU_virk.shape
 
-felles_variabelnavn = [x for x in vof_bdr.columns if x in SFU_virk.columns]
+felles_variabelnavn = [x for x in vof.columns if x in SFU_virk.columns]
 
 felles_variabelnavn
 
-vof_tilstand = vof_bdr[felles_variabelnavn + ['STATUSKODE']].copy()
-vof_tilstand_uten_private = vof_bdr_uten_private[felles_variabelnavn + ['STATUSKODE']].copy()
+vof_tilstand = vof[felles_variabelnavn + ['STATUSKODE']].copy()
+vof_tilstand_uten_private = vof_uten_private[felles_variabelnavn + ['STATUSKODE']].copy()
 SFU_tilstand = SFU_virk[felles_variabelnavn + ['STATUS', 'NAVN_HEL_SFU']].copy()
 
 SFU_tilstand.shape
 
 vof_tilstand.shape
 
+vof_tilstand_uten_private.shape
+
 # ## Enhetsanalyse
 
 # ### Sammenlikne virksomheter: SFU -> VOF
 
+# +
 orgnr_i_SFU_ikke_VOF = list(set(SFU_tilstand.ORGNR) - set(vof_tilstand.ORGNR))
 
-print("Antall virksomheter som ikke har registrerte foretak i delreg 2423:")
+print("Antall virksomheter/foretak som ikke er i delreg 2423:")
 SFU_tilstand[SFU_tilstand.ORGNR.isin(orgnr_i_SFU_ikke_VOF)].shape[0]
+# -
 
 ut = SFU_tilstand[SFU_tilstand['ORGNR'].isin(orgnr_i_SFU_ikke_VOF)][['ORGNR', 'NAVN', 'STATUS']]
 
@@ -346,7 +384,7 @@ rapportsamling['enheter ikke i VOF'] = ut
 
 orgnr_i_VOF_ikke_SFU = list(set(vof_tilstand.ORGNR) - set(SFU_tilstand.ORGNR))
 
-print("Antall virksomheter som ligger under alle offentlige og private helseforetak,")
+print("Antall virksomheter/foretak som ligger under alle offentlige og private helseforetak,")
 print("men som ikke har match i SFU:")
 vof_tilstand[vof_tilstand.ORGNR.isin(orgnr_i_VOF_ikke_SFU)].shape[0]
 
@@ -372,13 +410,19 @@ ut = (
 
 rapportsamling['enheter ikke i SFU (u. priv)'] = ut
 
-# ### Funn
+# ### Private som ikke har missing på HVAR_1_A i SFU:
+# Det betyr at det rapporteres tall fra dem på skjema 39?
 
-# - Det er 97 virksomheter som ikke har registrerte foretak i delreg 2423
-# - Motsatt er det 309 virksomheter i VOF som ikke er i delreg 2423 (når virksomeheter under private foretak er filtrert ut)
-# - Med private foretak er det 1076 virksomheter i VOF som ikke er i delreg 2423
+ut = (
+    SFU_enhet[
+        (SFU_enhet['H_VAR1_A'].notnull()) &
+        (SFU_enhet['H_VAR2_A'] == "PRIVAT")
+        # (SFU_enhet['SKJEMA_TYPE'].str.contains("39"))
+    ]
+    [['ORGNR', 'NAVN_HEL_SFU', 'SN07_1', 'ENHETS_TYPE', 'SKJEMA_TYPE', 'H_VAR1_A', 'H_VAR2_A']]
+)
 
-
+rapportsamling['private i SFU'] = ut
 
 # # Sammenlikne STATUS og SN07 i VOF og SFU
 
