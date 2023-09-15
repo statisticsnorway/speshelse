@@ -380,14 +380,6 @@ rapportsamling['enheter ikke i SFU (u. priv)'] = ut
 
 
 
-
-
-
-
-
-
-
-
 # # Sammenlikne STATUS og SN07 i VOF og SFU
 
 # ### Enheter som finnes både i VOF og SFU
@@ -468,7 +460,7 @@ ut = sammenlikne_tilstand[mask_status][['NAVN_HEL_SFU', 'ORGNR', 'STATUS_SFU', '
 
 rapportsamling['avvik STATUS og TILSTAND'] = ut
 
-
+# # Lagring
 
 if til_lagring:
     lagre_excel(rapportsamling, filsti_output)
