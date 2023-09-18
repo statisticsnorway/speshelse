@@ -63,6 +63,8 @@ def lagre_excel(dfs, sti):
         engine="openpyxl",
     ) as writer:
         for arknavn in dfs:
+            if len(arknavn) >= 30:
+                print("\t Arkfanenavnet ", arknavn, "er for langt. (Max 30 tegn i Excel)")
             dfs[arknavn].to_excel(writer, sheet_name=arknavn, index=False)
             print(f"Arkfanen '{arknavn}' er lagret i filen.")
 
@@ -217,19 +219,13 @@ orgnr_priv_ikke_sfu = list(set(orgnr_priv_sfu) - set(SFU_enhet['ORGNR']))
 
 ut = SFU_priv[SFU_priv['ORGNR'].isin(orgnr_priv_ikke_sfu)][['ORGNR', 'NAVN', 'SN07_1', 'STATUS', 'TILSTAND']]
 
-rapportsamling['priv. med i 2087722, ikke 2423'] = ut
-
-# +
-# SFU_priv = SFU_priv[~SFU_priv['ORGNR'].isin(orgnr_priv_ikke_sfu)] # for å ta ut de som ikke er 2423
-# -
+rapportsamling['priv. i 2087722, ikke 2423'] = ut
 
 orgnr_foretak_priv_sfu = list(SFU_priv['ORGNR']) # liste over private virksomheter som ligger i SFU
 
 # ## VOF: liste over alle helseforetak
 
-rapporteringsenheter_uten_RHF = rapporteringsenheter.query('~NAVN_KLASS.str.endswith("RHF")', engine="python")
-
-r_orgnr = rapporteringsenheter_uten_RHF.ORGNR_FORETAK.to_numpy()
+r_orgnr = rapporteringsenheter.ORGNR_FORETAK.to_numpy()
 
 
 def lag_sql_str(arr):
@@ -275,7 +271,8 @@ sporring_bed = f"""
         SN07_1,
         SN07_2,
         SN07_3,
-        STATUSKODE
+        STATUSKODE,
+        KARAKTERISTIKK
     FROM DSBBASE.SSB_BEDRIFT
     WHERE FORETAKS_NR IN {sql_str}
 """
@@ -292,7 +289,8 @@ sporring_bed_uten_private = f"""
         SN07_1,
         SN07_2,
         SN07_3,
-        STATUSKODE
+        STATUSKODE,
+        KARAKTERISTIKK
     FROM DSBBASE.SSB_BEDRIFT
     WHERE FORETAKS_NR IN {sql_str_foretak_uten_priv}
 """
@@ -308,7 +306,7 @@ vof_bdr.sample(1)
 vof_for.sample(1)
 
 vof = pd.concat([vof_for, vof_bdr])
-vof_uten_private = pd.concat([vof_for, vof_bdr_uten_private])
+vof_uten_private = pd.concat([vof_for_uten_priv, vof_bdr_uten_private])
 
 print(vof.shape)
 print(vof_uten_private.shape)
@@ -342,22 +340,13 @@ SFU_enhet['NAVN_HEL_SFU'] = (
     SFU_enhet['SPES_NAVN'].fillna("") + " "
 ).str.replace(r'\s+', ' ', regex=True)
 
-# +
-# Tar ut foretak i SFU
-mask = SFU_enhet['ORGNR_FORETAK'] == SFU_enhet['ORGNR']
-
-SFU_virk = SFU_enhet[~mask].copy()
-# -
-
-SFU_virk.shape
-
-felles_variabelnavn = [x for x in vof.columns if x in SFU_virk.columns]
+felles_variabelnavn = [x for x in vof.columns if x in SFU_enhet.columns]
 
 felles_variabelnavn
 
-vof_tilstand = vof[felles_variabelnavn + ['STATUSKODE']].copy()
-vof_tilstand_uten_private = vof_uten_private[felles_variabelnavn + ['STATUSKODE']].copy()
-SFU_tilstand = SFU_virk[felles_variabelnavn + ['STATUS', 'NAVN_HEL_SFU']].copy()
+vof_tilstand = vof[felles_variabelnavn + ['STATUSKODE', 'KARAKTERISTIKK']].copy()
+vof_tilstand_uten_private = vof_uten_private[felles_variabelnavn + ['STATUSKODE', 'KARAKTERISTIKK']].copy()
+SFU_tilstand = SFU_enhet[felles_variabelnavn + ['STATUS', 'NAVN_HEL_SFU']].copy()
 
 SFU_tilstand.shape
 
@@ -378,7 +367,7 @@ SFU_tilstand[SFU_tilstand.ORGNR.isin(orgnr_i_SFU_ikke_VOF)].shape[0]
 
 ut = SFU_tilstand[SFU_tilstand['ORGNR'].isin(orgnr_i_SFU_ikke_VOF)][['ORGNR', 'NAVN', 'STATUS']]
 
-rapportsamling['enheter ikke i VOF'] = ut
+rapportsamling['i 24, ikke klass eller 20778'] = ut
 
 # ### Sammenlikne virksomheter: VOF -> SFU
 
@@ -388,9 +377,9 @@ print("Antall virksomheter/foretak som ligger under alle offentlige og private h
 print("men som ikke har match i SFU:")
 vof_tilstand[vof_tilstand.ORGNR.isin(orgnr_i_VOF_ikke_SFU)].shape[0]
 
-ut = vof_tilstand[vof_tilstand['ORGNR'].isin(orgnr_i_VOF_ikke_SFU)][['ORGNR', 'NAVN', 'STATUSKODE', 'SN07_1']]
+ut = vof_tilstand[vof_tilstand['ORGNR'].isin(orgnr_i_VOF_ikke_SFU)][['ORGNR', 'NAVN', 'KARAKTERISTIKK', 'STATUSKODE', 'SN07_1']]
 
-rapportsamling['enheter ikke i SFU'] = ut
+rapportsamling['i klass og 20778, ikke i 24'] = ut
 
 # ### Sammenlikne virksomheter: SFU -> VOF (uten private)
 
@@ -405,10 +394,10 @@ ut = (
         vof_tilstand_uten_private['ORGNR']
         .isin(orgnr_i_VOF_ikke_SFU_uten_private)
     ]
-    [['ORGNR', 'NAVN', 'STATUSKODE', 'SN07_1']]
+    [['ORGNR', 'NAVN', 'KARAKTERISTIKK', 'STATUSKODE', 'SN07_1']]
 )
 
-rapportsamling['enheter ikke i SFU (u. priv)'] = ut
+rapportsamling['i klass, ikke i 24xx'] = ut
 
 # ### Private som ikke har missing på HVAR_1_A i SFU:
 # Det betyr at det rapporteres tall fra dem på skjema 39?
