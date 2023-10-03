@@ -3,7 +3,7 @@
 #
 # Gjør programmet kjørbart på Dapla? Krever pseudonomisert befolkningsfil
 #
-# Dersom programmet må kjøres for ny årgang (og `befolkning_per_grunnkrets` og `befolkning_per_postkrets` ikke finnes) må programmet kjøres i RStudio for å ikke kræsje!
+# Dersom programmet skal kjøres for ny årgang (og `befolkning_per_grunnkrets` og `befolkning_per_postkrets` ikke finnes) må programmet kjøres i RStudio for å ikke kræsje!
 #
 # Kjør 2015-2017 på nytt!
 
