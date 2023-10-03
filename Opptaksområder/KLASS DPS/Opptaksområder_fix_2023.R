@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-aargang <- 2016
+aargang <- 2023
 
 # +
 options(repr.matrix.max.rows=600, repr.matrix.max.cols=2000)
@@ -10,12 +10,13 @@ library(readxl)
 library(klassR)
 library(sf)
 library(leaflet)
+library(fellesr)
         })
 
-source("/home/rdn/fellesr/R/DAPLA_funcs.R")
+# source("/home/rdn/fellesr/R/DAPLA_funcs.R")
 
 # +
-opptaksomrader_KLASS <- klassR::GetKlass(629, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
+opptaksomrader_KLASS <- klassR::GetKlass(632, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
 dplyr::rename(GRUNNKRETSNUMMER = code4, 
              GRUNNKRETS_NAVN = name4, 
              OPPTAK_NUMMER = code3, 
@@ -51,7 +52,7 @@ nrow(opptaksomrader_KLASS)
 # # dplyr::filter(!GRUNNKRETSNUMMER_T1 %in% c("14440104") |  !GRUNNKRETSNUMMER %in% c("14490114")) # Fjerner Kjøs fra Markane
 # -
 
-# # Fix 2015-2019
+# # Fix 2023
 
 # ## HELSE VEST RHF
 

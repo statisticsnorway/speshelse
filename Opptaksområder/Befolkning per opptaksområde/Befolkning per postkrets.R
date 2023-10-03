@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # # Befolkning per postkrets
 
 valgt_crs <- 4326
@@ -20,13 +21,33 @@ suppressPackageStartupMessages({
 ### Statistikkbanktabell
 # -
 
-aargang <- 2019
+# Kjør 2017
+# aargang <- 2017
+if (exists("aargang_master")==TRUE){
+aargang <- aargang_master    
+}
+
+if (aargang >= 2020){
+  kristiansand_kommnr <- "4204"
+  trondheim_kommnr <- "5001"
+}
+
+if (aargang %in% 2018:2019){
+  kristiansand_kommnr <- "1001"
+  trondheim_kommnr <- "5001"
+}
+
+if (aargang %in% 2015:2017){
+  kristiansand_kommnr <- "1001"
+  trondheim_kommnr <- "1601"
+}
+
 
 # +
 T07459 <- PxWebApiData::ApiData(07459, ContentsCode = "Personer",
                                 Kjonn = T,
                                 Alder = T,
-                                Region = c("5001", "4204"),
+                                Region = c(trondheim_kommnr, kristiansand_kommnr),
                                Tid = as.character(aargang)) [[2]]
 
 T07459 %>%
@@ -68,7 +89,7 @@ head(bosatte_koorfil_fix)
 # -
 
 bosatte_koorfil_fix_subset <- bosatte_koorfil_fix %>%
-dplyr::filter(KOMMNR %in% c("5001", "4204")) %>%
+dplyr::filter(KOMMNR %in% c(trondheim_kommnr, kristiansand_kommnr)) %>%
  dplyr::rename(X = X_KOORDINAT,
                 Y = Y_KOORDINAT) %>%
   dplyr::mutate(x = as.numeric(as.character(X)),
@@ -80,7 +101,17 @@ dplyr::filter(KOMMNR %in% c("5001", "4204")) %>%
 arbeidsmappe <- "/ssb/stamme01/fylkhels/speshelse/felles/"
 arbeidsmappe_kart <- paste0(arbeidsmappe, "kart/", aargang, "/")
 
-postkretser_kart_filsti <- paste0(arbeidsmappe_kart, "POST_postkretser_flate_", aargang, ".parquet")
+if (aargang >= 2020){
+  postkretser_kart_filsti <- paste0(arbeidsmappe_kart, "POST_postkretser_flate_", aargang, ".parquet")
+  postkretser_kart <- sfarrow::st_read_parquet(postkretser_kart_filsti)
+} else {
+  postkretser_kart_filsti <- paste0("/ssb/stamme01/fylkhels/speshelse/felles/kart/2020/POST_postkretser_flate_2020.parquet")
+  postkretser_kart <- sfarrow::st_read_parquet(postkretser_kart_filsti) %>%
+    dplyr::mutate(KOMMUNENR = case_when(KOMMUNENR == "4204" ~ kristiansand_kommnr, TRUE ~ KOMMUNENR),
+                  KOMMUNENR = case_when(KOMMUNENR == "5001" ~ trondheim_kommnr, TRUE ~ KOMMUNENR))
+
+}
+
 # -
 
 rename_geometry <- function(g, name){
@@ -90,10 +121,9 @@ rename_geometry <- function(g, name){
   g
 }
 
-postkretser_kart <- sfarrow::st_read_parquet(postkretser_kart_filsti)
 
 postkretser_kart <- postkretser_kart %>%
-  dplyr::filter(KOMMUNENR %in% c("4204", "5001")) %>%
+  dplyr::filter(KOMMUNENR %in% c(kristiansand_kommnr, trondheim_kommnr)) %>%
   sf::st_zm(drop = T) %>%
   sf::st_cast("MULTIPOLYGON") %>%
   sf::st_transform(crs = valgt_crs) # %>%

@@ -1,0 +1,228 @@
+# -*- coding: utf-8 -*-
+# # Institusjonslister
+
+# Beskrivelse av scriptet... Sendes til Hdir i forbindelse med Samarbeids-/evalueringsmøte?
+#
+# Det lages én fil for offentlige institusjoner og én fil for private institusjoner i spesialisthelsetjenesten. Filene lagres med datomarkering i mappen **filsti_institusjonslister** (se under)
+
+suppressPackageStartupMessages({
+  library(rio)
+  library(dplyr)
+  library(stringr)
+  library(fellesr)
+})
+
+# ## Angir årgang og kobler til Oracle
+
+aargang <- 2022
+
+# Logg på for å få tilgang til Oracle 
+con <- fellesr::dynarev_uttrekk(con_ask = "con") # fellesr::
+
+# ## Filsti for institusjonslister
+#
+# Oppretter årgangsmappe dersom den ikke eksisterer.
+
+# +
+arbeidsmappe <- "/ssb/stamme01/fylkhels/speshelse/felles/institusjonslister/"
+
+filsti_institusjonslister <- paste0(arbeidsmappe, aargang, "/")
+
+filsti_institusjonslister
+# -
+
+if (file.exists(filsti_institusjonslister)==FALSE) {
+  dir.create(filsti_institusjonslister)
+}
+
+# ## Laster inn oversikt over alle rapporteringsenheter (bortsett fra private uten oppdragsdokument)
+
+HF <- klassR::GetKlass(603, output_style = "wide") %>%
+  dplyr::rename(ORGNR_FORETAK = code3, 
+                NAVN = name3, 
+                RHF = name2, 
+                Helseregion = code1) %>%
+  dplyr::mutate(Foretakstype = "HF") %>%
+  dplyr::select(ORGNR_FORETAK, NAVN, RHF, Helseregion, Foretakstype)
+
+RHF <- klassR::GetKlass(603, output_level = 2) %>%
+  dplyr::rename(ORGNR_FORETAK = code, 
+                NAVN = name, 
+                Helseregion = parentCode) %>%
+  dplyr::mutate(Foretakstype = "RHF", 
+                RHF = NAVN) %>%
+  dplyr::select(ORGNR_FORETAK, NAVN, RHF, Helseregion, Foretakstype)
+
+stotteforetak <- klassR::GetKlass(605, output_style = "wide") %>%
+  dplyr::rename(ORGNR_FORETAK = code3, 
+                NAVN = name3, 
+                RHF = name2, 
+                Helseregion = code1) %>%
+  dplyr::mutate(Foretakstype = "Støtteforetak") %>%
+  dplyr::select(ORGNR_FORETAK, NAVN, RHF, Helseregion, Foretakstype)
+
+offentlig <- rbind(HF, RHF, stotteforetak)
+
+oppdrag <- klassR::GetKlass(604, output_style = "wide") %>%
+  dplyr::rename(ORGNR_FORETAK = code2, 
+                NAVN = name2, 
+                RHF = name1, 
+                Helseregion = code1) %>%
+  dplyr::mutate(Foretakstype = "Oppdrag", 
+                RHF = paste0(RHF, " RHF")) %>%
+  dplyr::select(ORGNR_FORETAK, NAVN, RHF, Helseregion, Foretakstype)
+
+helsereg <- rbind(HF, RHF, stotteforetak, oppdrag) %>%
+  dplyr::group_by(Helseregion, RHF) %>%
+  dplyr::tally()
+
+helsereg
+
+# ## Laster inn delregisteret
+
+# OBS: hent delregnr fra KLASS 610?
+
+delreg <- fellesr::dynarev_uttrekk(delregnr = c(paste0(24, substr(aargang, 3, 4)), paste0(19377, substr(aargang, 3, 4))),
+                                   skjema = T, 
+                                   skjema_cols = F,
+                                   enhets_type = c("FRTK", "BEDR"), 
+                                   sfu_cols = T, 
+                                   con_ask = F)
+
+delreg <- delreg %>%
+  dplyr::filter(is.na(KVITT_TYPE)) %>%
+  dplyr::filter(!is.na(ORGNR)) %>%
+  dplyr::mutate(NAVN1 = as.character(NAVN1), 
+                NAVN2 = as.character(NAVN2),
+                NAVN3 = as.character(NAVN3), 
+                NAVN1 = tidyr::replace_na(NAVN1, ""), 
+                NAVN2 = tidyr::replace_na(NAVN2, ""), 
+                NAVN3 = tidyr::replace_na(NAVN3, ""))
+
+# Lager institusjonsnavn #
+delreg$NYTT_NAVN <- paste0(delreg$NAVN1, " ", 
+                           delreg$NAVN2, " ", 
+                           delreg$NAVN3) 
+
+# Fjerner mellomrom på slutten av strengen #
+delreg$NYTT_NAVN <- stringr::str_trim(delreg$NYTT_NAVN, side = c("right"))
+# Og inne i strengen #
+delreg$NYTT_NAVN <- stringr::str_squish(delreg$NYTT_NAVN)
+
+delreg_tester <- delreg %>%
+  dplyr::select(SN07_1, H_VAR1_A, ORGNR, ORGNR_FORETAK, NYTT_NAVN, NAVN, NAVN1, NAVN2, NAVN3, NAVN4, NAVN5) %>%
+  dplyr::filter(!is.na(H_VAR1_A)) %>%
+  dplyr::mutate(test = stringr::str_length(SN07_1), 
+                sn07_1_ny <- stringr::str_pad(SN07_1, width = 6, "right", pad = "0"))
+
+# ## Legger til Standard for næringsgruppering (SN) fra KLASS
+
+klass_sn <- klassR::GetKlass(6, output_level = 5) %>%
+  dplyr::select(-parentCode, -level) %>%
+  dplyr::rename(SN07_1 = code, 
+                SN07_1_navn = name) %>%
+  dplyr::mutate(SN07_1 = as.character(SN07_1))
+
+delreg  <- dplyr::left_join(delreg, klass_sn, by = "SN07_1")
+
+# ## Offentlige RHF, HF og hjelpeforetak
+
+# ### Beholder HF, RHF og hjelpeforetak
+
+offentlig <- offentlig %>%
+  dplyr::select(ORGNR_FORETAK, Foretakstype, Helseregion, RHF) # NAVN
+
+delreg$ORGNR_FORETAK <- as.character(delreg$ORGNR_FORETAK)
+delreg_offentlig <- dplyr::inner_join(offentlig, delreg, by = c("ORGNR_FORETAK"))
+
+delreg_offentlig_test <- delreg_offentlig %>%
+  dplyr::select(Foretakstype, Helseregion, RHF, ORGNR_FORETAK, H_VAR1_A, ORGNR, NAVN, NYTT_NAVN,
+                SKJEMA_TYPE, SN07_1, SN07_1_navn, F_POSTNR, F_POSTSTED) %>%
+  dplyr::rename(Foretakstype = Foretakstype,
+                Helseregion = Helseregion,
+                Helseregion_navn = RHF,
+                Foretaksorgnr = ORGNR_FORETAK,
+                Rapporteringsnr = H_VAR1_A,
+                Bedriftsorgnr = ORGNR,
+                HF_navn = NAVN,
+                Institusjonsnavn = NYTT_NAVN,
+                Skjematype = SKJEMA_TYPE,
+                Næringskode = SN07_1,
+                Næringsnavn = SN07_1_navn,
+                Postnummer = F_POSTNR, 
+                Poststed = F_POSTSTED)
+
+# ### Beholder kun enheter med rapporteringsnummer
+
+delreg_offentlig_test <- delreg_offentlig_test %>%
+  dplyr::filter(!is.na(Rapporteringsnr))
+
+# Sjekker for dubletter i Institusjonsnavn (?) #
+delreg_offentlig_test_duplikater <- delreg_offentlig_test %>%
+  janitor::get_dupes(Institusjonsnavn)
+print(paste0("Dubletter finnes for: ", unique(delreg_offentlig_test_duplikater$Institusjonsnavn)))
+
+# Sorterer etter helseregion #
+delreg_offentlig_test <- delreg_offentlig_test %>%
+  dplyr::arrange(Helseregion)
+
+# ## Lagrer filen
+
+openxlsx::write.xlsx(delreg_offentlig_test,
+                     file = paste0(filsti_institusjonslister, aargang, " Offentlige institusjoner spesialisthelsetjenesten (", format(Sys.Date(), "%d%m%y"), ").xlsx"),
+                     rowNames = FALSE,
+                     showNA = FALSE)
+
+# ## Private (med og uten oppdragsdokument)
+
+delreg_private <- delreg %>%
+  dplyr::filter(!ORGNR_FORETAK %in% unique(offentlig$ORGNR_FORETAK)) %>%
+  dplyr::left_join(oppdrag, by = "ORGNR_FORETAK") %>%
+  dplyr::mutate(Foretakstype = case_when(
+    ORGNR_FORETAK %in% unique(oppdrag$ORGNR_FORETAK) ~ "Private med oppdragsdokument", 
+    TRUE ~ "Private med kjøpsavtale"))
+
+delreg_private_test <- delreg_private %>%
+  select(Foretakstype, Helseregion, RHF, ORGNR_FORETAK, H_VAR1_A, ORGNR, NYTT_NAVN,
+         SKJEMA_TYPE, SN07_1, SN07_1_navn, F_POSTNR, F_POSTSTED) %>%
+  dplyr::rename(Foretakstype = Foretakstype,
+                Helseregion = Helseregion,
+                Helseregion_navn = RHF,
+                Foretaksorgnr = ORGNR_FORETAK,
+                Rapporteringsnr = H_VAR1_A,
+                Bedriftsorgnr = ORGNR,
+                Institusjonsnavn = NYTT_NAVN,
+                Skjematype = SKJEMA_TYPE,
+                Næringskode = SN07_1,
+                Næringsnavn = SN07_1_navn,
+                Postnummer = F_POSTNR,
+                Poststed = F_POSTSTED)
+
+# ### Beholder kun enheter med rapporteringsnummer
+
+# +
+# delreg_private_test_obs <- delreg_private_test %>%
+#   dplyr::filter(is.na(Rapporteringsnr))
+
+# delreg_private_test_obs
+# -
+
+delreg_private_test <- delreg_private_test %>%
+  dplyr::filter(!is.na(Rapporteringsnr))
+
+# ### Sjekker for dubletter i Institusjonsnavn (?)
+
+delreg_private_test_duplikater <- delreg_private_test %>%
+  janitor::get_dupes(Institusjonsnavn)
+print(paste0("Dubletter finnes for: ", unique(delreg_private_test_duplikater$Institusjonsnavn)))
+
+# Sorterer etter helseregion #
+delreg_private_test <- delreg_private_test %>%
+  dplyr::arrange(Helseregion)
+
+# ## Lagrer filen
+
+openxlsx::write.xlsx(delreg_private_test,
+                     file = paste0(filsti_institusjonslister, aargang, " Private institusjoner spesialisthelsetjenesten (", format(Sys.Date(), "%d%m%y"), ").xlsx"),
+                     rowNames = FALSE,
+                     showNA = FALSE)
