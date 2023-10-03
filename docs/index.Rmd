@@ -167,6 +167,8 @@ opptaksomrader_SOM_lokasjon_leaflet
 
 ### Akuttmottak
 
+Listen over akuttmottak er hentet fra [Kodeliste for akuttmottak](https://www.ssb.no/klass/klassifikasjoner/683).
+
 ```{r echo=FALSE}
 icons_akuttmottak <- leaflet::makeAwesomeIcon(text = fontawesome::fa("hospital"), # truck-medical
                                                 iconColor = "red",
