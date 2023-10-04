@@ -4,6 +4,8 @@
 # ## Velger årgang og tjenesteområde
 
 # Mangler grunnkretskart før 2015
+#
+# OBS: legg til RHF for HF og lokasjon!
 
 aargang <- 2023
 
@@ -14,11 +16,11 @@ aargang <- 2023
 # + TSB
 # + DPS
 
-tjeneste <- "DPS"
+tjeneste <- "SOM"
 
 # ## Flate eller utenhav
 
-utenhav <- FALSE
+utenhav <- TRUE
 
 if (utenhav == TRUE) {
 filsti_med_uten_hav <- "utenhav"
@@ -40,7 +42,7 @@ kommuner_med_postkretser <- c("4204", "5001")
 sf::sf_use_s2(FALSE)
 CRS <- 25833
 
-renv::autoload()
+# renv::autoload()
 
 suppressPackageStartupMessages({ 
 library(tidyverse)
@@ -48,9 +50,12 @@ library(readxl)
 library(klassR)
 library(sf)
 library(leaflet)
-    library(fellesr)
-    library(cartography)
+library(fellesr)
         })
+
+if (tjeneste == "DPS"){
+    library(cartography)
+}
 # -
 
 # ## Laster inn kart (grunnkrets)
@@ -672,8 +677,8 @@ if (grepl("onprem", Sys.getenv("JUPYTER_IMAGE_SPEC"))) {
 # +
 if (utenhav == TRUE) {
 
-ggplot() + 
-geom_sf(data = opptaksomrader_RHF)
+ggplot2::ggplot() + 
+ggplot2::geom_sf(data = opptaksomrader_RHF)
 
 } else {
 
@@ -695,14 +700,14 @@ opptaksomrader_RHF_leaflet <- leaflet::leaflet(options = leaflet::leafletOptions
 # Lagrer filen
 # htmlwidgets::saveWidget(opptaksomrader_RHF_leaflet, file = paste0(arbeidsmappe_opptak, "opptaksomrader_SOM_RHF_", aargang, ".html"), selfcontained=T)
 
-opptaksomrader_RHF_leaflet
+# opptaksomrader_RHF_leaflet
     }
 # -
 
 # # Lager opptaksområder for HF
 
 opptaksomrader_HF <- opptaksomrader_KLASS_2_kart %>%
-  dplyr::group_by(ORGNR_HF, NAVN_HF) %>%
+  dplyr::group_by(ORGNR_RHF, NAVN_RHF, ORGNR_HF, NAVN_HF) %>%
   dplyr::summarise(geometry = sf::st_union(sf::st_make_valid(geometry))) %>%
   dplyr::ungroup()
 
@@ -725,43 +730,44 @@ opptaksomrader_HF_filsti <- paste0("ssb-prod-helse-speshelse-data-kilde/felles/K
 # ## Visualiserer kartet
 
 # +
-if (utenhav == TRUE) {
+# if (utenhav == TRUE) {
 
-ggplot() + 
-geom_sf(data = opptaksomrader_HF)
+# ggplot() + 
+# geom_sf(data = opptaksomrader_HF)
 
-} else {
-pal_HF <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_KLASS_2_kart$NAVN_HF))
+# } else {
+# pal_HF <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_KLASS_2_kart$NAVN_HF))
 
-opptaksomrader_HF <- opptaksomrader_HF %>%
-sf::st_transform(crs = 4326)
+# opptaksomrader_HF <- opptaksomrader_HF %>%
+# sf::st_transform(crs = 4326)
 
-opptaksomrader_HF_leaflet <- leaflet::leaflet(options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
-   leaflet::addTiles() %>%
-   leaflet::addPolygons(stroke = F, data = opptaksomrader_HF,
-                       # color = "green",
-                       weight = 1,
-                       fillColor = pal_HF(opptaksomrader_HF$NAVN_HF),
-                       fillOpacity = 0.5, smoothFactor = 0.5,
-                       popup = paste0("Opptaksområde: ", opptaksomrader_HF$NAVN_HF, " / Befolkning: ", prettyNum(opptaksomrader_HF$PERSONER, big.mark = " ", scientific = FALSE))) %>%
-  leaflet::addLegend("bottomright", pal = pal_HF, values = as.factor(opptaksomrader_HF$NAVN_HF), opacity = 1)
+# opptaksomrader_HF_leaflet <- leaflet::leaflet(options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+#    leaflet::addTiles() %>%
+#    leaflet::addPolygons(stroke = F, data = opptaksomrader_HF,
+#                        # color = "green",
+#                        weight = 1,
+#                        fillColor = pal_HF(opptaksomrader_HF$NAVN_HF),
+#                        fillOpacity = 0.5, smoothFactor = 0.5,
+#                        popup = paste0("Opptaksområde: ", opptaksomrader_HF$NAVN_HF, " / Befolkning: ", prettyNum(opptaksomrader_HF$PERSONER, big.mark = " ", scientific = FALSE))) %>%
+#   leaflet::addLegend("bottomright", pal = pal_HF, values = as.factor(opptaksomrader_HF$NAVN_HF), opacity = 1)
 
-# Lagrer filen
-# htmlwidgets::saveWidget(opptaksomrader_HF_leaflet, file = paste0(arbeidsmappe_opptak, "opptaksomrader_SOM_HF_", aargang, ".html"), selfcontained=T)
+# # Lagrer filen
+# # htmlwidgets::saveWidget(opptaksomrader_HF_leaflet, file = paste0(arbeidsmappe_opptak, "opptaksomrader_SOM_HF_", aargang, ".html"), selfcontained=T)
 
-opptaksomrader_HF_leaflet
-    }
+# opptaksomrader_HF_leaflet
+#     }
 # -
 
 # # Lager opptaksområder for lokasjonsområder
 
-opptaksomrader_lokasjon %>%
-data.frame()
+# +
+# opptaksomrader_lokasjon %>%
+# data.frame()
 
 # +
 if (tjeneste %in% c("SOM", "DPS")){
 opptaksomrader_lokasjon <- opptaksomrader_KLASS_2_kart %>%
-  dplyr::group_by(OPPTAK_NUMMER, OPPTAK) %>%
+  dplyr::group_by(ORGNR_RHF, NAVN_RHF, ORGNR_HF, NAVN_HF, OPPTAK_NUMMER, OPPTAK) %>%
   dplyr::summarise(geometry = sf::st_union(sf::st_make_valid(geometry))) %>%
   dplyr::ungroup()
 
@@ -785,36 +791,36 @@ opptaksomrader_lokasjon_filsti <- paste0("ssb-prod-helse-speshelse-data-kilde/fe
 
 # Visualiserer kartet
 
-if (utenhav == TRUE) {
+# if (utenhav == TRUE) {
 
-ggplot() + 
-geom_sf(data = opptaksomrader_lokasjon)
+# ggplot() + 
+# geom_sf(data = opptaksomrader_lokasjon)
 
-} else {
-pal_lokasjon <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_KLASS_2_kart$OPPTAK))
+# } else {
+# pal_lokasjon <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_KLASS_2_kart$OPPTAK))
 
-opptaksomrader_lokasjon <- opptaksomrader_lokasjon %>%
-sf::st_transform(crs = 4326)
+# opptaksomrader_lokasjon <- opptaksomrader_lokasjon %>%
+# sf::st_transform(crs = 4326)
 
-opptaksomrader_lokasjon_leaflet <- leaflet::leaflet(options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
-   leaflet::addTiles() %>%
-   leaflet::addPolygons(stroke = F, data = opptaksomrader_lokasjon,
-                       # color = "green",
-                       weight = 1,
-                       fillColor = pal_lokasjon(opptaksomrader_lokasjon$OPPTAK),
-                       fillOpacity = 0.5, smoothFactor = 0.5,
-                       popup = paste0("Opptaksområde: ", opptaksomrader_lokasjon$OPPTAK, " / Befolkning: ", prettyNum(opptaksomrader_lokasjon$PERSONER, big.mark = " ", scientific = FALSE))) %>%
-  leaflet::addLegend("bottomright", pal = pal_lokasjon, values = as.factor(opptaksomrader_lokasjon$OPPTAK), opacity = 1)
+# opptaksomrader_lokasjon_leaflet <- leaflet::leaflet(options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+#    leaflet::addTiles() %>%
+#    leaflet::addPolygons(stroke = F, data = opptaksomrader_lokasjon,
+#                        # color = "green",
+#                        weight = 1,
+#                        fillColor = pal_lokasjon(opptaksomrader_lokasjon$OPPTAK),
+#                        fillOpacity = 0.5, smoothFactor = 0.5,
+#                        popup = paste0("Opptaksområde: ", opptaksomrader_lokasjon$OPPTAK, " / Befolkning: ", prettyNum(opptaksomrader_lokasjon$PERSONER, big.mark = " ", scientific = FALSE))) %>%
+#   leaflet::addLegend("bottomright", pal = pal_lokasjon, values = as.factor(opptaksomrader_lokasjon$OPPTAK), opacity = 1)
 
-# Lagrer filen
-# htmlwidgets::saveWidget(opptaksomrader_lokasjon_leaflet, file = paste0(arbeidsmappe_opptak, "opptaksomrader_SOM_lokasjon_", aargang, ".html"), selfcontained=T)
+# # Lagrer filen
+# # htmlwidgets::saveWidget(opptaksomrader_lokasjon_leaflet, file = paste0(arbeidsmappe_opptak, "opptaksomrader_SOM_lokasjon_", aargang, ".html"), selfcontained=T)
 
-opptaksomrader_lokasjon_leaflet
-    }
+# opptaksomrader_lokasjon_leaflet
+    # }
     }
 # -
 
-# ## Sjekker om befolkning stemmer med offisielle befolkninstall
+# ## Sjekker om befolkning stemmer med offisielle befolkningstall
 
 # +
 # sum(T04317$PERSONER)
@@ -832,3 +838,5 @@ opptaksomrader_lokasjon_leaflet
 end.time <- Sys.time()
 time.taken <- end.time - start.time
 time.taken
+
+
