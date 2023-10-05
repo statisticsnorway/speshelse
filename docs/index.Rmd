@@ -11,7 +11,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -19,46 +19,74 @@ knitr::opts_chunk$set(
 ```
 
 
-```{r, include=FALSE}
+```{r include=FALSE}
 
 aargang <- 2023
 
+suppressPackageStartupMessages({ 
 library(tidyverse)
+    library(sf)
+    library(sfarrow)
+    })
+
+if (grepl("onprem", Sys.getenv("JUPYTER_IMAGE_SPEC")) | Sys.getenv("JUPYTER_IMAGE_SPEC") == "") {
+    
+    arbeidsmappe <- "/ssb/stamme01/fylkhels/speshelse/felles/"
+    arbeidsmappe_kart <- paste0(arbeidsmappe, "kart/", aargang, "/")
+    arbeidsmappe_opptak <- paste0(arbeidsmappe, "opptaksomrader/", aargang, "/")
+    }
 
 # SOM
-opptaksomrader_SOM_RHF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_RHF_flate_", aargang, ".parquet")) %>%
+opptaksomrader_SOM_RHF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_SOM_RHF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_SOM_HF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_HF_flate_", aargang, ".parquet")) %>%
+opptaksomrader_SOM_HF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_SOM_HF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_SOM_lokasjon <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_SOM_lokasjon_flate_", aargang, ".parquet")) %>%
+opptaksomrader_SOM_lokasjon <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_SOM_lokasjon_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
+  
+ # Akuttmottak
+akuttmottak <- klassR::GetKlass(683, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
+  dplyr::rename(region = code1,
+                orgnummer_RHF = code2,
+                RHF = name2,
+                HF = name3,
+                orgnummer_HF = code3,
+                Akuttmottak = name4,
+                ID = code4,
+                adresse = name5,
+                postnummer = code5,
+                lon = code6, 
+                lat = name6) %>%
+  dplyr::mutate(lon = gsub(",", ".", lon), 
+                lat = gsub(",", ".", lat)) %>%
+  sf::st_as_sf(coords = c("lon", "lat"), crs = 25833) %>%
+  sf::st_transform(crs = 4326)
 
 # PHV
-opptaksomrader_PHV_RHF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_PHV_RHF_flate_", aargang, ".parquet")) %>%
+opptaksomrader_PHV_RHF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_PHV_RHF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_PHV_HF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_PHV_HF_flate_", aargang, ".parquet")) %>%
+opptaksomrader_PHV_HF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_PHV_HF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
 # TSB
-opptaksomrader_TSB_RHF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_TSB_RHF_flate_", aargang, ".parquet")) %>%
+opptaksomrader_TSB_RHF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_TSB_RHF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_TSB_HF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_TSB_HF_flate_", aargang, ".parquet")) %>%
+opptaksomrader_TSB_HF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_TSB_HF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
 # DPS
-opptaksomrader_DPS_RHF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_RHF_flate_", aargang, ".parquet")) %>%
+opptaksomrader_DPS_RHF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_DPS_RHF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_DPS_HF <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_HF_flate_", aargang, ".parquet")) %>%
+opptaksomrader_DPS_HF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_DPS_HF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_DPS_DPS <- sfarrow::st_read_parquet(paste0("C:/Users/rdn/Documents/Kart/Opptaksomrade HF/opptaksomrader_DPS_DPS_flate_", aargang, ".parquet")) %>%
+opptaksomrader_DPS_DPS <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_DPS_lokasjon_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
-
 ```
 
 ## Opptaksområder for spesialisthelsetjenesten (somatikk) 
@@ -67,7 +95,7 @@ Kartene nedenfor er laget med utgangspunkt i [Kodeliste for opptaksområder i sp
 
 ### RHF-enes opptaksområder
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 ssb_farger <- klassR::GetKlass(614, output_style = "wide") %>%
   dplyr::rename(farge_nummer = code3, 
                 HEX = name3, 
@@ -93,7 +121,7 @@ opptaksomrader_SOM_RHF_leaflet
 
 ### HF-enes opptaksområder
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 ## Helseforetakenes opptaksområder
 
 pal_HF <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_SOM_HF$NAVN_HF))
@@ -118,7 +146,7 @@ opptaksomrader_SOM_HF_leaflet
 
 ### Lokalsykehusenes opptaksområder
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 pal_lokasjon <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_SOM_lokasjon$OPPTAK))
 
 opptaksomrader_SOM_lokasjon_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
@@ -137,13 +165,37 @@ opptaksomrader_SOM_lokasjon_leaflet
 #   leaflet::addLegend("bottomright", pal = pal_lokasjon, values = as.factor(opptaksomrader_SOM_lokasjon$OPPTAK), opacity = 1)
 ```
 
+### Akuttmottak
+
+Listen over akuttmottak er hentet fra [Kodeliste for akuttmottak](https://www.ssb.no/klass/klassifikasjoner/683).
+
+```{r echo=FALSE}
+icons_akuttmottak <- leaflet::makeAwesomeIcon(text = fontawesome::fa("hospital"), # truck-medical
+                                                iconColor = "red",
+                                                markerColor = "white")
+
+opptaksomrader_SOM_akutt_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(stroke = F, data = opptaksomrader_SOM_lokasjon,
+                       weight = 1,
+                       fillColor = pal_lokasjon(opptaksomrader_SOM_lokasjon$OPPTAK),
+                       fillOpacity = 0.5, smoothFactor = 0.5,
+                       popup = paste0("Opptaksområde: ", opptaksomrader_SOM_lokasjon$OPPTAK, " / Befolkning: ", prettyNum(opptaksomrader_SOM_lokasjon$PERSONER, big.mark = " ", scientific = FALSE))) %>%
+  leaflet::addAwesomeMarkers(data = akuttmottak$geometry,
+                      popup = paste0("Akuttmottak: ", akuttmottak$Akuttmottak, " (", akuttmottak$HF, ")"), 
+                      icon = icons_akuttmottak)
+
+opptaksomrader_SOM_akutt_leaflet
+```
+
+
 ## Opptaksområder for spesialisthelsetjenesten (psykisk helsevern) 
 
 Kartene nedenfor er laget med utgangspunkt i [Kodeliste for opptaksområder i spesialisthelsetjenesten (psykisk helsevern)](https://www.ssb.no/klass/klassifikasjoner/630). I denne kodelisten er opptaksområdene for spesialisthelsetjenesten (innenfor psykisk helsevern) fordelt etter grunnkretser. Disse grunnkretsene blir koblet med en kartfil på grunnkretsnivå og deretter blir opptaksområdene aggregert etter ulike nivåer (RHF og HF). Befolkningsdata på grunnkretsnivå er hentet fra [statistikkbanktabell 04317](https://www.ssb.no/statbank/table/04317/) og er koblet på før aggregeringen av opptaksområdene.
 
 ### RHF-enes opptaksområder
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 opptaksomrader_PHV_RHF_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
   leaflet::addTiles() %>%
   leaflet::addPolygons(stroke = F, data = opptaksomrader_PHV_RHF,
@@ -159,7 +211,7 @@ opptaksomrader_PHV_RHF_leaflet
 
 ### HF-enes opptaksområder
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 opptaksomrader_PHV_HF_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
   leaflet::addTiles() %>%
   leaflet::addPolygons(stroke = F, data = opptaksomrader_PHV_HF,
@@ -179,7 +231,7 @@ Kartene nedenfor er laget med utgangspunkt i [Kodeliste for opptaksområder i sp
 
 ### RHF-enes opptaksområder
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 opptaksomrader_TSB_RHF_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
   leaflet::addTiles() %>%
   leaflet::addPolygons(stroke = F, data = opptaksomrader_TSB_RHF,
@@ -195,7 +247,7 @@ opptaksomrader_TSB_RHF_leaflet
 
 ### HF-enes opptaksområder
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 opptaksomrader_TSB_HF_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
   leaflet::addTiles() %>%
   leaflet::addPolygons(stroke = F, data = opptaksomrader_TSB_HF,
@@ -214,7 +266,7 @@ Kartene nedenfor er laget med utgangspunkt i [Kodeliste for opptaksområder i sp
 
 ### RHF-enes opptaksområder
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 opptaksomrader_DPS_RHF_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
   leaflet::addTiles() %>%
   leaflet::addPolygons(stroke = F, data = opptaksomrader_DPS_RHF,
@@ -229,7 +281,7 @@ opptaksomrader_DPS_RHF_leaflet
 ```
 
 ### HF-enes opptaksområder
-```{r, echo=FALSE}
+```{r echo=FALSE}
 opptaksomrader_DPS_HF_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
   leaflet::addTiles() %>%
   leaflet::addPolygons(stroke = F, data = opptaksomrader_DPS_HF,
@@ -244,7 +296,7 @@ opptaksomrader_DPS_HF_leaflet
 
 ### DPS-enes opptaksområder
 
-```{r, echo=FALSE}
+```{r echo=FALSE}
 pal_DPS <- leaflet::colorFactor(ssb_farger$HEX, domain = as.factor(opptaksomrader_DPS_DPS$OPPTAK))
 
 opptaksomrader_DPS_lokasjon_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
