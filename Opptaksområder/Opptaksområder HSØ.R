@@ -105,28 +105,52 @@ HSØ
 
 unique(opptaksomrader_SOM_HF_H12$NAVN_HF)
 
+# ## Kart per HF
+
 # +
-for (i in unique(opptaksomrader_SOM_HF_H12$NAVN_HF)){
+# for (i in unique(opptaksomrader_SOM_HF_H12$NAVN_HF)){
 
-# i <- "VESTRE VIKEN HF"
+# # i <- "VESTRE VIKEN HF"
 
+# valgt_HF <- opptaksomrader_SOM_HF_H12 %>%
+# filter(NAVN_HF == i)
+
+# VV_resten <- opptaksomrader_SOM_HF_H12 %>%
+# filter(NAVN_HF != i)
+
+# kart <- ggplot2::ggplot() + 
+# ggplot2::geom_sf(data = VV_resten, fill = "grey85", color = "white", lwd = 0.3) +
+# ggplot2::geom_sf(data = valgt_HF, fill = ssb_farger_blaa$HEX, color = "white", lwd = 0.3) +
+# ggplot2::theme_void()
+  
+# ggplot2::ggsave(kart, file=paste0("/ssb/bruker/rdn/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_HSØ_", aargang, "_", i, ".png"), 
+#        width = 10, height = 10, units = "cm")
+
+# # kart
+# # png(filename = paste0("/ssb/bruker/rdn/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_HSØ_", aargang, "_", i, ".png"), width = 2000, height = 2000)
+# # kart
+# # dev.off()
+    
+# }
+# -
+
+# ## OUS, LDS, DS og Ahus 
+
+# +
 valgt_HF <- opptaksomrader_SOM_HF_H12 %>%
-filter(NAVN_HF == i)
+filter(NAVN_HF %in% c("OSLO UNIVERSITETSSYKEHUS HF", "LOVISENBERG DIAKONALE SYKEHUS AS", "DIAKONHJEMMET SYKEHUS AS", "AKERSHUS UNIVERSITETSSYKEHUS HF"))
 
 VV_resten <- opptaksomrader_SOM_HF_H12 %>%
-filter(NAVN_HF != i)
+filter(!NAVN_HF %in% c("OSLO UNIVERSITETSSYKEHUS HF", "LOVISENBERG DIAKONALE SYKEHUS AS", "DIAKONHJEMMET SYKEHUS AS", "AKERSHUS UNIVERSITETSSYKEHUS HF"))
+
 
 kart <- ggplot2::ggplot() + 
 ggplot2::geom_sf(data = VV_resten, fill = "grey85", color = "white", lwd = 0.3) +
 ggplot2::geom_sf(data = valgt_HF, fill = ssb_farger_blaa$HEX, color = "white", lwd = 0.3) +
 ggplot2::theme_void()
-  
-ggplot2::ggsave(kart, file=paste0("/ssb/bruker/rdn/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_HSØ_", aargang, "_", i, ".png"), 
-       width = 10, height = 10, units = "cm")
 
-# kart
-# png(filename = paste0("/ssb/bruker/rdn/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_HSØ_", aargang, "_", i, ".png"), width = 2000, height = 2000)
-# kart
-# dev.off()
-    
-}
+ggplot2::ggsave(kart, file=paste0("/ssb/bruker/rdn/speshelse/Opptaksområder/images/opptaksområde_SOM_HF_HSØ_", aargang, "_OUS_LDS_DS_Ahus", ".png"), 
+       width = 10, height = 10, units = "cm")
+# -
+
+kart
