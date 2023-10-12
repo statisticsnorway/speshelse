@@ -11,7 +11,7 @@
 
 til_lagring = False
 
-aar4 = 2022
+aar4 = 2023
 aar2 = str(aar4)[-2:]
 aarfør4 = aar4-1
 aarfør2 = str(aarfør4)[-2:]
@@ -68,7 +68,7 @@ df_rhf = offhels_wide_df[['name_2', 'code_2']]
 
 df_rhf = df_rhf.drop_duplicates()
 
-df_rhf['s'] = "0X 0Y 40 41"
+df_rhf['s'] = "0X 0Y 40 41 48"
 df_rhf.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
 
 print("Antall: ", df_rhf.shape[0])
@@ -168,7 +168,7 @@ brukerliste_df.sample(10)
 # +
 dato_idag = pd.Timestamp("today").strftime("%d%m%y")
 filnavn = "Brukerliste" + "_" + str(aar4) + "_" + dato_idag + ".csv"
-sti_til_lagring = ""
+sti_til_lagring = "/ssb/stamme01/fylkhels/speshelse/felles/droplister/" + str(aar4) + "/" + str(dato_idag) + "/"
 
 if til_lagring:
     brukerliste_df.to_csv(
@@ -178,3 +178,6 @@ if til_lagring:
                       index=False
                      )
     print(f"Filen er lagret på {sti_til_lagring + filnavn}")
+# -
+
+

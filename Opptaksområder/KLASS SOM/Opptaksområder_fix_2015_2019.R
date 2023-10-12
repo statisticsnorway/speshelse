@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-aargang <- 2019
+aargang <- 2016
 
 # +
 options(repr.matrix.max.rows=600, repr.matrix.max.cols=2000)
@@ -26,6 +26,29 @@ dplyr::rename(GRUNNKRETSNUMMER = code4,
              NAVN_RHF = name1)
 
 nrow(opptaksomrader_KLASS)
+
+# +
+# grunnkrets_KLASS <- klassR::GetKlass(1, output_level = 2, date = c(paste0(aargang, "-01-01"))) %>%
+# rename(GRUNNKRETSNUMMER = code, 
+#       GRUNKKRETSNAVN = name) %>%
+# select(GRUNNKRETSNUMMER, GRUNKKRETSNAVN)
+
+# # head(grunnkrets_KLASS)
+
+# grunnkrets_KLASS_t1 <- klassR::GetKlass(1, output_level = 2, date = c(paste0(aargang-1, "-01-01"))) %>%
+# rename(GRUNNKRETSNUMMER = code, 
+#       GRUNKKRETSNAVN = name) %>%
+# select(GRUNNKRETSNUMMER, GRUNKKRETSNAVN)
+
+# head(grunnkrets_KLASS)
+
+# grunnkrets_KLASS_korrespondanse <- klassR::GetKlass(1, date = c(paste0(aargang-1, "-01-01"), paste0(aargang, "-01-01")), correspond = TRUE) %>%
+# dplyr::rename(GRUNNKRETSNUMMER_T1 = sourceCode, 
+#              GRUNNKRETSNUMMER = targetCode, 
+#              targetName = targetName)
+
+# # grunnkrets_KLASS <- grunnkrets_KLASS %>%
+# # dplyr::filter(!GRUNNKRETSNUMMER_T1 %in% c("14440104") |  !GRUNNKRETSNUMMER %in% c("14490114")) # Fjerner Kjøs fra Markane
 # -
 
 # # Fix 2015-2019
@@ -46,38 +69,17 @@ dplyr::mutate(OPPTAK_NUMMER = "S14",
     }
 
 # ### Gulen
-#
-# Gulen har blitt kategorisert under Haraldsplass sitt opptaksområde. Skal dette endres til Helse Førde? Hvilket lokalsykehus i så fall?
 
-# +
-# if (aargang %in% 2015:2019){
-# opptaksomrader_KLASS_gulen <- opptaksomrader_KLASS %>%
-# filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1411")) %>%
-# dplyr::mutate(OPPTAK_NUMMER = "S19", 
-#               OPPTAK = "Førde", 
-#               ORGNR_HF = "983974732", 
-#              NAVN_HF = "HELSE FØRDE HF", 
-#              ORGNR_RHF = "983658725", 
-#              NAVN_RHF = "HELSE VEST RHF")
-#     }
-# -
-
-# ### Eidfjord
-
-# +
-# if (aargang %in% 2015:2019){
-# opptaksomrader_KLASS_eidfjord <- opptaksomrader_KLASS %>%
-# filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("4619", "1232")) # %>%
-# # dplyr::mutate(OPPTAK_NUMMER = "", 
-# #               OPPTAK = "", 
-# #               ORGNR_HF = "", 
-# #              NAVN_HF = "", 
-# #              ORGNR_RHF = "", 
-# #              NAVN_RHF = "")
-#     }
-
-# opptaksomrader_KLASS_eidfjord
-# -
+if (aargang %in% 2015){
+opptaksomrader_KLASS_gulen <- opptaksomrader_KLASS %>%
+filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1411")) %>%
+dplyr::mutate(OPPTAK_NUMMER = "S19", 
+              OPPTAK = "Førde", 
+              ORGNR_HF = "983974732", 
+             NAVN_HF = "HELSE FØRDE HF", 
+             ORGNR_RHF = "983658725", 
+             NAVN_RHF = "HELSE VEST RHF")
+    }
 
 # ### Hornindal
 
@@ -92,7 +94,7 @@ dplyr::mutate(OPPTAK_NUMMER = "S21",
              NAVN_RHF = "HELSE VEST RHF")
 }
 
-# ## HELSE SØR_ØST RHF
+# ## HELSE SØR-ØST RHF
 
 # ### Vestby
 
@@ -100,8 +102,8 @@ dplyr::mutate(OPPTAK_NUMMER = "S21",
 if (aargang %in% 2015:2018){
 opptaksomrader_KLASS_vestby <- opptaksomrader_KLASS %>%
 filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("0211")) %>%
-dplyr::mutate(OPPTAK_NUMMER = "",  # ???
-              OPPTAK = "",  # ??? AHUS?
+dplyr::mutate(OPPTAK_NUMMER = "S36", 
+              OPPTAK = "Akershus", 
               ORGNR_HF = "983971636", 
              NAVN_HF = "AKERSHUS UNIVERSITETSSYKEHUS HF", 
              ORGNR_RHF = "991324968", 
@@ -124,26 +126,124 @@ dplyr::mutate(ORGNR_HF = "983971709",
     head(opptaksomrader_KLASS_kongsvinger)
     }
 
-# ### Nes
+# ## HELSE MIDT-NORGE RHF
+
+# ### Halsa
 
 # +
-# opptaksomrader_KLASS %>%
-# filter(substr(GRUNNKRETSNUMMER, 1, 4) == "0236") %>%
-# head()
+if (aargang %in% 2015:2019){
+opptaksomrader_KLASS_halsa <- opptaksomrader_KLASS %>%
+filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1571")) %>%
+dplyr::mutate(OPPTAK_NUMMER = "S26", 
+              OPPTAK = "Kristiansund", 
+              ORGNR_HF = "997005562", 
+             NAVN_HF = "HELSE MØRE OG ROMSDAL HF", 
+             ORGNR_RHF = "983658776", 
+             NAVN_RHF = "HELSE MIDT-NORGE RHF")
+}
+
+opptaksomrader_KLASS_halsa
+# -
+
+# ### Roan
+#
+# Helse Nord-Trøndelag for somatikk og St. Olavs for psykisk helsevern. 
 
 # +
-# if (aargang %in% 2015:2018){
-# opptaksomrader_KLASS_nes <- opptaksomrader_KLASS %>%
-# filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("0236")) %>%
-# dplyr::mutate(OPPTAK_NUMMER = "", 
-#               OPPTAK = "", 
-#               ORGNR_HF = "983971709", 
-#              NAVN_HF = "SYKEHUSET INNLANDET HF", 
-#              ORGNR_RHF = "991324968", 
-#              NAVN_RHF = "HELSE SØR-ØST RHF")
+if (aargang %in% 2015:2019){
+opptaksomrader_KLASS_roan <- opptaksomrader_KLASS %>%
+filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("5019", "1632")) %>%
+dplyr::mutate(OPPTAK_NUMMER = "S25", 
+              OPPTAK = "Namsos", 
+              ORGNR_HF = "983974791", 
+             NAVN_HF = "HELSE NORD-TRØNDELAG HF", 
+             ORGNR_RHF = "983658776", 
+             NAVN_RHF = "HELSE MIDT-NORGE RHF")
+}
 
-# opptaksomrader_KLASS_nes
-#     }
+opptaksomrader_KLASS_roan
+# -
+
+# ### Verran 
+
+# +
+if (aargang %in% 2015:2019){
+opptaksomrader_KLASS_verran <- opptaksomrader_KLASS %>%
+filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1724", "5039")) %>%
+dplyr::mutate(OPPTAK_NUMMER = "S25", 
+              OPPTAK = "Namsos", 
+              ORGNR_HF = "983974791", 
+             NAVN_HF = "HELSE NORD-TRØNDELAG HF", 
+             ORGNR_RHF = "983658776", 
+             NAVN_RHF = "HELSE MIDT-NORGE RHF")
+}
+
+# opptaksomrader_KLASS_verran
+# -
+
+# ### Osen 
+
+# +
+opptaksomrader_KLASS %>%
+filter(substr(GRUNNKRETSNUMMER, 1, 4) == "1633")
+
+opptaksomrader_KLASS %>%
+filter(substr(GRUNNKRETSNUMMER, 1, 4) == "5020")
+
+# +
+# if (aargang %in% 2015:2019){
+# opptaksomrader_KLASS_osen <- opptaksomrader_KLASS %>%
+# filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("5020")) %>%
+# dplyr::mutate(OPPTAK_NUMMER = "S25", 
+#               OPPTAK = "Namsos", 
+#               ORGNR_HF = "983974791", 
+#              NAVN_HF = "HELSE NORD-TRØNDELAG HF", 
+#              ORGNR_RHF = "983658776", 
+#              NAVN_RHF = "HELSE MIDT-NORGE RHF")
+# }
+
+# opptaksomrader_KLASS_osen
+# -
+
+# ### Leksvik 
+
+# +
+# leksvik_endring <- grunnkrets_KLASS_korrespondanse %>% # grunnkrets_KLASS_korrespondanse, grunnkrets_KLASS_t1
+# filter(substr(GRUNNKRETSNUMMER_T1, 1, 4) %in% c("1718"))
+
+# unique(leksvik_endring$GRUNNKRETSNUMMER)
+
+gamle_leksvik_2018_2019 <- c('50540500','50540501','50540502','50540503','50540504','50540505','50540506','50540507','50540508','50540509','50540510','50540600','50540601','50540602','50540603','50540604')
+# -
+
+opptaksomrader_KLASS %>%
+filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1718")) %>%
+head()
+
+# +
+if (aargang %in% 2015:2017){
+opptaksomrader_KLASS_leksvik <- opptaksomrader_KLASS %>%
+filter(substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1718")) %>%
+dplyr::mutate(OPPTAK_NUMMER = "S24", 
+              OPPTAK = "Levanger", 
+              ORGNR_HF = "983974791", 
+             NAVN_HF = "HELSE NORD-TRØNDELAG HF", 
+             ORGNR_RHF = "983658776", 
+             NAVN_RHF = "HELSE MIDT-NORGE RHF")
+}
+
+if (aargang %in% 2018:2019){
+opptaksomrader_KLASS_leksvik <- opptaksomrader_KLASS %>%
+filter(GRUNNKRETSNUMMER %in% gamle_leksvik_2018_2019) %>%
+dplyr::mutate(OPPTAK_NUMMER = "S24", 
+              OPPTAK = "Levanger", 
+              ORGNR_HF = "983974791", 
+             NAVN_HF = "HELSE NORD-TRØNDELAG HF", 
+             ORGNR_RHF = "983658776", 
+             NAVN_RHF = "HELSE MIDT-NORGE RHF")
+}
+
+opptaksomrader_KLASS_leksvik
 # -
 
 # ## Lager fil med fix
@@ -151,21 +251,69 @@ dplyr::mutate(ORGNR_HF = "983971709",
 # +
 if (aargang %in% 2019){
 opptaksomrader_KLASS_uten_fix <- opptaksomrader_KLASS %>%
-filter(!substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1231", "1444", "4619", "1232"))
+filter(!substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1231", # Ullensvang
+                                              "1444", # Hornindal
+                                              "1571", # Halsa  
+                                              "5019", "1632", # Roan
+                                              "1724", "5039")) %>% # Verran
+    filter(!GRUNNKRETSNUMMER %in% gamle_leksvik_2018_2019)
 
-opptaksomrader_KLASS_med_fix <- rbind(opptaksomrader_KLASS_uten_fix, opptaksomrader_KLASS_ullensvang, opptaksomrader_KLASS_hornindal)
+opptaksomrader_KLASS_med_fix <- rbind(opptaksomrader_KLASS_uten_fix, opptaksomrader_KLASS_ullensvang, opptaksomrader_KLASS_hornindal, opptaksomrader_KLASS_halsa, 
+                                      opptaksomrader_KLASS_roan, opptaksomrader_KLASS_verran, opptaksomrader_KLASS_leksvik)
 nrow(opptaksomrader_KLASS)-nrow(opptaksomrader_KLASS_med_fix)
     }
 
-if (aargang %in% 2015:2018){
+if (aargang %in% 2018){
 opptaksomrader_KLASS_uten_fix <- opptaksomrader_KLASS %>%
-filter(!substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1231", "1444", "0211", "4619", "1232"), # Legg til flere?
-      OPPTAK != "Kongsvinger") 
+filter(!substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1231", # Ullensvang
+                                              "1444", # Hornindal
+                                              "1571", # Halsa  
+                                              "0211", # Vestby
+                                              "5019", "1632", # Roan
+                                              "1724", "5039")) %>% # Verran
+    filter(OPPTAK != "Kongsvinger", !GRUNNKRETSNUMMER %in% gamle_leksvik_2018_2019)
 
-opptaksomrader_KLASS_med_fix <- rbind(opptaksomrader_KLASS_uten_fix, opptaksomrader_KLASS_ullensvang, opptaksomrader_KLASS_hornindal, 
-                                     opptaksomrader_KLASS_kongsvinger, opptaksomrader_KLASS_vestby) # Legg til flere
+opptaksomrader_KLASS_med_fix <- rbind(opptaksomrader_KLASS_uten_fix, opptaksomrader_KLASS_ullensvang, opptaksomrader_KLASS_hornindal, opptaksomrader_KLASS_halsa, 
+                                      opptaksomrader_KLASS_roan, opptaksomrader_KLASS_verran, opptaksomrader_KLASS_vestby, opptaksomrader_KLASS_kongsvinger, opptaksomrader_KLASS_leksvik)
 nrow(opptaksomrader_KLASS)-nrow(opptaksomrader_KLASS_med_fix)
     }
+
+if (aargang %in% 2016:2017){
+opptaksomrader_KLASS_uten_fix <- opptaksomrader_KLASS %>%
+filter(!substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1231", # Ullensvang
+                                              "1444", # Hornindal
+                                              "1571", # Halsa  
+                                              "0211", # Vestby
+                                              "1718", # Leksvik
+                                              "5019", "1632", # Roan
+                                              "1724", "5039")) %>% # Verran
+    filter(OPPTAK != "Kongsvinger")
+
+opptaksomrader_KLASS_med_fix <- rbind(opptaksomrader_KLASS_uten_fix, opptaksomrader_KLASS_ullensvang, opptaksomrader_KLASS_hornindal, opptaksomrader_KLASS_halsa, opptaksomrader_KLASS_vestby,
+                                      opptaksomrader_KLASS_leksvik, opptaksomrader_KLASS_roan, opptaksomrader_KLASS_verran, opptaksomrader_KLASS_kongsvinger)
+nrow(opptaksomrader_KLASS)-nrow(opptaksomrader_KLASS_med_fix)
+    }
+
+if (aargang %in% 2015){
+opptaksomrader_KLASS_uten_fix <- opptaksomrader_KLASS %>%
+filter(!substr(GRUNNKRETSNUMMER, 1, 4) %in% c("1231", # Ullensvang
+                                              "1444", # Hornindal
+                                              "1571", # Halsa  
+                                              "0211", # Vestby
+                                              "1718", # Leksvik
+                                              "1411", # Gulen
+                                              "5019", "1632", # Roan
+                                              "1724", "5039")) %>% # Verran
+    filter(OPPTAK != "Kongsvinger")
+
+opptaksomrader_KLASS_med_fix <- rbind(opptaksomrader_KLASS_uten_fix, opptaksomrader_KLASS_ullensvang, opptaksomrader_KLASS_hornindal, opptaksomrader_KLASS_halsa, 
+                                      opptaksomrader_KLASS_roan, opptaksomrader_KLASS_verran, opptaksomrader_KLASS_leksvik, opptaksomrader_KLASS_vestby, opptaksomrader_KLASS_gulen,
+                                      opptaksomrader_KLASS_kongsvinger)
+nrow(opptaksomrader_KLASS)-nrow(opptaksomrader_KLASS_med_fix)
+    }
+# -
+
+# ## Lager KLASS-fil
 
 # +
 test <- opptaksomrader_KLASS_med_fix %>%
@@ -204,6 +352,23 @@ level_4 <- test %>%
 opptaksomrader_KLASS_med_fix_KLASS <- rbind(level_1, level_2, level_3, level_4)
 # -
 
-opptaksomrader_KLASS_med_fix_KLASS
+head(opptaksomrader_KLASS_med_fix_KLASS)
 
+openxlsx::write.xlsx(opptaksomrader_KLASS_med_fix_KLASS, file = paste0("/home/rdn/speshelse/Opptaksområder/KLASS SOM/SOM_opptak_", aargang, ".xlsx"),
+                     rowNames = FALSE,
+                     showNA = FALSE,
+                     overwrite=T) # T = overskriver dersom filen allerede finnes, F = gir feilmelding dersom filen finnes
 
+# +
+test_2016 <- readxl::read_excel(paste0("/home/rdn/speshelse/Opptaksområder/KLASS SOM/SOM_opptak_", aargang, ".xlsx"))
+
+test_2016 %>%
+mutate(test = nchar('ns1:kode')) %>%
+filter(test == 7)
+
+# -
+
+openxlsx::write.xlsx(opptaksomrader_KLASS_med_fix_KLASS, file = ,
+                     rowNames = FALSE,
+                     showNA = FALSE,
+                     overwrite=T) # T = overskriver dersom filen allerede finnes, F = gir feilmelding dersom filen finnes
