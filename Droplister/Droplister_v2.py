@@ -128,24 +128,22 @@ HF = klass_offentlige_helseforetak.pivot_level()
 HF = (
     HF.rename(columns={
         'code_1': 'HELSEREGION',
-        'name_2': 'RHF',
         'code_3': 'ORGNR_FORETAK',
         'name_3': 'NAVN_KLASS'
     }
              )
-    [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION', 'RHF']]
+    [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
 )
 # -
 
-RHF_kode_klass = klass_offentlige_helseforetak.pivot_level()
-RHF_kode_klass = (
-    RHF_kode_klass[['code_1', 'name_2', 'code_2']]
+RHF = klass_offentlige_helseforetak.pivot_level()
+RHF = (
+    RHF[['code_1', 'name_2', 'code_2']]
     .drop_duplicates()
     .rename(columns={'code_1': 'HELSEREGION',
                      'name_2': 'NAVN_KLASS',
                      'code_2': 'ORGNR_FORETAK'})
 )
-RHF_kode_klass['RHF'] = RHF_kode_klass['NAVN_KLASS']
 
 # + [markdown] toc-hr-collapsed=true
 # ### Private helseinstitusjoner med oppdrags- og bestillerdokument
@@ -164,7 +162,6 @@ phob = (
              )
     [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
 )
-phob['RHF'] = None
 # -
 
 # ### Regionale og felleseide støtteforetak i spesialisthelsetjenesten
@@ -176,12 +173,11 @@ rfss = klass_rfss.pivot_level()
 rfss = (
     rfss.rename(columns={
         'code_1': 'HELSEREGION',
-        'name_2': 'RHF',
         'code_3': 'ORGNR_FORETAK',
         'name_3': 'NAVN_KLASS'
     }
              )
-    [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION', 'RHF']]
+    [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
 )
 
 rfss2 = (
@@ -193,10 +189,9 @@ rfss2 = (
         'code': 'ORGNR_FORETAK',
         'parentCode': 'HELSEREGION',
         'name': 'NAVN_KLASS'
-    }
-            )
+        }
+    )
 )
-rfss2['RHF'] = "FELLESEIDE STØTTEFORETAK"
 
 rfss3 = (
     get_classification(605)
@@ -207,22 +202,21 @@ rfss3 = (
         'code': 'ORGNR_FORETAK',
         'parentCode': 'HELSEREGION',
         'name': 'NAVN_KLASS'
-    }
-            )
+        }
+    )
 )
-rfss3['RHF'] = None
-
-rfss3
 
 rfss_region = klass_rfss.data.copy()
 
-rfss_region = rfss_region[rfss_region['level'] == '1'][['code', 'name']].rename(columns={'code': 'HELSEREGION', 'name': 'RHF'})
-
-rapporteringsenheter = pd.concat(
-    [HF, RHF, RHF_kode_klass, rfss, rfss2, rfss3]
+rfss_region = (
+    rfss_region[rfss_region['level'] == '1'][['code', 'name']]
+        .rename(columns={'code': 'HELSEREGION', 'name': 'RHF'}
+        )
 )
 
-rapporteringsenheter = rapporteringsenheter.drop(columns=['RHF'])
+rapporteringsenheter = pd.concat(
+    [HF, RHF, phob, rfss, rfss2, rfss3]
+)
 
 rapporteringsenheter = pd.merge(rapporteringsenheter,
                                 rfss_region,
@@ -230,14 +224,12 @@ rapporteringsenheter = pd.merge(rapporteringsenheter,
                                 on='HELSEREGION'
                                 )
 
-# ### Limer sammen all data fra KLASS
-
-alle_foretak_virk = pd.concat([offhelse_df, privhelse_df, regfel_df])
-alle_foretak_virk = alle_foretak_virk[["code", "parentCode", "level", "name"]]
+rapporteringsenheter = rapporteringsenheter[~rapporteringsenheter.duplicated()]
+regionoppslag = rapporteringsenheter[rapporteringsenheter['NAVN_KLASS'].str.endswith("RHF")].copy()[['HELSEREGION', 'RHF']]
 
 # ## VOF: liste over alle helseforetak
 
-rapporteringsenheter_uten_RHF = rapporteringsenheter.query('~NAVN_KLASS.str.endswith("RHF")',engine="python")
+rapporteringsenheter_uten_RHF = rapporteringsenheter[~rapporteringsenheter['NAVN_KLASS'].str.endswith("RHF")]
 
 r_orgnr = rapporteringsenheter_uten_RHF.ORGNR_FORETAK.to_numpy()
 
@@ -277,20 +269,18 @@ vof_bdr = pd.read_sql_query(sporring_bed, conn)
 vof_for = vof_for.rename(columns={'NAVN': 'NAVN_FORETAK'})
 vof_for = vof_for.rename(columns={'ORGNR': 'ORGNR_FORETAK'})
 
-vof_bdr = vof_bdr.rename(columns = {'ORGNR':'ORGNR_BEDRIFT'})
+vof_bdr = vof_bdr.rename(columns = {'ORGNR': 'ORGNR_BEDRIFT'})
 vof_bdr['KARAKTERISTIKK'] = vof_bdr['KARAKTERISTIKK'].fillna("")
 vof_bdr['NAVN_BEDRIFT'] = vof_bdr['NAVN'] + " " + vof_bdr['KARAKTERISTIKK']
 
 vof_bdr=vof_bdr.drop(columns=['NAVN', 'KARAKTERISTIKK'])
 
-vof = pd.merge(vof_bdr,vof_for, how='left', on='FORETAKS_NR')
+vof = pd.merge(vof_bdr, vof_for, how='left', on='FORETAKS_NR')
 vof = vof.drop(columns=['FORETAKS_NR'])
 
 rapporteringsenheter['ORGNR_FORETAK'] = rapporteringsenheter['ORGNR_FORETAK'].apply(str)
 rapporteringsenheter_vof = pd.merge(vof,rapporteringsenheter, how='left', on='ORGNR_FORETAK')
 # -
-
-rapporteringsenheter_vof.info()
 
 # ## Dynarev
 
@@ -340,12 +330,10 @@ skjemadata48  = hent_data_delreg24x_og_19377x(siste_to_siffer_aar_for, 'HELSE48'
 # # Setter sammen master-SFU-fil med all nødvendig informasjon
 
 # SFU: orgnummer, orgnummer_foretak, foretaksnavn, helseregionnavn, helseregionsnummer
-# "alle virksomhetene til speshelse ligger i 2421"
-#
 
-# +
 SFUklass = pd.merge(SFU_data, rapporteringsenheter, how="left", on="ORGNR_FORETAK")
 
+# +
 SFUklass['HELSEREGION'] = SFUklass['HELSEREGION'].fillna("06")
 
 SFUklass['SKJEMA_TYPE'] = SFUklass['SKJEMA_TYPE'].apply(lambda x: str(x).split(" "))
@@ -358,6 +346,7 @@ SFUklass['NAVN'] = SFUklass['NAVN1'] + " " +\
                    SFUklass['NAVN3'] + " " +\
                    SFUklass['NAVN4'] + " " +\
                    SFUklass['NAVN5']
+
 SFUklass['NAVN'] = SFUklass['NAVN'].apply(lambda x: ' '.join(x.split()))
 
 # # Lager droplister
@@ -371,15 +360,8 @@ skjemaer_til_droplister = ["skj0X", "skj0Y", "skj38O", "skj38P", "skj39", "skj40
 
 # Funksjon som returnerer en tabell med alle rader som inneholder et gitt skjema:
 
-# eks:
-# tabell_som_inneholder_skjema(SFUklass, 'SKJEMA_TYPE', "0X")
 def tabell_som_inneholder_skjema(df, kol, skjemanavn):
-    ant = df.shape[0]
-    rader_med_skjemanavn = []
-    for i in range(ant):
-        if skjemanavn in df[kol].iloc[i]:
-            rader_med_skjemanavn.append(i)
-    return df.iloc[rader_med_skjemanavn]
+    return df[df[kol].apply(lambda x: skjemanavn in x)]
 
 
 # + [markdown] toc-hr-collapsed=true
@@ -392,7 +374,7 @@ def tabell_som_inneholder_skjema(df, kol, skjemanavn):
 # kolonner som skal være med i droplisten:
 kolonner0X0Y404148 = ["USERID", "REGION_NR", "REGION_NAVN", "FORETAK_ORGNR", "FORETAK_NAVN"]
 
-skj0X = tabell_som_inneholder_skjema(SFUklass, 'SKJEMA_TYPE', "0X")
+skj0X = tabell_som_inneholder_skjema(SFUklass, 'SKJEMA_TYPE', '0X')
 skj0X = skj0X.rename(columns = {'NAVN1':'FORETAK_NAVN',
                                 'ORGNR':'USERID',
                                 'HELSEREGION':'REGION_NR',
@@ -430,21 +412,26 @@ skj40 = skj40[kolonner0X0Y404148].sort_values('REGION_NR')
 
 # ### skj41 (Private spesialister med driftsavtale)
 
-skj41 = RHF_kode_klass.copy()
+skj41 = rapporteringsenheter[rapporteringsenheter['NAVN_KLASS'].str.endswith("RHF")].copy()
+
 skj41 = skj41.rename(columns = {'HELSEREGION': 'REGION_NR',
+                                'NAVN_KLASS': 'FORETAK_NAVN',
                                 'RHF': 'REGION_NAVN',
                                 'ORGNR_FORETAK': 'FORETAK_ORGNR'})
 skj41['USERID'] = skj41['FORETAK_ORGNR']
-skj41['FORETAK_NAVN'] = skj41['REGION_NAVN']
+# skj41['FORETAK_NAVN'] = skj41['REGION_NAVN']
 skj41 = skj41[kolonner0X0Y404148]
 
 # ### skj48 (Praksiskonsulentordningen)
 
-# +
 skj48 = tabell_som_inneholder_skjema(SFUklass, 'SKJEMA_TYPE', "48").copy()
 skj48 = skj48[["NAVN_KLASS", "ORGNR_FORETAK", "HELSEREGION"]]
-skj48 = pd.merge(skj48, RHF_kode_klass[['HELSEREGION', 'RHF']], how="left", on="HELSEREGION")
+
 skj48 = pd.concat([skj48, HF])
+
+skj48 = pd.merge(skj48, regionoppslag, how="left", on="HELSEREGION")
+
+# +
 skj48 = skj48.rename(columns={"NAVN_KLASS": "FORETAK_NAVN",
                               "ORGNR_FORETAK": "FORETAK_ORGNR",
                               "HELSEREGION": "REGION_NR",
@@ -472,16 +459,30 @@ def lag_navn_orgnr_kolonnenavn(ant_kolonner):
 # Denne funksjonen tar inn en dataframe med undervirksomheter som hører til et foretaksnummer og antall kolonner som skal være med i droplisten. Undervirksomhetene legges etterhverandre med riktig korrespondanse mellom navn- og orgnr-kolonner.
 
 def lag_navn_orgnr_kolonner(fvdf, ant_kolonner, med_foretak = True):
-    foretak_rader = fvdf.ORGNR_FORETAK.value_counts().index.to_numpy()              # tar ut unike foretaksnummer i en liste
+    """
+    Denne funksjonen tar en pandas DataFrame (fvdf) som inneholder informasjon om organisasjoner og deres foretaksnummer (ORGNR_FORETAK).
+    Den oppretter en ny DataFrame der hver unike organisasjon har en egen kolonne for organisasjonsnummer (ORGNR) og navn (NAVN).
 
-    foretak_org_df = -1
+    Parametere:
+    - fvdf (pandas DataFrame): Inndataframe som inneholder organisasjonsdata.
+    - ant_kolonner (int): Antall kolonner i den resulterende DataFrame for hver organisasjon.
+    - med_foretak (bool, valgfritt): En boolsk verdi som angir om kolonnene for organisasjonsnummer og navn skal inkluderes.
+      Hvis False, ekskluderes organisasjonsnummer i kolonner hvis de samsvarer med ORGNR_FORETAK.
+
+    Returnerer:
+    - En ny DataFrame der hver unike organisasjon har en kolonne for ORGNR og NAVN. Kolonnene kan være tomme (NaN) hvis det ikke er nok data.
+    - DataFramen er transponert for å ha organisasjoner som indekser i stedet for kolonner.
+    """
+    foretak_rader = fvdf['ORGNR_FORETAK'].unique()
+
+    foretak_org_df = None
     for nr in foretak_rader:                                                        # blar gjennom listen og lager kolonner til hvert foretak
         if med_foretak:
             orgnr_df = fvdf.query(f'ORGNR_FORETAK  == "{nr}"')['ORGNR']
             navn_df = fvdf.query(f'ORGNR_FORETAK  == "{nr}"')['NAVN']
         else:
             orgnr_df = fvdf.query(f'ORGNR_FORETAK  == "{nr}" and ORGNR != "{nr}"')['ORGNR']
-            navn_df = fvdf.query(f'ORGNR_FORETAK  == "{nr}" and ORGNR != "{nr}"')['NAVN']    
+            navn_df = fvdf.query(f'ORGNR_FORETAK  == "{nr}" and ORGNR != "{nr}"')['NAVN']
 
         ant_virksomheter = orgnr_df.shape[0]
         tom_df = pd.Series(np.nan, index=range(ant_kolonner-ant_virksomheter))
@@ -496,7 +497,7 @@ def lag_navn_orgnr_kolonner(fvdf, ant_kolonner, med_foretak = True):
         foretak_df = pd.concat([orgnr_df, navn_df], axis=0)
         foretak_df['ORGNR_FORETAK'] = nr
 
-        if type(foretak_org_df) == int:                                             # limer sammen hvert foretak med nye kolonner til en stor tabell
+        if foretak_org_df is None:                                             # limer sammen hvert foretak med nye kolonner til en stor tabell
             foretak_org_df = foretak_df
         else:
             foretak_org_df = pd.concat([foretak_org_df, foretak_df], axis = 1)
@@ -525,12 +526,11 @@ onskede_kolonner = ["USERID", "HELSEREGION", "HELSEREGION_NAVN",
                     "D_PLAS_FJOR"] + orgnr_virk + navn_virk
 # -
 
-# Henter data fra SFU med næringskode ("86.106") og statuskode ("B")
-# Næringskode i kolonne SN07_1
+# Henter data fra SFU med næringskode ("86.106") og statuskode ("B"). Næringskode i kolonne SN07_1
 
 skj38O['tmp_bool'] = True
 
-finne_virksomheter_df = pd.merge(SFUklass, skj38O, how="left", on=["ORGNR_FORETAK", "RHF", "NAVN_KLASS", "HELSEREGION"])
+finne_virksomheter_df = pd.merge(SFUklass, skj38O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"])
 finne_virksomheter_df = finne_virksomheter_df.query('tmp_bool == True and SN07_1 == "86.106" and STATUS == "B"')
 finne_virksomheter_df = finne_virksomheter_df[['ORGNR','ORGNR_FORETAK','NAVN']]
 
@@ -541,13 +541,15 @@ skj38O = pd.merge(skj38O, undervirksomheter_navn_og_kolonner, how="left", on="OR
 
 skj38O['USERID'] = skj38O['ORGNR_FORETAK']
 skj38O = skj38O.rename(columns={"ORGNR_FORETAK": "FORETAKETS_ORGNR",
-                                "NAVN_KLASS": "FORETAKETS_NAVN",
-                                "RHF": "HELSEREGION_NAVN"})
+                                "NAVN_KLASS": "FORETAKETS_NAVN"
+                                })
 
 skj38O = pd.merge(skj38O, d_plass_fjor, how="left", on="FORETAKETS_ORGNR")
+# -
+
+skj38O = pd.merge(skj38O, regionoppslag, how="left", on="HELSEREGION").rename(columns={'RHF': 'HELSEREGION_NAVN'})
 
 skj38O = skj38O[onskede_kolonner]
-# -
 
 # ### skj44O (Psykisk helsevern for voksne PHFV)
 
@@ -575,7 +577,7 @@ onskede_kolonner = ["USERID", "HELSEREGION", "HELSEREGION_NAVN",
 
 skj44O['tmp_bool'] = True
 
-finne_virksomheter_df = pd.merge(SFUklass, skj44O, how="left", on=["ORGNR_FORETAK", "RHF", "NAVN_KLASS", "HELSEREGION"])
+finne_virksomheter_df = pd.merge(SFUklass, skj44O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"])
 finne_virksomheter_df = finne_virksomheter_df.query('tmp_bool == True and SN07_1 == "86.104" and STATUS == "B"')
 finne_virksomheter_df = finne_virksomheter_df[['ORGNR','ORGNR_FORETAK','NAVN']]
 
@@ -587,13 +589,14 @@ skj44O = pd.merge(skj44O, undervirksomheter_navn_og_kolonner, how="left", on="OR
 skj44O['USERID'] = skj44O['ORGNR_FORETAK']
 skj44O['USERID'] = skj44O['ORGNR_FORETAK']
 skj44O = skj44O.rename(columns={"ORGNR_FORETAK": "FORETAKETS_ORGNR",
-                                "NAVN_KLASS": "FORETAKETS_NAVN",
-                                "RHF": "HELSEREGION_NAVN"})
+                                "NAVN_KLASS": "FORETAKETS_NAVN"})
 
 skj44O = pd.merge(skj44O, d_plass_fjor, how="left", on="FORETAKETS_ORGNR")
+# -
+
+skj44O = pd.merge(skj44O, regionoppslag, how="left", on="HELSEREGION").rename(columns={'RHF': 'HELSEREGION_NAVN'})
 
 skj44O = skj44O[onskede_kolonner]
-# -
 
 # ### skj45O (Psykisk helsevern for barn og unge (PHBU/BUP), offentlige helseforetak)
 
@@ -617,7 +620,7 @@ onskede_kolonner = ["USERID", "HELSEREGION", "HELSEREGION_NAVN",
 
 skj45O['tmp_bool'] = True
 
-finne_virksomheter_df = pd.merge(SFUklass, skj45O, how="left", on=["ORGNR_FORETAK", "RHF", "NAVN_KLASS", "HELSEREGION"])
+finne_virksomheter_df = pd.merge(SFUklass, skj45O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"])
 finne_virksomheter_df = finne_virksomheter_df.query('tmp_bool == True and SN07_1 == "86.105" and STATUS == "B"')
 finne_virksomheter_df = finne_virksomheter_df[['ORGNR','ORGNR_FORETAK','NAVN']]
 
@@ -626,12 +629,13 @@ undervirksomheter_navn_og_kolonner = lag_navn_orgnr_kolonner(finne_virksomheter_
 skj45O = pd.merge(skj45O, undervirksomheter_navn_og_kolonner, how="left", on="ORGNR_FORETAK")
 
 skj45O['USERID'] = skj45O['ORGNR_FORETAK']
-skj45O['USERID'] = skj45O['ORGNR_FORETAK']
 skj45O = skj45O.rename(columns={"ORGNR_FORETAK": "FORETAKETS_ORGNR",
                                 "NAVN_KLASS": "FORETAKETS_NAVN",
                                 "RHF": "HELSEREGION_NAVN"})
 
 skj45O = pd.merge(skj45O, d_plass_fjor, how="left", on="FORETAKETS_ORGNR")
+
+skj45O = pd.merge(skj45O, regionoppslag, how="left", on="HELSEREGION").rename(columns={'RHF': 'HELSEREGION_NAVN'})
 
 skj45O = skj45O[onskede_kolonner]
 
@@ -663,7 +667,7 @@ kolonner = ["USERID", "HELSEREGION", "HELSEREGION_NAVN",
 # +
 skj46O['tmp_bool'] = True
 
-finne_virksomheter_df = pd.merge(SFUklass, skj46O, how="left", on=["ORGNR_FORETAK", "RHF", "NAVN_KLASS", "HELSEREGION"])
+finne_virksomheter_df = pd.merge(SFUklass, skj46O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"])
 finne_virksomheter_df = finne_virksomheter_df.query('tmp_bool == True and SN07_1 in ["86.101", "86.102", "86.103","86.107",]')
 
 finne_virksomheter_df = finne_virksomheter_df[['ORGNR','ORGNR_FORETAK','NAVN', 'NAVN_KLASS']]
@@ -677,7 +681,7 @@ finne_virksomheter_df = finne_virksomheter_df.groupby(["ORGNR_FORETAK", "NAVN_KL
 finne_virksomheter_df = finne_virksomheter_df.rename(columns={"NAVN_KLASS": "FORETAKETS_NAVN"})
 
 # +
-finne_virksomheter_df2 = pd.merge(SFUklass, skj46O, how="left", on=["ORGNR_FORETAK", "RHF", "NAVN_KLASS", "HELSEREGION"])
+finne_virksomheter_df2 = pd.merge(SFUklass, skj46O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"])
 finne_virksomheter_df2 = finne_virksomheter_df2.query('tmp_bool == True and SN07_1 in ["86.101", "86.102", "86.103","86.107",]')
 
 finne_virksomheter_df2 = finne_virksomheter_df2[['ORGNR','ORGNR_FORETAK','NAVN', 'NAVN_KLASS']]
@@ -691,9 +695,10 @@ skj46O = pd.merge(skj46O, finne_virksomheter_df, how="left", on="ORGNR_FORETAK")
 
 skj46O['USERID'] = skj46O['ORGNR_FORETAK']
 skj46O = skj46O.rename(columns={"ORGNR_FORETAK": "FORETAKETS_ORGNR",
-                                "NAVN_KLASS": "FORETAKETS_NAVN",
-                                "RHF": "HELSEREGION_NAVN"})
+                                "NAVN_KLASS": "FORETAKETS_NAVN"})
 # -
+
+skj46O = pd.merge(skj46O, regionoppslag, how="left", on="HELSEREGION").rename(columns={'RHF': 'HELSEREGION_NAVN'})
 
 skj46O = skj46O[kolonner]
 
@@ -732,17 +737,17 @@ def instlist_med_riktig_antall_n(finst_orgnr_df):
     
     # mellomsteg for å legge institusjonene horisontalt ved siden av rapporteringsnummeret
     # itererer over alle unike rapporteringsnummer
-    tmpdf = -1
+    tmpdf = None
     for finst_orgnr in rapporterer_ikke_til_annen_v.ORGNR.unique():
         instliste = "\\n".join(rapporterer_til_annen_v.query(f'FINST_ORGNR=="{finst_orgnr}"').orgnr_navn)
         if len(instliste) > 0:
-            if type(tmpdf) == int:
+            if tmpdf is None:
                 tmpdf = pd.DataFrame([finst_orgnr, instliste])
             else:
                 nytt_tillegg = pd.DataFrame([finst_orgnr, instliste])
                 tmpdf = pd.concat([tmpdf, nytt_tillegg], axis=1)
     
-    if type(tmpdf) != int:
+    if tmpdf is not None:
         tmpdf = tmpdf.transpose()
         tmpdf.columns = ['FINST_ORGNR', 'INSTLISTE_HALE']   
     
@@ -761,12 +766,12 @@ def legg_paa_hale_med_n(df):
 
 
 kolonner_i_alle_private = ['USERID',
-                            'REGION_NR',
-                            'REGION_NAVN',
-                            'FORETAK_ORGNR',
-                            'FORETAK_NAVN',
-                            'FINST_ORGNR',
-                            'FINST_NAVN']
+                           'REGION_NR',
+                           'REGION_NAVN',
+                           'FORETAK_ORGNR',
+                           'FORETAK_NAVN',
+                           'FINST_ORGNR',
+                           'FINST_NAVN']
 
 # ### skj38P (TSB for private helseforetak)
 
@@ -780,23 +785,22 @@ kolonner = kolonner_i_alle_private +\
             ['INSTLIST']
 
 skj38P = tabell_som_inneholder_skjema(SFUklass, 'SKJEMA_TYPE', "381").copy()
-skj38P = skj38P.rename(columns = {"ORGNR_FORETAK": "FORETAK_ORGNR",
-                                   "NAVN": "FINST_NAVN",
-                                   'ORGNR':'FINST_ORGNR',
-                                   'HELSEREGION':'REGION_NR',
-                                   'RHF':'REGION_NAVN'})
+skj38P = skj38P.rename(columns={'ORGNR_FORETAK': 'FORETAK_ORGNR',
+                                'NAVN': 'FINST_NAVN',
+                                'ORGNR': 'FINST_ORGNR',
+                                'HELSEREGION': 'REGION_NR',
+                                'RHF': 'REGION_NAVN'})
 
 # USERID er alltid foretaksnummer
 skj38P['USERID'] = skj38P['FORETAK_ORGNR']
+# -
 
 
-# +
 # Importerer riktig regionnummer fra KLASS og gir foretak som ikke er offentlige betegnelsen "PRIVATE INSTITUSJONER"
-skj38P = pd.merge(skj38P, RHF_kode_klass[["HELSEREGION", "RHF"]], how="left" , left_on="REGION_NR", right_on="HELSEREGION")
+skj38P = pd.merge(skj38P, regionoppslag, how="left" , left_on="REGION_NR", right_on="HELSEREGION")
 
 skj38P['REGION_NAVN'] = skj38P['RHF']
-skj38P.REGION_NAVN = skj38P.REGION_NAVN.fillna("PRIVATE INSTITUSJONER")
-# -
+skj38P['REGION_NAVN'] = skj38P['REGION_NAVN'].fillna("PRIVATE INSTITUSJONER")
 
 foretaksnavn = hent_foretaksnavn_til_virksomhetene_fra_SFU(skj38P.FORETAK_ORGNR.unique())
 skj38P = pd.merge(skj38P, foretaksnavn, how="left", on="FORETAK_ORGNR")
@@ -823,21 +827,21 @@ kolonner = kolonner_i_alle_private +\
 
 skj39 = tabell_som_inneholder_skjema(SFUklass, 'SKJEMA_TYPE', "39").copy()
 skj39 = skj39.rename(columns = {"ORGNR_FORETAK": "FORETAK_ORGNR",
-                                   "NAVN": "FINST_NAVN",
-                                   'ORGNR':'FINST_ORGNR',
-                                   'HELSEREGION':'REGION_NR',
-                                   'RHF':'REGION_NAVN'})
+                                "NAVN": "FINST_NAVN",
+                                'ORGNR':'FINST_ORGNR',
+                                'HELSEREGION':'REGION_NR',
+                                'RHF':'REGION_NAVN'})
 
 # USERID er alltid foretaksnummer
 skj39['USERID'] = skj39['FORETAK_ORGNR']
+# -
 
 
-# +
 # Importerer riktig regionnummer fra KLASS og gir foretak som ikke er offentlige betegnelsen "PRIVATE INSTITUSJONER"
-skj39 = pd.merge(skj39, RHF_kode_klass[["HELSEREGION", "RHF"]], how="left" , left_on="REGION_NR", right_on="HELSEREGION")
+skj39 = pd.merge(skj39, regionoppslag, how="left" , left_on="REGION_NR", right_on="HELSEREGION")
 
 skj39['REGION_NAVN'] = skj39['RHF']
-skj39.REGION_NAVN = skj39.REGION_NAVN.fillna("PRIVATE INSTITUSJONER")
+skj39['REGION_NAVN'] = skj39['REGION_NAVN'].fillna("PRIVATE INSTITUSJONER")
 
 # +
 # Henter foretaksnavn til virksomhetene fra SFU
@@ -898,7 +902,7 @@ skj44P['USERID'] = skj44P['FORETAK_ORGNR']
 # +
 # Importerer riktig regionnummer fra KLASS og gir foretak 
 # som ikke er offentlige betegnelsen "PRIVATE INSTITUSJONER"
-skj44P = pd.merge(skj44P, RHF_kode_klass[["HELSEREGION", "RHF"]], how="left" , left_on="REGION_NR", right_on="HELSEREGION")
+skj44P = pd.merge(skj44P, regionoppslag, how="left" , left_on="REGION_NR", right_on="HELSEREGION")
 
 skj44P['REGION_NAVN'] = skj44P['RHF']
 skj44P.REGION_NAVN = skj44P.REGION_NAVN.fillna("PRIVATE INSTITUSJONER")
@@ -918,7 +922,7 @@ skj44P = legg_paa_hale_med_n(skj44P)
 
 skj44P = pd.merge(skj44P, d_plass_fjor, how="left", on="FINST_ORGNR")
 
-# Tar kun vare på de kolonnene jeg spesifiserte i begynnelsen 
+# Tar kun vare på de kolonnene jeg spesifiserte i begynnelsen
 skj44P = skj44P[kolonner]
 
 # ### skj45P (Psykisk helsevern for barn og unge (PHBU/BUP), private helseforetak)
@@ -946,7 +950,7 @@ skj45P['USERID'] = skj45P['FORETAK_ORGNR']
 # +
 # Importerer riktig regionnummer fra KLASS og gir foretak 
 # som ikke er offentlige betegnelsen "PRIVATE INSTITUSJONER"
-skj45P = pd.merge(skj45P, RHF_kode_klass[["HELSEREGION", "RHF"]], how="left" , left_on="REGION_NR", right_on="HELSEREGION")
+skj45P = pd.merge(skj45P, regionoppslag, how="left" , left_on="REGION_NR", right_on="HELSEREGION")
 
 skj45P['REGION_NAVN'] = skj45P['RHF']
 skj45P.REGION_NAVN = skj45P.REGION_NAVN.fillna("PRIVATE INSTITUSJONER")
@@ -960,9 +964,10 @@ skj45P = pd.merge(skj45P, foretak, how="left", on="FORETAK_ORGNR")
 
 rapporteringsenhet, undervirksomheter = instlist_med_riktig_antall_n(pd.DataFrame(skj45P['FINST_ORGNR']))
 
-# +
 skj45P = pd.merge(skj45P, rapporteringsenhet, how="left", on="FINST_ORGNR")
-if type(undervirksomheter) != int:
+
+# +
+if undervirksomheter is not None:
     skj45P = pd.merge(skj45P, undervirksomheter, how="left", on="FINST_ORGNR")
     skj45P['INSTLISTE_HALE'] = skj45P['INSTLISTE_HALE'].fillna("\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n\\n")
 else:
@@ -973,6 +978,8 @@ skj45P = legg_paa_hale_med_n(skj45P)
 # -
 
 skj45P = pd.merge(skj45P, d_plass_fjor, how="left", on="FINST_ORGNR")
+
+d_plass_fjor
 
 # Tar kun vare på de kolonnene spesifisert i begynnelsen
 skj45P = skj45P[kolonner]
@@ -1003,7 +1010,7 @@ skj46P['USERID'] = skj46P['FORETAK_ORGNR']
 
 # +
 # Importerer riktig regionnummer fra KLASS og gir foretak som ikke er offentlige betegnelsen "PRIVATE INSTITUSJONER"
-skj46P = pd.merge(skj46P, RHF_kode_klass[["HELSEREGION", "RHF"]], how="left" , left_on="REGION_NR", right_on="HELSEREGION")
+skj46P = pd.merge(skj46P, regionoppslag, how="left" , left_on="REGION_NR", right_on="HELSEREGION")
 
 skj46P['REGION_NAVN'] = skj46P['RHF']
 skj46P.REGION_NAVN = skj46P.REGION_NAVN.fillna("PRIVATE INSTITUSJONER")
@@ -1058,7 +1065,7 @@ skj47['USERID'] = skj47['FORETAK_ORGNR']
 
 # +
 # Importerer riktig regionnummer fra KLASS og gir foretak som ikke er offentlige betegnelsen "PRIVATE INSTITUSJONER"
-skj47 = pd.merge(skj47, RHF_kode_klass[["HELSEREGION", "RHF"]], how="left" , left_on="REGION_NR", right_on="HELSEREGION")
+skj47 = pd.merge(skj47, regionoppslag, how="left" , left_on="REGION_NR", right_on="HELSEREGION")
 
 skj47['REGION_NAVN'] = skj47['RHF']
 skj47.REGION_NAVN = skj47.REGION_NAVN.fillna("PRIVATE INSTITUSJONER")
