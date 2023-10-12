@@ -14,7 +14,7 @@ suppressPackageStartupMessages({
 
 # ## Angir årgang og kobler til Oracle
 
-aargang <- 2022
+aargang <- 2023
 
 # Logg på for å få tilgang til Oracle 
 con <- fellesr::dynarev_uttrekk(con_ask = "con") # fellesr::
@@ -137,7 +137,8 @@ delreg_offentlig <- dplyr::inner_join(offentlig, delreg, by = c("ORGNR_FORETAK")
 
 delreg_offentlig_test <- delreg_offentlig %>%
   dplyr::select(Foretakstype, Helseregion, RHF, ORGNR_FORETAK, H_VAR1_A, ORGNR, NAVN, NYTT_NAVN,
-                SKJEMA_TYPE, SN07_1, SN07_1_navn, F_POSTNR, F_POSTSTED) %>%
+                # SKJEMA_TYPE, 
+                SN07_1, SN07_1_navn, F_POSTNR, F_POSTSTED) %>%
   dplyr::rename(Foretakstype = Foretakstype,
                 Helseregion = Helseregion,
                 Helseregion_navn = RHF,
@@ -146,7 +147,7 @@ delreg_offentlig_test <- delreg_offentlig %>%
                 Bedriftsorgnr = ORGNR,
                 HF_navn = NAVN,
                 Institusjonsnavn = NYTT_NAVN,
-                Skjematype = SKJEMA_TYPE,
+                # Skjematype = SKJEMA_TYPE,
                 Næringskode = SN07_1,
                 Næringsnavn = SN07_1_navn,
                 Postnummer = F_POSTNR, 
