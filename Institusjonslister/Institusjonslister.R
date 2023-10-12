@@ -14,7 +14,7 @@ suppressPackageStartupMessages({
 
 # ## Angir årgang og kobler til Oracle
 
-aargang <- 2022
+aargang <- 2023
 
 # Logg på for å få tilgang til Oracle 
 con <- fellesr::dynarev_uttrekk(con_ask = "con") # fellesr::
@@ -53,13 +53,33 @@ RHF <- klassR::GetKlass(603, output_level = 2) %>%
                 RHF = NAVN) %>%
   dplyr::select(ORGNR_FORETAK, NAVN, RHF, Helseregion, Foretakstype)
 
-stotteforetak <- klassR::GetKlass(605, output_style = "wide") %>%
-  dplyr::rename(ORGNR_FORETAK = code3, 
-                NAVN = name3, 
-                RHF = name2, 
-                Helseregion = code1) %>%
-  dplyr::mutate(Foretakstype = "Støtteforetak") %>%
+# +
+RHF_region <- RHF %>%
+select(Helseregion, RHF)
+
+stotteforetak <- klassR::GetKlass(605, date = c(paste0(aargang, "-01-01"))) %>%
+  dplyr::filter(!is.na(parentCode), nchar(parentCode) <= 2) %>%
+  dplyr::rename(ORGNR_FORETAK = code,
+                NAVN = name,
+                Helseregion = parentCode) %>%
+  dplyr::mutate(Foretakstype = "Støtteforetak") %>% # OBS: legg til orgnummer?
+  dplyr::left_join(RHF_region, by = "Helseregion") %>%
+  dplyr::mutate(RHF = case_when(is.na(RHF) ~ "FELLESEIDE STØTTEFORETAK", TRUE ~ RHF)) %>%
+  dplyr::filter(!grepl("RHF", NAVN)) %>%
   dplyr::select(ORGNR_FORETAK, NAVN, RHF, Helseregion, Foretakstype)
+
+# # HELSE MIDT-NORGE RHF HELSEPLATTFORMEN
+# stotteforetak_2 <- klassR::GetKlass(605, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
+#   dplyr::rename(ORGNR_FORETAK = code3, 
+#                 NAVN = name3, 
+#                 RHF = name2, 
+#                 Helseregion = code1) %>%
+#   dplyr::mutate(Foretakstype = "Støtteforetak") %>%
+#   dplyr::select(ORGNR_FORETAK, NAVN, RHF, Helseregion, Foretakstype)
+
+# stotteforetak <- rbind(stotteforetak_1, stotteforetak_2)
+# stotteforetak
+# -
 
 offentlig <- rbind(HF, RHF, stotteforetak)
 
@@ -88,6 +108,9 @@ delreg <- fellesr::dynarev_uttrekk(delregnr = c(paste0(24, substr(aargang, 3, 4)
                                    enhets_type = c("FRTK", "BEDR"), 
                                    sfu_cols = T, 
                                    con_ask = F)
+
+delreg %>%
+filter(ORGNR == "918098275")
 
 delreg <- delreg %>%
   dplyr::filter(is.na(KVITT_TYPE)) %>%
@@ -135,9 +158,15 @@ offentlig <- offentlig %>%
 delreg$ORGNR_FORETAK <- as.character(delreg$ORGNR_FORETAK)
 delreg_offentlig <- dplyr::inner_join(offentlig, delreg, by = c("ORGNR_FORETAK"))
 
+# +
+# delreg_offentlig %>%
+# filter(ORGNR_FORETAK == "983658776")
+# -
+
 delreg_offentlig_test <- delreg_offentlig %>%
   dplyr::select(Foretakstype, Helseregion, RHF, ORGNR_FORETAK, H_VAR1_A, ORGNR, NAVN, NYTT_NAVN,
-                SKJEMA_TYPE, SN07_1, SN07_1_navn, F_POSTNR, F_POSTSTED) %>%
+                # SKJEMA_TYPE, 
+                SN07_1, SN07_1_navn, F_POSTNR, F_POSTSTED) %>%
   dplyr::rename(Foretakstype = Foretakstype,
                 Helseregion = Helseregion,
                 Helseregion_navn = RHF,
@@ -146,7 +175,7 @@ delreg_offentlig_test <- delreg_offentlig %>%
                 Bedriftsorgnr = ORGNR,
                 HF_navn = NAVN,
                 Institusjonsnavn = NYTT_NAVN,
-                Skjematype = SKJEMA_TYPE,
+                # Skjematype = SKJEMA_TYPE,
                 Næringskode = SN07_1,
                 Næringsnavn = SN07_1_navn,
                 Postnummer = F_POSTNR, 
