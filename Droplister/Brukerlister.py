@@ -18,12 +18,10 @@ aarfør2 = str(aarfør4)[-2:]
 
 # +
 import pandas as pd
-from klass import klass_df
-from klass import klass_df_wide
-from klass import klass_get
+from klass import get_classification
 import cx_Oracle
 import getpass
-import requests
+
 
 # Fjerner begrensning på antall rader og kolonner som vises av gangen
 pd.set_option("display.max_columns", None)
@@ -38,58 +36,76 @@ conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-pa
 
 # ## Hjelpeforetak
 
+klass_rfss = get_classification(605).get_codes()
+
+rfss2 = (
+    get_classification(605)
+    .get_codes()
+    .data.query("level == '2' & parentCode == '99'")
+    [['code', 'name']]
+    .rename(columns={
+        'code': 'ORGNR_FORETAK',
+        'name': 'FORETAK_NAVN'
+        }
+    )
+)
+
+rfss3 = (
+    get_classification(605)
+    .get_codes()
+    .data.query("level == '2' & parentCode != '99'")
+    [['code', 'name']]
+    .rename(columns={
+        'code': 'ORGNR_FORETAK',
+        'name': 'FORETAK_NAVN'
+        }
+    )
+)
+
+RFSS = pd.concat([rfss2, rfss3])
+
+RFSS
+
 # +
-hjelpeforetak_som_ikke_er_rapporteringsenhet = ['918098275'] # HELSE MIDT-NORGE RHF HELSEPLATTFORMEN	
+RFSS['SKJEMA_TYPE'] = "0X 0Y 40"
 
-URL = f'https://data.ssb.no/api/klass/v1/classifications/605/codes.json?from={aar4}-01-01&includeFuture=True'
-offhels_df = klass_df(URL, level='codes')
-
-# tar ut RHFene fra listen
-df_hj = offhels_df.query("level != '1'")
-
-# tar bort unntakene
-df_hj = df_hj[~df_hj['code'].isin(hjelpeforetak_som_ikke_er_rapporteringsenhet)]
-
-df_hj['s'] = "0X 0Y 40"
-df_hj = df_hj[['name', 'code', 's']]
-df_hj.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
-
-print("Antall: ", df_hj.shape[0])
-df_hj.sample(3)
+print("Antall: ", RFSS.shape[0])
+RFSS.sample(3)
 # -
 
 # ## RHF
 
-# +
-URL = f'https://data.ssb.no/api/klass/v1/classifications/603/codes.json?from={aar4}-01-01'
-offhels_wide_df = klass_df_wide(URL)
+klass_offentlige_helseforetak = get_classification(603).get_codes()
 
-df_rhf = offhels_wide_df[['name_2', 'code_2']]
+RHF = klass_offentlige_helseforetak.pivot_level()
+RHF = (
+    RHF[['name_2', 'code_2']]
+    .drop_duplicates()
+    .rename(columns={'name_2': 'FORETAK_NAVN',
+                     'code_2': 'ORGNR_FORETAK'})
+)
 
-df_rhf = df_rhf.drop_duplicates()
+RHF['SKJEMA_TYPE'] = "0X 0Y 40 41 48"
 
-df_rhf['s'] = "0X 0Y 40 41 48"
-df_rhf.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
-
-print("Antall: ", df_rhf.shape[0])
-df_rhf.sample(3)
-# -
+print("Antall: ", RHF.shape[0])
+RHF.sample(3)
 
 # ## HF
 
-# +
-URL = f'https://data.ssb.no/api/klass/v1/classifications/603/codes.json?from={aar4}-01-01&includeFuture=True'
-df_hf = klass_df_wide(URL)
+HF = klass_offentlige_helseforetak.pivot_level()
+HF = (
+    HF.rename(columns={
+        'code_3': 'ORGNR_FORETAK',
+        'name_3': 'FORETAK_NAVN'
+    }
+             )
+    [['ORGNR_FORETAK', 'FORETAK_NAVN']]
+)
 
-df_hf = df_hf[['code_3', 'name_3']]
-df_hf.columns = ['ORGNR_FORETAK', 'FORETAK_NAVN']
+HF['SKJEMA_TYPE'] = "0X 0Y 40 380 440 450 460 48"
+print("Antall: ", HF.shape[0])
+HF.sample(3)
 
-df_hf['SKJEMA_TYPE'] = "0X 0Y 40 380 440 450 460 48"
-print("Antall: ", df_hf.shape[0])
-df_hf.sample(3)
-
-
-# -
 
 # ## Private
 
@@ -127,32 +143,42 @@ sporring_for = f"""
     WHERE STATUSKODE = 'B' AND ORGNR IN {sql_str}
 """
 
-df_p = pd.read_sql_query(sporring_for, conn)[['NAVN', 'ORGNR']]
-df_p['s'] = "39 381 441 451 461 47"
-df_p.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
+PRIV = pd.read_sql_query(sporring_for, conn)[['NAVN', 'ORGNR']]
+PRIV = PRIV.rename(columns={'NAVN': 'FORETAK_NAVN',
+                            'ORGNR': 'ORGNR_FORETAK'})
+PRIV['SKJEMA_TYPE'] = "39 381 441 451 461 47"
 
-print("\nFra DSBBASE.SSB_FORETAK\nAntall foretak: ", df_p.shape[0])
-df_p.sample(3)
+print("\nFra DSBBASE.SSB_FORETAK\nAntall foretak: ", PRIV.shape[0])
+PRIV.sample(3)
 # -
 
 # ## Oppdrags- og bestillerdokument
 
-URL = f'https://data.ssb.no/api/klass/v1/classifications/604/codes.json?from={aar4}-01-01&includeFuture=True'
-df_op = klass_df_wide(URL)
+# +
+klass_priv_frtk_ob = get_classification(604).get_codes()
+
+PHOB = klass_priv_frtk_ob.pivot_level()
+
+PHOB = (
+    PHOB.rename(columns={
+        'code_2': 'ORGNR_FORETAK',
+        'name_2': 'FORETAK_NAVN'
+    }
+             )
+    [['ORGNR_FORETAK', 'FORETAK_NAVN']]
+)
 
 # +
-df_op = df_op[['name_2', 'code_2']]
+PHOB['SKJEMA_TYPE'] = "39 381 441 451 461 47 48"
 
-df_op.loc[:, 's'] = "39 381 441 451 461 47 48"
-df_op.columns = ['FORETAK_NAVN', 'ORGNR_FORETAK', 'SKJEMA_TYPE']
-print("Antall: ", df_op.shape[0])
-df_op.sample(3)
+print("Antall: ", PHOB.shape[0])
+PHOB.sample(3)
 # -
 
 # ## Slå sammen til en dataframe som eksporteres til `.csv`
 
 # +
-brukerliste_dfs = [df_hj, df_rhf, df_hf, df_p, df_op]
+brukerliste_dfs = [RFSS, RHF, HF, PRIV, PHOB]
 brukerliste_df = pd.concat(brukerliste_dfs)
 print("Antall foretak i brukerlisten: ", brukerliste_df.shape[0])
 
@@ -163,7 +189,7 @@ brukerliste_df = brukerliste_df.reset_index(drop=True)
 # -
 
 
-brukerliste_df.sample(10)
+brukerliste_df.sample(3)
 
 # +
 dato_idag = pd.Timestamp("today").strftime("%d%m%y")
