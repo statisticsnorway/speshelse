@@ -7,9 +7,9 @@
 #       format_version: '1.5'
 #       jupytext_version: 1.15.2
 #   kernelspec:
-#     display_name: spesh
+#     display_name: Python3
 #     language: python
-#     name: spesh
+#     name: python3
 # ---
 
 # + [markdown] toc-hr-collapsed=true

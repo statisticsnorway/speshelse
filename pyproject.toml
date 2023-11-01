@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "spesh"
+name = "speshelse"
 version = "0.1.0"
 description = ""
 authors = ["Magne F. Myhren <mfm@ssb.no>"]
