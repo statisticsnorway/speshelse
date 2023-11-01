@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sqlalchemy import text
 
 def lag_sql_str(arr):
     s = "("
@@ -9,13 +10,34 @@ def lag_sql_str(arr):
     return s
 
 
+def les_sql(sql_spørring, tilkobling):
+    """
+    Utfører en SQL-spørring og returnerer en DataFrame hvor kolonnenavnene er i store bokstaver.
+    
+    Parametere:
+    - sql_spørring (str): SQL-spørringen som skal utføres.
+    - tilkobling (SQLAlchemy connection): Databaseforbindelsen som skal brukes for spørringen.
+    
+    Returnerer:
+    - DataFrame: Resultatet av SQL-spørringen med kolonnenavnene i store bokstaver.
+    """
+
+    # Utfør SQL-spørringen
+    df = pd.read_sql_query(text(sql_spørring), tilkobling)
+
+    # Konverter kolonnenavnene til store bokstaver
+    df.columns = [col.upper() for col in df.columns]
+
+    return df
+
+
 def hent_data_delreg24x_og_19377x(x, skjema, conn):
     sporring = f"""
         SELECT *
         FROM DYNAREV.VW_SKJEMA_DATA
         WHERE DELREG_NR IN ('24{x}', '19377{x}') AND SKJEMA IN ('{skjema}') AND AKTIV = '1'
     """
-    sporring_df = pd.read_sql_query(sporring, conn)
+    sporring_df = les_sql(sporring, conn)
     sporring_df = sporring_df[['SKJEMA','ENHETS_ID', 'FELT_ID', 'FELT_VERDI']]
     sporring_df = sporring_df.pivot(index=['ENHETS_ID','SKJEMA'], columns='FELT_ID', values='FELT_VERDI')
     return sporring_df
