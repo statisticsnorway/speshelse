@@ -1,0 +1,16 @@
+{
+  "template": "https://github.com/statisticsnorway/ssb-project-template-stat",
+  "commit": "d812a9210647a93d2cda82086fe0f036f0d07214",
+  "checkout": "1.0.1",
+  "context": {
+    "cookiecutter": {
+      "full_name": "Magne F. Myhren",
+      "email": "mfm@ssb.no",
+      "project_name": "spesh",
+      "description": "",
+      "license_year": "2023",
+      "_template": "https://github.com/statisticsnorway/ssb-project-template-stat"
+    }
+  },
+  "directory": null
+}
