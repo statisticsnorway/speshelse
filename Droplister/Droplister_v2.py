@@ -749,7 +749,7 @@ skj46O = pd.merge(skj46O, regionoppslag, how="left", on="HELSEREGION")
 skj46O = skj46O[kolonner]
 # -
 
-skj46O.dtypes
+skj46O
 
 # + [markdown] toc-hr-collapsed=true
 # ## Skjemaer til private foretak og deres underinstitusjoner
