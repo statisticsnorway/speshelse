@@ -7,9 +7,9 @@
 #       format_version: '1.5'
 #       jupytext_version: 1.15.2
 #   kernelspec:
-#     display_name: spesh
+#     display_name: stat-helse-test
 #     language: python
-#     name: spesh
+#     name: stat-helse-test
 # ---
 
 # + [markdown] toc-hr-collapsed=true
@@ -725,6 +725,7 @@ finne_virksomheter_df = finne_virksomheter_df.rename(
     columns={"NAVN_KLASS": "FORETAKETS_NAVN"}
 )
 
+
 # +
 finne_virksomheter_df2 = pd.merge(
     SFUklass, skj46O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"]
@@ -742,13 +743,13 @@ undervirksomheter_navn_og_kolonner = lag_navn_orgnr_kolonner(finne_virksomheter_
 
 skj46O = pd.merge(skj46O, undervirksomheter_navn_og_kolonner, how="left", on="ORGNR_FORETAK")
 
-skj46O = pd.merge(skj46O, finne_virksomheter_df, how="left", on="ORGNR_FORETAK")
+skj46O = pd.merge(skj46O, finne_virksomheter_df, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS"])
 
 skj46O['USERID'] = skj46O['ORGNR_FORETAK']
 skj46O = skj46O.rename(columns={"ORGNR_FORETAK": "FORETAKETS_ORGNR",
                                 "NAVN_KLASS": "FORETAKETS_NAVN"})
-# -
 
+# +
 skj46O = pd.merge(skj46O, regionoppslag, how="left", on="HELSEREGION")
 
 skj46O = skj46O[kolonner]
