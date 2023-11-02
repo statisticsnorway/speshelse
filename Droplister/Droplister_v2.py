@@ -7,9 +7,9 @@
 #       format_version: '1.5'
 #       jupytext_version: 1.15.2
 #   kernelspec:
-#     display_name: stat-helse-test
+#     display_name: spesh
 #     language: python
-#     name: stat-helse-test
+#     name: spesh
 # ---
 
 # + [markdown] toc-hr-collapsed=true
@@ -709,21 +709,15 @@ finne_virksomheter_df = pd.merge(
     right_on="FINST_ORGNR",
 )
 
-finne_virksomheter_df["SEN_HT_FJOR"] = pd.to_numeric(
-    finne_virksomheter_df["SEN_HT_FJOR"]
-)
-finne_virksomheter_df["SDGN_HT_FJOR"] = pd.to_numeric(
-    finne_virksomheter_df["SDGN_HT_FJOR"]
-)
+finne_virksomheter_df["SEN_HT_FJOR"] = finne_virksomheter_df["SEN_HT_FJOR"].astype('Int64')
+finne_virksomheter_df["SDGN_HT_FJOR"] = finne_virksomheter_df["SDGN_HT_FJOR"].astype('Int64')
 
 finne_virksomheter_df = (
     finne_virksomheter_df.groupby(["ORGNR_FORETAK", "NAVN_KLASS"])
     .sum(numeric_only=True)
     .reset_index()
 )
-finne_virksomheter_df = finne_virksomheter_df.rename(
-    columns={"NAVN_KLASS": "FORETAKETS_NAVN"}
-)
+finne_virksomheter_df = finne_virksomheter_df.drop(columns=['NAVN_KLASS'])
 
 
 # +
@@ -743,7 +737,7 @@ undervirksomheter_navn_og_kolonner = lag_navn_orgnr_kolonner(finne_virksomheter_
 
 skj46O = pd.merge(skj46O, undervirksomheter_navn_og_kolonner, how="left", on="ORGNR_FORETAK")
 
-skj46O = pd.merge(skj46O, finne_virksomheter_df, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS"])
+skj46O = pd.merge(skj46O, finne_virksomheter_df, how="left", on="ORGNR_FORETAK")
 
 skj46O['USERID'] = skj46O['ORGNR_FORETAK']
 skj46O = skj46O.rename(columns={"ORGNR_FORETAK": "FORETAKETS_ORGNR",
@@ -753,6 +747,9 @@ skj46O = skj46O.rename(columns={"ORGNR_FORETAK": "FORETAKETS_ORGNR",
 skj46O = pd.merge(skj46O, regionoppslag, how="left", on="HELSEREGION")
 
 skj46O = skj46O[kolonner]
+# -
+
+skj46O.dtypes
 
 # + [markdown] toc-hr-collapsed=true
 # ## Skjemaer til private foretak og deres underinstitusjoner
