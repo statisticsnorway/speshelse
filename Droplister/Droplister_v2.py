@@ -451,61 +451,9 @@ skj48["USERID"] = skj48["FORETAK_ORGNR"]
 
 skj48 = skj48[kolonner0X0Y404148].sort_values("REGION_NR").reset_index(drop=True)
 
-
 # + [markdown] toc-hr-collapsed=true
 # ## Skjemaer til offentlige foretak
 # Inneholder et visst antall kolonner med virksomheters navn og orgnr.
-# -
-
-def lag_navn_orgnr_kolonner(fvdf, ant_kolonner, med_foretak=True):
-    """
-    Denne funksjonen tar en pandas DataFrame (fvdf) som inneholder
-    informasjon om organisasjoner og deres foretaksnummer (ORGNR_FORETAK).
-    Den oppretter en ny DataFrame der hver unike organisasjon har en
-    egen kolonne for organisasjonsnummer (ORGNR) og navn (NAVN).
-
-    Parametere:
-    - fvdf (pandas DataFrame): Inndataframe som inneholder organisasjonsdata.
-    - ant_kolonner (int): Antall kolonner i den resulterende DataFrame for hver
-      organisasjon.
-    - med_foretak (bool, valgfritt): En boolsk verdi som angir om kolonnene for
-      organisasjonsnummer og navn skal inkluderes.
-      Hvis False, ekskluderes organisasjonsnummer i kolonner hvis de samsvarer med ORGNR_FORETAK.
-
-    Returnerer:
-    - En ny DataFrame der hver unike organisasjon har en kolonne for ORGNR og NAVN. Kolonnene kan være tomme (NaN) hvis det ikke er nok data.
-    - DataFramen er transponert for å ha organisasjoner som indekser i stedet for kolonner.
-    """
-    foretak_rader = fvdf['ORGNR_FORETAK'].unique()
-
-    foretak_org_df = None
-    for nr in foretak_rader:  # blar gjennom listen og lager kolonner til hvert foretak
-        if med_foretak:
-            orgnr_df = fvdf.query(f'ORGNR_FORETAK  == "{nr}"')['ORGNR']
-            navn_df = fvdf.query(f'ORGNR_FORETAK  == "{nr}"')['NAVN']
-        else:
-            orgnr_df = fvdf.query(f'ORGNR_FORETAK  == "{nr}" and ORGNR != "{nr}"')['ORGNR']
-            navn_df = fvdf.query(f'ORGNR_FORETAK  == "{nr}" and ORGNR != "{nr}"')['NAVN']
-
-        ant_virksomheter = orgnr_df.shape[0]
-        tom_df = pd.Series(np.nan, index=range(ant_kolonner-ant_virksomheter))
-        orgnr_df = pd.concat([orgnr_df, tom_df], axis=0)
-        orgnr_df.index = orgnr_virk
-
-        ant_navn = navn_df.shape[0]
-        tom_df = pd.Series(np.nan, index=range(ant_kolonner-ant_navn))
-        navn_df = pd.concat([navn_df, tom_df], axis=0)
-        navn_df.index = navn_virk
-
-        foretak_df = pd.concat([orgnr_df, navn_df], axis=0)
-        foretak_df['ORGNR_FORETAK'] = nr
-
-        if foretak_org_df is None:  # limer sammen hvert foretak med nye kolonner til en stor tabell
-            foretak_org_df = foretak_df
-        else:
-            foretak_org_df = pd.concat([foretak_org_df, foretak_df], axis = 1)
-    return foretak_org_df.transpose()
-
 
 # + [markdown] toc-hr-collapsed=true
 # ### skj38O (TSB for offentlige helseforetak)
@@ -534,30 +482,29 @@ onskede_kolonner = ["USERID", "HELSEREGION", "HELSEREGION_NAVN",
 
 # Henter data fra SFU med næringskode ("86.106") og statuskode ("B"). Næringskode i kolonne SN07_1
 
-skj38O['tmp_bool'] = True
+temp = pd.merge(
+    skj38O["ORGNR_FORETAK"],
+    SFUklass[
+        (SFUklass["SN07_1"] == "86.106") &
+        (SFUklass["STATUS"] == "B")]
+    [["ORGNR", "ORGNR_FORETAK", "NAVN"]],
+    how="left",
+    on="ORGNR_FORETAK",
+).dropna(subset=["ORGNR"])
 
-finne_virksomheter_df = pd.merge(
-    SFUklass, skj38O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"]
-)
-finne_virksomheter_df = finne_virksomheter_df.query(
-    'tmp_bool == True and SN07_1 == "86.106" and STATUS == "B"'
-)
-finne_virksomheter_df = finne_virksomheter_df[["ORGNR", "ORGNR_FORETAK", "NAVN"]]
+temp = hjfunk.lag_navn_orgnr_kolonner(temp, 20)
 
-undervirksomheter_navn_og_kolonner = lag_navn_orgnr_kolonner(finne_virksomheter_df, 20)
+skj38O = pd.merge(skj38O, temp, how="left", on="ORGNR_FORETAK")
 
 # +
-skj38O = pd.merge(skj38O, undervirksomheter_navn_og_kolonner, how="left", on="ORGNR_FORETAK")
-
 skj38O['USERID'] = skj38O['ORGNR_FORETAK']
 skj38O = skj38O.rename(columns={"ORGNR_FORETAK": "FORETAKETS_ORGNR",
                                 "NAVN_KLASS": "FORETAKETS_NAVN"
                                 })
 
 skj38O = pd.merge(skj38O, d_plass_fjor, how="left", on="FORETAKETS_ORGNR")
-# -
-
 skj38O = pd.merge(skj38O, regionoppslag, how="left", on="HELSEREGION")
+# -
 
 skj38O = skj38O[onskede_kolonner]
 
@@ -595,7 +542,7 @@ finne_virksomheter_df = finne_virksomheter_df.query(
 )
 finne_virksomheter_df = finne_virksomheter_df[["ORGNR", "ORGNR_FORETAK", "NAVN"]]
 
-undervirksomheter_navn_og_kolonner = lag_navn_orgnr_kolonner(finne_virksomheter_df, 20)
+undervirksomheter_navn_og_kolonner = hjfunk.lag_navn_orgnr_kolonner(finne_virksomheter_df, 20)
 
 # +
 skj44O = pd.merge(
@@ -649,7 +596,7 @@ finne_virksomheter_df = finne_virksomheter_df.query(
 )
 finne_virksomheter_df = finne_virksomheter_df[["ORGNR", "ORGNR_FORETAK", "NAVN"]]
 
-undervirksomheter_navn_og_kolonner = lag_navn_orgnr_kolonner(finne_virksomheter_df, 20)
+undervirksomheter_navn_og_kolonner = hjfunk.lag_navn_orgnr_kolonner(finne_virksomheter_df, 20)
 
 skj45O = pd.merge(skj45O, undervirksomheter_navn_og_kolonner, how="left", on="ORGNR_FORETAK")
 
@@ -751,7 +698,7 @@ finne_virksomheter_df2 = finne_virksomheter_df2[
 ]
 
 # +
-undervirksomheter_navn_og_kolonner = lag_navn_orgnr_kolonner(finne_virksomheter_df2, 24, False)
+undervirksomheter_navn_og_kolonner = hjfunk.lag_navn_orgnr_kolonner(finne_virksomheter_df2, 24, False)
 
 skj46O = pd.merge(skj46O, undervirksomheter_navn_og_kolonner, how="left", on="ORGNR_FORETAK")
 

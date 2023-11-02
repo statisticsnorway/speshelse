@@ -71,6 +71,47 @@ def lag_navn_orgnr_kolonnenavn(ant_kolonner):
     return nvn, org
 
 
+def lag_navn_orgnr_kolonner(foretak_virk_df, ant_kolonner, med_foretak=True):
+    """
+    Denne funksjonen tar en pandas DataFrame (foretak_virk_df) som inneholder
+    informasjon om organisasjoner og deres foretaksnummer (ORGNR_FORETAK).
+    Den oppretter en ny DataFrame der hver unike organisasjon har en
+    egen kolonne for organisasjonsnummer (ORGNR) og navn (NAVN).
+
+    Parametere:
+    - foretak_virk_df (pandas DataFrame): Inndataframe som inneholder organisasjonsdata.
+    - ant_kolonner (int): Antall kolonner i den resulterende DataFrame for hver
+      organisasjon.
+    - med_foretak (bool, valgfritt): En boolsk verdi som angir om kolonnene for
+      organisasjonsnummer og navn skal inkluderes.
+      Hvis False, ekskluderes organisasjonsnummer i kolonner hvis de samsvarer med ORGNR_FORETAK.
+
+    Returnerer:
+    - En ny DataFrame der hver unike organisasjon har en kolonne for ORGNR og NAVN. Kolonnene kan være tomme (NaN) hvis det ikke er nok data.
+    - DataFramen er transponert for å ha organisasjoner som indekser i stedet for kolonner.
+    """
+    unique_orgnr = foretak_virk_df['ORGNR_FORETAK'].unique()
+
+    columns = [f"ORGNR_VIRK{i+1}" for i in range(ant_kolonner)] + \
+              [f"NAVN_VIRK{i+1}" for i in range(ant_kolonner)] + ["ORGNR_FORETAK"]
+    df_result = pd.DataFrame(columns=columns)
+    
+    for nr in unique_orgnr:
+        subset = foretak_virk_df[foretak_virk_df['ORGNR_FORETAK'] == nr]
+        
+        if not med_foretak:
+            subset = subset[subset['ORGNR'] != nr]
+
+        orgnr_values = subset['ORGNR'].tolist() + [np.nan] * (ant_kolonner - len(subset))
+        navn_values = subset['NAVN'].tolist() + [np.nan] * (ant_kolonner - len(subset))
+        
+        row_values = orgnr_values + navn_values + [nr]
+        temp_df = pd.DataFrame([row_values], columns=columns)
+        df_result = pd.concat([df_result, temp_df], ignore_index=True)
+    
+    return df_result
+
+
 def instlist_med_riktig_antall_n(finst_orgnr_df, SFUklass):
     """
     Denne funksjonen utfører en serie operasjoner på DataFrames og returnerer to DataFrames.
