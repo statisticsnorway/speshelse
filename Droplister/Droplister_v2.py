@@ -7,9 +7,9 @@
 #       format_version: '1.5'
 #       jupytext_version: 1.15.2
 #   kernelspec:
-#     display_name: stat-helse-test
+#     display_name: spesh
 #     language: python
-#     name: stat-helse-test
+#     name: spesh
 # ---
 
 # + [markdown] toc-hr-collapsed=true
@@ -721,9 +721,6 @@ finne_virksomheter_df = (
     .sum(numeric_only=True)
     .reset_index()
 )
-finne_virksomheter_df = finne_virksomheter_df.rename(
-    columns={"NAVN_KLASS": "FORETAKETS_NAVN"}
-)
 
 
 # +
@@ -743,6 +740,7 @@ undervirksomheter_navn_og_kolonner = lag_navn_orgnr_kolonner(finne_virksomheter_
 
 skj46O = pd.merge(skj46O, undervirksomheter_navn_og_kolonner, how="left", on="ORGNR_FORETAK")
 
+# +
 skj46O = pd.merge(skj46O, finne_virksomheter_df, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS"])
 
 skj46O['USERID'] = skj46O['ORGNR_FORETAK']
