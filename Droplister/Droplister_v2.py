@@ -57,21 +57,19 @@
 # ## Importerer pakker og setter innstillinger
 
 # +
-import numpy as np
 import pandas as pd
 
 from sqlalchemy import create_engine
 
 import getpass
 import os
-from klass import get_classification
 
 import hjelpefunksjoner as hjfunk
 
 # +
 # Fjerner begrensning på antall rader og kolonner som vises av gangen
 pd.set_option("display.max_columns", None)
-pd.set_option('display.max_rows', 300)
+pd.set_option('display.max_rows', 50)
 pd.set_option('display.max_colwidth', None)
 
 # Unngå standardform i output
@@ -125,118 +123,25 @@ conn = engine.connect()
 
 # + [markdown] toc-hr-collapsed=true
 # ##  fra KLASS
-# -
-
-# ### Offentlige helseforetak
 
 # +
-klass_offentlige_helseforetak = get_classification(603).get_codes()
+HF, RHF, phob, rfss, rfss2, rfss3, rapporteringsenheter = hjfunk.hent_enheter_fra_klass(aargang)
 
-HF = klass_offentlige_helseforetak.pivot_level()
-HF = (
-    HF.rename(columns={
-        'code_1': 'HELSEREGION',
-        'code_3': 'ORGNR_FORETAK',
-        'name_3': 'NAVN_KLASS'
-    })
-    [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
-)
-# -
-
-RHF = klass_offentlige_helseforetak.pivot_level()
-RHF = (
-    RHF[['code_1', 'name_2', 'code_2']]
-    .drop_duplicates()
-    .rename(columns={'code_1': 'HELSEREGION',
-                     'name_2': 'NAVN_KLASS',
-                     'code_2': 'ORGNR_FORETAK'})
-)
-
-# + [markdown] toc-hr-collapsed=true
-# ### Private helseinstitusjoner med oppdrags- og bestillerdokument
-
-# +
-klass_priv_frtk_ob = get_classification(604).get_codes()
-
-phob = klass_priv_frtk_ob.pivot_level()
-
-phob = (
-    phob.rename(columns={
-        'code_1': 'HELSEREGION',
-        'code_2': 'ORGNR_FORETAK',
-        'name_2': 'NAVN_KLASS'
-    })
-    [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
-)
-# -
-
-# ### Regionale og felleseide støtteforetak i spesialisthelsetjenesten
-
-klass_rfss = get_classification(605).get_codes()
-
-rfss = klass_rfss.pivot_level()
-
-rfss = (
-    rfss.rename(columns={
-        'code_1': 'HELSEREGION',
-        'code_3': 'ORGNR_FORETAK',
-        'name_3': 'NAVN_KLASS'
-    })
-    [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
-)
-
-rfss2 = (
-    get_classification(605)
-    .get_codes()
-    .data.query("level == '2' & parentCode == '99'")
-    [['code', 'parentCode', 'name']]
-    .rename(columns={
-        'code': 'ORGNR_FORETAK',
-        'parentCode': 'HELSEREGION',
-        'name': 'NAVN_KLASS'
-        }
-    )
-)
-
-rfss3 = (
-    get_classification(605)
-    .get_codes()
-    .data.query("level == '2' & parentCode != '99'")
-    [['code', 'parentCode', 'name']]
-    .rename(columns={
-        'code': 'ORGNR_FORETAK',
-        'parentCode': 'HELSEREGION',
-        'name': 'NAVN_KLASS'
-        }
-    )
-)
-
-rfss_region = klass_rfss.data.copy()
-
-rfss_region = (
-    rfss_region[rfss_region['level'] == '1'][['code', 'name']]
-    .rename(columns={'code': 'HELSEREGION', 'name': 'RHF'})
-)
-
-rapporteringsenheter = pd.concat(
-    [HF, RHF, phob, rfss, rfss2, rfss3]
-)
-
-rapporteringsenheter = pd.merge(rapporteringsenheter,
-                                rfss_region,
-                                how='left',
-                                on='HELSEREGION'
-                                )
-
-rapporteringsenheter = rapporteringsenheter.rename(columns={'RHF': 'HELSEREGION_NAVN'})
-
-rapporteringsenheter = rapporteringsenheter[~rapporteringsenheter.duplicated()]
 regionoppslag = (
     rapporteringsenheter[rapporteringsenheter['NAVN_KLASS']
                          .str.endswith("RHF")]
     .copy()
     [['HELSEREGION', 'HELSEREGION_NAVN']]
 )
+# -
+
+print("Rapporteringsenheter fra KLASS årgang", aargang, "1. januar")
+print(f"HF: \t\t\t\t\t\t\t\t\t{HF.shape[0]} enheter")
+print(f"RHF: \t\t\t\t\t\t\t\t\t{RHF.shape[0]} enheter")
+print(f"Priv. helse oppdrag og bestillerdok.: \t\t\t\t\t{phob.shape[0]} enheter")
+print(f"Regionale og felleseide støtteforetak i spesialisthelsetjenesten: \t{rfss.shape[0]+rfss2.shape[0]+rfss3.shape[0]} enheter")
+print(f"rapporteringsenheter: \t\t\t\t\t\t\t{rapporteringsenheter.shape[0]} enheter")
+
 
 # ## VOF: liste over alle helseforetak
 

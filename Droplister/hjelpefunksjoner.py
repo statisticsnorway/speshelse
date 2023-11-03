@@ -10,6 +10,142 @@ def lag_sql_str(arr):
     return s
 
 
+def hent_enheter_fra_klass(aargang):
+    """
+    Henter rapporteringsenheter fra KLASS basert på gitt årgang.
+
+    Denne funksjonen henter data fra KLASS for offentlige helseforetak,
+    private helseinstitusjoner med oppdrags- og bestillerdokument, og 
+    regionale og felleseide støtteforetak i spesialisthelsetjenesten.
+
+    Args:
+    - aargang (str): Året det hentes data for, i formatet 'YYYY'.
+
+    Returns:
+    - tuple: Returnerer syv DataFrames som representerer ulike rapporteringsenheter:
+        - HF: Data for offentlige helseforetak.
+        - RHF: Data for regionale helseforetak.
+        - phob: Data for private helseinstitusjoner med oppdrags- og bestillerdokument.
+        - rfss: Data for regionale og felleseide støtteforetak.
+        - rfss2: Data for støtteforetak med parentCode '99'.
+        - rfss3: Data for støtteforetak uten parentCode '99'.
+        - rapporteringsenheter: Samlet data for alle rapporteringsenheter.
+
+    Eksempel:
+    >>> HF, RHF, phob, rfss, rfss2, rfss3, rapporteringsenheter = hent_enheter_fra_klass('2023')
+    """
+
+    from klass import get_classification
+
+    ### Offentlige helseforetak
+
+    klass_offentlige_helseforetak = get_classification(603).get_codes(from_date=f'{aargang}-01-01',
+                                                                      to_date=f'{aargang}-01-02')
+
+    HF = klass_offentlige_helseforetak.pivot_level()
+    HF = (
+        HF.rename(columns={
+            'code_1': 'HELSEREGION',
+            'code_3': 'ORGNR_FORETAK',
+            'name_3': 'NAVN_KLASS'
+        })
+        [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
+    )
+
+    RHF = klass_offentlige_helseforetak.pivot_level()
+    RHF = (
+        RHF[['code_1', 'name_2', 'code_2']]
+        .drop_duplicates()
+        .rename(columns={'code_1': 'HELSEREGION',
+                         'name_2': 'NAVN_KLASS',
+                         'code_2': 'ORGNR_FORETAK'})
+    )
+
+    ### Private helseinstitusjoner med oppdrags- og bestillerdokument
+
+    klass_priv_frtk_ob = get_classification(604).get_codes(from_date=f'{aargang}-01-01',
+                                                           to_date=f'{aargang}-01-02')
+
+    phob = klass_priv_frtk_ob.pivot_level()
+
+    phob = (
+        phob.rename(columns={
+            'code_1': 'HELSEREGION',
+            'code_2': 'ORGNR_FORETAK',
+            'name_2': 'NAVN_KLASS'
+        })
+        [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
+    )
+
+    ### Regionale og felleseide støtteforetak i spesialisthelsetjenesten
+
+    klass_rfss = get_classification(605).get_codes(from_date=f'{aargang}-01-01',
+                                                   to_date=f'{aargang}-01-02')
+
+    rfss = klass_rfss.pivot_level()
+
+    rfss = (
+        rfss.rename(columns={
+            'code_1': 'HELSEREGION',
+            'code_3': 'ORGNR_FORETAK',
+            'name_3': 'NAVN_KLASS'
+        })
+        [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
+    )
+
+    rfss2 = (
+        get_classification(605)
+        .get_codes(from_date=f'{aargang}-01-01',
+                   to_date=f'{aargang}-01-02')
+        .data.query("level == '2' & parentCode == '99'")
+        [['code', 'parentCode', 'name']]
+        .rename(columns={
+            'code': 'ORGNR_FORETAK',
+            'parentCode': 'HELSEREGION',
+            'name': 'NAVN_KLASS'
+            }
+        )
+    )
+
+    rfss3 = (
+        get_classification(605)
+        .get_codes(from_date=f'{aargang}-01-01',
+                   to_date=f'{aargang}-01-02')
+        .data.query("level == '2' & parentCode != '99'")
+        [['code', 'parentCode', 'name']]
+        .rename(columns={
+            'code': 'ORGNR_FORETAK',
+            'parentCode': 'HELSEREGION',
+            'name': 'NAVN_KLASS'
+            }
+        )
+    )
+
+    rfss_region = klass_rfss.data.copy()
+
+    rfss_region = (
+        rfss_region[rfss_region['level'] == '1'][['code', 'name']]
+        .rename(columns={'code': 'HELSEREGION', 'name': 'RHF'})
+    )
+
+    rapporteringsenheter = pd.concat(
+        [HF, RHF, phob, rfss, rfss2, rfss3]
+    )
+
+    rapporteringsenheter = pd.merge(rapporteringsenheter,
+                                    rfss_region,
+                                    how='left',
+                                    on='HELSEREGION'
+                                    )
+
+    rapporteringsenheter = rapporteringsenheter.rename(columns={'RHF': 'HELSEREGION_NAVN'})
+
+    rapporteringsenheter = rapporteringsenheter[~rapporteringsenheter.duplicated()]
+
+    return HF, RHF, phob, rfss, rfss2, rfss3, rapporteringsenheter
+
+
+
 def les_sql(sql_spørring, tilkobling):
     """
     Utfører en SQL-spørring og returnerer en DataFrame hvor kolonnenavnene er i store bokstaver.
