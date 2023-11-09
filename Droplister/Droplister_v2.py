@@ -125,14 +125,13 @@ conn = engine.connect()
 # ##  fra KLASS
 
 # +
-HF, RHF, phob, rfss, rfss2, rfss3, rapporteringsenheter = hjfunk.hent_enheter_fra_klass(aargang)
-
-regionoppslag = (
-    rapporteringsenheter[rapporteringsenheter['NAVN_KLASS']
-                         .str.endswith("RHF")]
-    .copy()
-    [['HELSEREGION', 'HELSEREGION_NAVN']]
+HF, RHF, phob, rfss, rfss2, rfss3, rapporteringsenheter = hjfunk.hent_enheter_fra_klass(
+    aargang
 )
+
+regionoppslag = rapporteringsenheter[
+    rapporteringsenheter["NAVN_KLASS"].str.endswith("RHF")
+].copy()[["HELSEREGION", "HELSEREGION_NAVN"]]
 # -
 
 print(" Rapporteringsenheter fra KLASS årgang", aargang, "1. januar")
@@ -217,8 +216,7 @@ SFU_data = SFU_data[SFU_data['ORGNR'].notnull()]
 skjemanavn_liste = [
     "HELSE38O", "HELSE38P", "HELSE39", "HELSE40",
     "HELSE41", "HELSE44O", "HELSE44P", "HELSE45O",
-    "HELSE45P", "46O", "HELSE46P", "HELSE47",
-    "HELSE48",
+    "HELSE45P", "46O", "HELSE46P", "HELSE47", "HELSE48",
 ]
 
 skjemadata = {}
@@ -260,9 +258,7 @@ skjemaer_til_droplister = ["skj0X", "skj0Y", "skj38O", "skj38P", "skj39", "skj39
                            "skj40", "skj41", "skj44O", "skj44P", "skj45O",
                            "skj45P", "skj46O", "skj46P", "skj47", "skj48"]
 
-# + [markdown] toc-hr-collapsed=true
 # ## Skjemaer som hentes rett fra klass og SFU
-# -
 
 # ### 0X (Resultatregnskap for RHF og HF)
 
@@ -357,8 +353,8 @@ skj48 = skj48.rename(
 skj48["USERID"] = skj48["FORETAK_ORGNR"]
 
 skj48 = skj48[kolonner0X0Y404148].sort_values("REGION_NR").reset_index(drop=True)
+# -
 
-# + [markdown] toc-hr-collapsed=true
 # ## Skjemaer til offentlige foretak
 # Inneholder et visst antall kolonner med virksomheters navn og orgnr.
 
@@ -376,7 +372,7 @@ d_plass_fjor = (
     .rename(columns={"DGN_DGN": "D_PLAS_FJOR"})
 )
 
-skj38O = HF.query('ORGNR_FORETAK != "883971752"').copy()                           # Tar ut SUNNAAS
+skj38O = HF[HF['ORGNR_FORETAK'] != "883971752"].copy()                           # Tar ut SUNNAAS
 
 # +
 # Lager kolonneoverskrifter i tråd med tidligere droplister:
@@ -422,8 +418,8 @@ skj38O = skj38O[onskede_kolonner]
 # Alle offentlige helseforetak foruten ```SUNNAAS```. Bruker ```HF```-tabellen laget i kapittel 2.1.1
 
 # Henter døgnplasser fra foregående år
-d_plass_fjor = (skjemadata["HELSE44O"][['FORETAKETS_ORGNR','D_PLAS_T']].reset_index().copy()
-                [['FORETAKETS_ORGNR','D_PLAS_T']]
+d_plass_fjor = (skjemadata["HELSE44O"][['FORETAKETS_ORGNR', 'D_PLAS_T']].reset_index().copy()
+                [['FORETAKETS_ORGNR', 'D_PLAS_T']]
                 .rename(columns={'D_PLAS_T': 'D_PLAS_FJOR'}))
 
 skj44O = HF.query('ORGNR_FORETAK != "883971752"').copy()                    # Tar ut SUNNAAS
@@ -559,6 +555,20 @@ kolonner = (
 
 # Henter data fra SFU med næringskoder ("86.101") ("86.102") ("86.103") ("86.107"). Finner næringskoden i kolonne ```SN07_1```
 
+
+
+
+
+# +
+# Oppdater denne i tråd med skj38O
+# -
+
+
+
+
+
+
+
 # +
 skj46O["tmp_bool"] = True
 
@@ -626,11 +636,10 @@ skj46O = skj46O.rename(
 skj46O = pd.merge(skj46O, regionoppslag, how="left", on="HELSEREGION")
 
 skj46O = skj46O[kolonner]
+# -
 
-# + [markdown] toc-hr-collapsed=true
 # ## Skjemaer til private foretak og deres underinstitusjoner
 # Droplisten inneholder kolonne med rapporteringspliktige underinstitusjoner i en kolonne atskilt med \n
-# -
 
 kolonner_i_alle_private = [
     "USERID",
