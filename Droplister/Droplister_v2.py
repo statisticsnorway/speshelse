@@ -256,7 +256,7 @@ SFUklass['NAVN'] = SFUklass['NAVN'].apply(lambda x: ' '.join(x.split()))
 # En liste over alle variabelnavn som peker til droplister
 skjemaer_til_droplister = ["skj0X", "skj0Y", "skj38O", "skj38P", "skj39", "skj39b",
                            "skj40", "skj41", "skj44O", "skj44P", "skj45O",
-                           "skj45P", "skj46O", "skj46P", "skj47", "skj48"]
+                           "skj45P", "skj46O", "skj46P", "skj46Pb", "skj47", "skj48"]
 
 # ## Skjemaer som hentes rett fra klass og SFU
 
@@ -1007,6 +1007,22 @@ skj46P.loc[skj46P.FORETAK_NAVN.isnull(), 'FORETAK_NAVN'] = skj46P.NAVN1
 # Tar kun vare på de kolonnene jeg spesifiserte i begynnelsen
 skj46P = skj46P[kolonner]
 
+# ### skj46Pb (Somatiske sykehus, private helseforetak) Alternativ dropliste
+
+# Legger ved en kolonne `INSTLIST` som for skj39.
+
+skj46Pb = skj46P.copy()
+
+rapporteringsenhet, undervirksomheter = hjfunk.instlist_med_riktig_antall_n(
+    pd.DataFrame(skj46Pb["FINST_ORGNR"]), SFUklass
+)
+
+skj46Pb = pd.merge(skj46Pb, rapporteringsenhet, how="left", on="FINST_ORGNR")
+skj46Pb = pd.merge(skj46Pb, undervirksomheter, how="left", on="FINST_ORGNR")
+skj46Pb = hjfunk.legg_paa_hale_med_n(skj46Pb)
+
+skj46Pb[kolonner + ['INSTLIST']]
+
 # ### skj47 (Somatiske institusjoner)
 
 # Henter døgnplasser fra foregående år
@@ -1014,12 +1030,12 @@ d_plass_fjor = (
     skjemadata["HELSE47"][["FINST_ORGNR", "D_HELD", "SDGN_SUM"]]
     .reset_index()
     .copy()[["FINST_ORGNR", "D_HELD", "SDGN_SUM"]]
-    .rename(columns={"D_HELD": "D_HELD_IFJOR", "SDGN_SUM": "SDGN_SUM_IFJOR"})
+    .rename(columns={"D_HELD": "D_HELD_IFJOR", "SDGN_SUM": "SDGN_HT_FJOR"})
 )
 
 # +
 # kolonner som skal være med i droplisten:
-kolonner = kolonner_i_alle_private + ["D_HELD_IFJOR", "SDGN_SUM_IFJOR"]
+kolonner = kolonner_i_alle_private + ["D_HELD_IFJOR", "SDGN_HT_FJOR"]
 
 skj47 = hjfunk.tabell_som_inneholder_skjema(SFUklass, "SKJEMA_TYPE", "47").copy()
 skj47 = skj47.rename(
