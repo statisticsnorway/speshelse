@@ -90,7 +90,7 @@ siste_to_siffer_aar_for = str(aar_for)[-2:]
 dato_idag = pd.Timestamp("today").strftime("%d%m%y")
 
 ###############################################################################
-lagre_filer = False              # sett til True, hvis du vil lagre droplistene
+lagre_filer = True              # sett til True, hvis du vil lagre droplistene
 ###############################################################################
 stamme_sti = "/ssb/stamme01/fylkhels/speshelse/felles/droplister/"
 # -
@@ -1021,7 +1021,7 @@ skj46Pb = pd.merge(skj46Pb, rapporteringsenhet, how="left", on="FINST_ORGNR")
 skj46Pb = pd.merge(skj46Pb, undervirksomheter, how="left", on="FINST_ORGNR")
 skj46Pb = hjfunk.legg_paa_hale_med_n(skj46Pb)
 
-skj46Pb[kolonner + ['INSTLIST']]
+skj46Pb = skj46Pb[kolonner + ['INSTLIST']]
 
 # ### skj47 (Somatiske institusjoner)
 
