@@ -11,6 +11,7 @@ from functions.hjelpefunksjoner import lagre_excel
 
 # +
 import pandas as pd
+import numpy as np
 
 import getpass
 import datetime as dt
@@ -29,15 +30,16 @@ import functools as ft
 pd.options.display.float_format = '{:.1f}'.format
 
 username = getpass.getuser()
-password = getpass.getpass(prompt='Oracle-passord: ')
 dsn = "DB1P"
-
-# +
-engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+try:
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+except:
+    print("Passord ikke skrevet inn:")
+    password = getpass.getpass(prompt='Oracle-passord: ')
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
 
 # Opprett en tilkobling fra motoren
 conn = engine.connect()
-# -
 
 
 aar4 = '2022'
@@ -116,7 +118,6 @@ tjenester_til_SOM = [
     "ADM",
 ]
 m_til_SOM = rgn0x['TJENESTE_KODE'].isin(tjenester_til_SOM)
-# rgn0x = rgn0x[~rgn0x['tjenester_til_SOM'].isin(tjenester_tas_ut)].copy()
 rgn0x.loc[m_til_SOM, 'TJENESTE_KODE'] = "SOM"
 # -
 
@@ -249,10 +250,6 @@ verdi_kol = [
     "LONN"
 ]
 
-df_final['SNITTLONN_kr'] = df_final['LONN'] / df_final['AARSVERK'] * 1000
-
-df_final['sum_verdier_rad'] = round(df_final[verdi_kol].apply(abs).sum(axis=1), 1)
-
 
 
 df_final = df_final.sort_values(['ORGNR_FRTK', 'TJENESTE_KODE', 'HELSEREGION', 'FORETAKSTYPE'])
@@ -281,6 +278,73 @@ print(100*"-")
 rapport_dublett(df_final, ["ORGNR_FRTK", "TJENESTE_KODE"])
 rapport_dublett(df_final, ["NAVN", "TJENESTE_KODE"])
 rapport_dublett(df_final, ["NAVN", "ORGNR_FRTK", "TJENESTE_KODE", "HELSEREGION", "ORGNR_STATBANK"])
+
+
+
+# ## Fordele AOS (administrasjon) utover de andre tjenestene
+
+pd.options.display.float_format = '{:.5f}'.format
+
+df_final_aarsverk = df_final[['ORGNR_FRTK', 'TJENESTE_KODE', 'AARSVERK', 'LONN']].copy()
+
+df_final_aarsverk["LONN_tot"] = (
+    df_final_aarsverk
+    .groupby(["ORGNR_FRTK"])["LONN"]
+    .transform("sum")
+)
+
+df_lonn_aos = df_final_aarsverk[df_final_aarsverk['TJENESTE_KODE'] == "AOS"][['ORGNR_FRTK', 'LONN']].copy()
+
+df_final_aarsverk = pd.merge(
+    df_final_aarsverk,
+    df_lonn_aos,
+    how='left',
+    on='ORGNR_FRTK',
+    suffixes=('', '_aos')
+).fillna(0.0)
+
+df_aarsverk_aos = df_final_aarsverk[df_final_aarsverk['TJENESTE_KODE'] == "AOS"][['ORGNR_FRTK', 'AARSVERK']].copy()
+
+df_final_aarsverk = pd.merge(
+    df_final_aarsverk,
+    df_aarsverk_aos,
+    how='left',
+    on='ORGNR_FRTK',
+    suffixes=('', '_aos')
+).fillna(0.0)
+
+df_final_aarsverk['LONN_tot_uten_aos'] = df_final_aarsverk['LONN_tot'] - df_final_aarsverk['LONN_aos']
+
+df_final_aarsverk = df_final_aarsverk.drop(columns=['LONN_aos', 'LONN_tot'])
+
+df_final_aarsverk['andel'] = df_final_aarsverk['LONN'] / df_final_aarsverk['LONN_tot_uten_aos']
+
+df_final_aarsverk['AARSVERK_ny'] = df_final_aarsverk['AARSVERK'] + df_final_aarsverk['AARSVERK_aos'] * df_final_aarsverk['andel']
+
+df_final_aarsverk = df_final_aarsverk[['ORGNR_FRTK', 'TJENESTE_KODE', 'AARSVERK_ny']]
+
+
+
+df_final = pd.merge(
+    df_final,
+    df_final_aarsverk,
+    how='left',
+    on=['ORGNR_FRTK', 'TJENESTE_KODE']
+)
+
+# Tar ut AOS etter å ha fordel aarsverk utover de andre tjenestekodene.
+
+df_final = df_final[df_final['TJENESTE_KODE'] != "AOS"].reset_index(drop=True)
+
+# Lager noen interessante sammenstillinger av tall
+
+df_final['SNITTLONN_millioner'] = df_final['LONN'] / df_final['AARSVERK_ny'] / 1000
+
+df_final['sum_verdier_rad'] = round(df_final[verdi_kol].apply(abs).sum(axis=1), 1)
+
+# # Lagring
+
+df_final[df_final['NAVN'].str.contains("SYKEHUSPARTNER")]
 
 
 
