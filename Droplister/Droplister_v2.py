@@ -109,15 +109,16 @@ if lagre_filer:
 # ## Tilgang oracle
 
 username = getpass.getuser()
-password = getpass.getpass(prompt='Oracle-passord: ')
 dsn = "DB1P"
-
-# +
-engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+try:
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+except:
+    print("Passord ikke skrevet inn")
+    password = getpass.getpass(prompt='Oracle-passord: ')
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
 
 # Opprett en tilkobling fra motoren
 conn = engine.connect()
-# -
 
 # # Henter data
 
