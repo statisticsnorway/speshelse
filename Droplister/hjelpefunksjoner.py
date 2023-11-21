@@ -50,6 +50,7 @@ def hent_enheter_fra_klass(aargang):
             'name_3': 'NAVN_KLASS'
         })
         [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
+        .reset_index(drop=True)
     )
 
     RHF = klass_offentlige_helseforetak.pivot_level()
@@ -59,6 +60,7 @@ def hent_enheter_fra_klass(aargang):
         .rename(columns={'code_1': 'HELSEREGION',
                          'name_2': 'NAVN_KLASS',
                          'code_2': 'ORGNR_FORETAK'})
+        .reset_index(drop=True)
     )
 
     ### Private helseinstitusjoner med oppdrags- og bestillerdokument
@@ -75,6 +77,7 @@ def hent_enheter_fra_klass(aargang):
             'name_2': 'NAVN_KLASS'
         })
         [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
+        .reset_index(drop=True)
     )
 
     ### Regionale og felleseide støtteforetak i spesialisthelsetjenesten
@@ -91,6 +94,7 @@ def hent_enheter_fra_klass(aargang):
             'name_3': 'NAVN_KLASS'
         })
         [['ORGNR_FORETAK', 'NAVN_KLASS', 'HELSEREGION']]
+        .reset_index(drop=True)
     )
 
     rfss2 = (
@@ -105,21 +109,23 @@ def hent_enheter_fra_klass(aargang):
             'name': 'NAVN_KLASS'
             }
         )
+        .reset_index(drop=True)
     )
 
     rfss3 = (
         get_classification(605)
-        .get_codes(from_date=f'{aargang}-01-01',
-                   to_date=f'{aargang}-01-02')
-        .data.query("level == '2' & parentCode != '99'")
-        [['code', 'parentCode', 'name']]
-        .rename(columns={
-            'code': 'ORGNR_FORETAK',
-            'parentCode': 'HELSEREGION',
-            'name': 'NAVN_KLASS'
-            }
-        )
+        .get_codes(from_date=f"{aargang}-01-01", to_date=f"{aargang}-01-02")
+        .data
     )
+
+    RHF_orgnr_list = RHF.ORGNR_FORETAK.to_list()
+    m1 = rfss3["level"] == "2"
+    m2 = rfss3["parentCode"] != "99"
+    m3 = ~rfss3["code"].isin(RHF_orgnr_list)
+
+    rfss3 = rfss3[m1 & m2 & m3][['code', 'parentCode', 'name']].rename(
+        columns={"code": "ORGNR_FORETAK", "parentCode": "HELSEREGION", "name": "NAVN_KLASS"}
+    ).reset_index(drop=True)
 
     rfss_region = klass_rfss.data.copy()
 
@@ -138,7 +144,7 @@ def hent_enheter_fra_klass(aargang):
                                     on='HELSEREGION'
                                     )
 
-    rapporteringsenheter = rapporteringsenheter.rename(columns={'RHF': 'HELSEREGION_NAVN'})
+    rapporteringsenheter = rapporteringsenheter.rename(columns={'RHF': 'HELSEREGION_NAVN'}).reset_index(drop=True)
 
     rapporteringsenheter = rapporteringsenheter[~rapporteringsenheter.duplicated()]
 

@@ -18,9 +18,15 @@ import requests
 
 from sqlalchemy import create_engine
 import getpass
-
-til_lagring = False # Sett til True, hvis du skal gjøre endringer i Databasen
 # -
+
+################################################################
+til_lagring = True # Sett til True, hvis du vil lagre en ny fil
+################################################################
+
+import functools as ft
+
+pd.options.display.float_format = '{:.1f}'.format
 
 username = getpass.getuser()
 password = getpass.getpass(prompt='Oracle-passord: ')
@@ -77,13 +83,19 @@ foretakstyper = (
 
 # ## Aktivitet
 
+akt.FORETAKSTYPE.value_counts()
+
+akt.columns
+
 akt = (
     akt
-    .rename(columns={'ORGNR': 'ORGNR_FRTK'})
-    .drop(columns=['NAVN_FRTK', 'TJENESTE_NAVN', 'RHF', 'ORGNR_STATBANK'])
+    .drop(columns=['NAVN_FRTK', 'TJENESTE_NAVN', 'RHF'])
 )
 
-akt = akt.groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'FORETAKSTYPE', 'HELSEREGION', 'NAVN_STATBANK']).sum(numeric_only=True).reset_index()
+as_mask = akt['FORETAKSTYPE'] == "Avtalespesialister"
+akt.loc[as_mask, 'ORGNR_FRTK'] = akt.loc[as_mask, 'ORGNR_STATBANK'] 
+
+akt = akt.groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'FORETAKSTYPE', 'HELSEREGION', 'ORGNR_STATBANK']).sum(numeric_only=True).reset_index()
 
 rapport_df(akt)
 
@@ -108,9 +120,9 @@ m_til_SOM = rgn0x['TJENESTE_KODE'].isin(tjenester_til_SOM)
 rgn0x.loc[m_til_SOM, 'TJENESTE_KODE'] = "SOM"
 # -
 
-rgn0x = rgn0x[["ORGNR_FRTK", "TJENESTE_KODE", "TOT_UTG", 'HELSEREGION', "NAVN_STATBANK", "LONN"]]
+rgn0x = rgn0x[["ORGNR_FRTK", "TJENESTE_KODE", "TOT_UTG", 'HELSEREGION', "ORGNR_STATBANK", "LONN"]]
 
-rgn0x = rgn0x.groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'HELSEREGION', "NAVN_STATBANK"]).sum().reset_index()
+rgn0x = rgn0x.groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'HELSEREGION', "ORGNR_STATBANK"]).sum().reset_index()
 
 rgn0x = pd.merge(
     rgn0x,
@@ -129,10 +141,10 @@ rapport_df(rgn0x)
 m_86107 = rgn39['SN07_1'] == '86.107'
 rgn39.loc[m_86107, 'TJENESTE_KODE'] = "REH"
 
-rgn39 = rgn39[["ORGNR_VIRK", "TOT_UTG", "TJENESTE_KODE", "ORGNR_FRTK", 'FORETAKSTYPE', "HELSEREGION", "NAVN_STATBANK", "LONN"]]
+rgn39 = rgn39[["ORGNR_VIRK", "TOT_UTG", "TJENESTE_KODE", "ORGNR_FRTK", 'FORETAKSTYPE', "HELSEREGION", "ORGNR_STATBANK", "LONN"]]
 
 rgn39 = (
-    rgn39.groupby(["ORGNR_FRTK", "TJENESTE_KODE", "FORETAKSTYPE", "HELSEREGION", "NAVN_STATBANK"])[['TOT_UTG', 'LONN']].sum()
+    rgn39.groupby(["ORGNR_FRTK", "TJENESTE_KODE", "FORETAKSTYPE", "HELSEREGION", "ORGNR_STATBANK"])[['TOT_UTG', 'LONN']].sum()
     .reset_index()
 )
 
@@ -141,8 +153,8 @@ rapport_df(rgn39)
 # ## Personell
 
 per = (
-    per[['ORGNR_FRTK', 'TJENESTE_KODE', 'AARSVERK', 'FORETAKSTYPE', 'HELSEREGION', "NAVN_STATBANK"]]
-    .groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'FORETAKSTYPE', 'HELSEREGION', "NAVN_STATBANK"]).sum()
+    per[['ORGNR_FRTK', 'TJENESTE_KODE', 'AARSVERK', 'FORETAKSTYPE', 'HELSEREGION', "ORGNR_STATBANK"]]
+    .groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'FORETAKSTYPE', 'HELSEREGION', "ORGNR_STATBANK"]).sum()
     .reset_index()
 )
 
@@ -155,11 +167,9 @@ dfs = [akt, rgn0x, rgn39, per]
 for df in dfs:
     print(df.columns.to_list())
 
-import functools as ft
-
 df_final = ft.reduce(
     lambda left, right: pd.merge(
-        left, right, on=["ORGNR_FRTK", "TJENESTE_KODE", "FORETAKSTYPE", 'HELSEREGION', "NAVN_STATBANK"], how="outer"
+        left, right, on=["ORGNR_FRTK", "TJENESTE_KODE", "FORETAKSTYPE", 'HELSEREGION', "ORGNR_STATBANK"], how="outer"
     ),
     dfs,
 )
@@ -174,7 +184,7 @@ df_final.TOT_UTG.sum()
 
 df_final[df_final['ORGNR_FRTK'] == "883971752"]
 
-df_final = df_final.groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'FORETAKSTYPE', "HELSEREGION", "NAVN_STATBANK"]).sum().reset_index()
+df_final = df_final.groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'FORETAKSTYPE', "HELSEREGION", "ORGNR_STATBANK"]).sum().reset_index()
 
 sql_str = hjfunk.lag_sql_str(df_final.ORGNR_FRTK.unique())
 
@@ -198,6 +208,15 @@ df_final = pd.merge(
     how='left'
 ).copy()
 
+tomt_navn = df_final.NAVN.isna()
+df_final.loc[tomt_navn, "NAVN"] = (
+    df_final.loc[tomt_navn, "FORETAKSTYPE"]
+    + " "
+    + df_final.loc[tomt_navn, "TJENESTE_KODE"]
+    + " "
+    + df_final.loc[tomt_navn, "HELSEREGION"]
+)
+
 df_final = df_final[
     [
         "ORGNR_FRTK",
@@ -205,7 +224,7 @@ df_final = df_final[
         "TJENESTE_KODE",
         "FORETAKSTYPE",
         "HELSEREGION",
-        "NAVN_STATBANK",
+        "ORGNR_STATBANK",
         "UTSKRIVNINGER",
         "OPPHOLDSDOGN",
         "OPPHOLDSDAGER",
@@ -236,8 +255,6 @@ df_final['sum_verdier_rad'] = round(df_final[verdi_kol].apply(abs).sum(axis=1), 
 
 
 
-pd.options.display.float_format = '{:.1f}'.format
-
 df_final = df_final.sort_values(['ORGNR_FRTK', 'TJENESTE_KODE', 'HELSEREGION', 'FORETAKSTYPE'])
 
 
@@ -253,18 +270,17 @@ def rapport_dublett(df, kols):
     print(f"[{dups}]\tAntall foretak med dublett på {kols}")
 
 
-
 # -
 
 rapport_missing(df_final, "NAVN")
 rapport_missing(df_final, "ORGNR_FRTK")
 rapport_missing(df_final, "TJENESTE_KODE")
 rapport_missing(df_final, "HELSEREGION")
-rapport_missing(df_final, "NAVN_STATBANK")
+rapport_missing(df_final, "ORGNR_STATBANK")
 print(100*"-")
 rapport_dublett(df_final, ["ORGNR_FRTK", "TJENESTE_KODE"])
 rapport_dublett(df_final, ["NAVN", "TJENESTE_KODE"])
-rapport_dublett(df_final, ["NAVN", "ORGNR_FRTK", "TJENESTE_KODE", "HELSEREGION", "NAVN_STATBANK"])
+rapport_dublett(df_final, ["NAVN", "ORGNR_FRTK", "TJENESTE_KODE", "HELSEREGION", "ORGNR_STATBANK"])
 
 
 
@@ -272,41 +288,9 @@ excel_ark = {
     'Populasjonsanalyse': df_final
 }
 
-lagre_excel(excel_ark, "/ssb/stamme01/fylkhels/speshelse/felles/populasjon/populasjonsanalyse.xlsx")
-
-
-
-
-
-df_final.sample(5)
-
-
-
-
-
-# # Koble masterfiler med 24xx
-
-# +
-# sporring = f"""
-#     SELECT *
-#     FROM DSBBASE.DLR_ENHET_I_DELREG
-#     WHERE DELREG_NR IN ('24{aar2}')
-# """
-# SFU_data = hjfunk.les_sql(sporring, conn)
-# print(f"Rader:    {SFU_data.shape[0]}\nKolonner: {SFU_data.shape[1]}")
-# SFU_data.info()
-
-
-# +
-# pop = SFU_data.ORGNR.copy()
-# -
-
-
-
-
-
-
-
-
+if til_lagring:
+    idag = str(pd.Timestamp.today()).split(" ")[0].replace("-", "")
+    sti = f"/ssb/stamme01/fylkhels/speshelse/felles/populasjon/populasjonsanalyse_{idag}.xlsx"
+    lagre_excel(excel_ark, sti)
 
 
