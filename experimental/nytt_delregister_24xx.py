@@ -32,44 +32,6 @@ filsti_output = f"/ssb/stamme01/fylkhels/speshelse/felles/droplister/2023/nytt_d
 rapportsamling = {} # variabel som til slutt inneholder alt som skal lagres i Excel-fil
 
 
-def lagre_excel(dfs, sti):
-    """
-    Lagrer en eller flere DataFrames i en Excel-fil på den angitte banen (sti).
-
-    Args:
-        dfs (dict): En dictionary der nøklene er arknavn og verdiene er DataFrames som skal lagres i Excel-filen.
-        sti (str): Stien til Excel-filen der DataFrames skal lagres.
-
-    Eksempel:
-        For å lagre to DataFrames 'df1' og 'df2' i en Excel-fil 'eksempel.xlsx' på stien '/sti/til/fil/eksempel.xlsx':
-
-        >>> import pandas as pd
-        >>> data1 = {'A': [1, 2, 3], 'B': [4, 5, 6]}
-        >>> data2 = {'X': [7, 8, 9], 'Y': [10, 11, 12]}
-        >>> df1 = pd.DataFrame(data1)
-        >>> df2 = pd.DataFrame(data2)
-        >>> dataframes = {'Ark1': df1, 'Ark2': df2}
-        >>> sti_til_fil = '/sti/til/fil/eksempel.xlsx'
-        >>> lagre_excel(dataframes, sti_til_fil)
-
-        Funksjonen vil opprette en Excel-fil på '/sti/til/fil/eksempel.xlsx' og lagre 'df1' i 'Ark1'-arket og 'df2' i 'Ark2'-arket i filen.
-    """
-    if not os.path.exists(sti):
-        print("Filen eksisterer ikke. Oppretter tom fil å skrive til.")
-        null_df = pd.DataFrame()
-        null_df.to_excel(sti)
-    with pd.ExcelWriter(
-        sti,
-        engine="openpyxl",
-    ) as writer:
-        for arknavn in dfs:
-            if len(arknavn) >= 30:
-                print("\t Arkfanenavnet ", arknavn, "er for langt. (Max 30 tegn i Excel)")
-            dfs[arknavn].to_excel(writer, sheet_name=arknavn, index=False)
-            print(f"Arkfanen '{arknavn}' er lagret i filen.")
-
-    print(sti)
-
 
 sporring = f"""
     SELECT *

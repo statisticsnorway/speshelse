@@ -1,20 +1,58 @@
 # -*- coding: utf-8 -*-
+# # Prep
+
+# ## Pakker og tilganger
+
+import sys
+sys.path.insert(0, '..')
+
+import Droplister.hjelpefunksjoner as hjfunk
+from functions.hjelpefunksjoner import lagre_excel
+
 # +
 import pandas as pd
-import cx_Oracle
-from db1p import query_db1p
+import numpy as np
+
 import getpass
 import datetime as dt
 import requests
 
-til_lagring = False # Sett til True, hvis du skal gjøre endringer i Databasen
-
-# +
-# conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
+from sqlalchemy import create_engine
+import getpass
 # -
+
+################################################################
+til_lagring = True # Sett til True, hvis du vil lagre en ny fil
+################################################################
+
+import functools as ft
+
+pd.options.display.float_format = '{:.1f}'.format
+
+username = getpass.getuser()
+dsn = "DB1P"
+try:
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+except:
+    print("Passord ikke skrevet inn:")
+    password = getpass.getpass(prompt='Oracle-passord: ')
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+
+# Opprett en tilkobling fra motoren
+conn = engine.connect()
+
 
 aar4 = '2022'
 aar2 = aar4[-2:]
+
+
+def rapport_df(df):
+    display(df.info())
+    display(df.sample(2))
+    df.filter(like="ORG").nunique()
+
+
+# # Innlasting av filer
 
 sti_akt   = f"/ssb/stamme01/fylkhels/speshelse/aktivitet/{aar4}/masterfil/aktivitet_masterfil_{aar4}.parquet"
 sti_rgn0x = f"/ssb/stamme01/fylkhels/speshelse/regnskap/{aar4}/masterfil/helse0x_masterfil_{aar4}.parquet"
@@ -22,95 +60,301 @@ sti_rgn39 = f"/ssb/stamme01/fylkhels/speshelse/regnskap/{aar4}/masterfil/helse39
 sti_per   = f"/ssb/stamme01/fylkhels/speshelse/personell/{aar4}/personell/masterfil/personell_masterfil_{aar4}.parquet"
 
 akt = pd.read_parquet(sti_akt)
-# rgn0x = pd.read_parquet(sti_rgn0x)
+rgn0x = pd.read_parquet(sti_rgn0x)
 rgn39 = pd.read_parquet(sti_rgn39)
 per = pd.read_parquet(sti_per)
 
-# # Prep
+# # Bearbeiding av filer
+
+HF, RHF, phob, rfss, rfss2, rfss3, rapporteringsenheter = hjfunk.hent_enheter_fra_klass(
+    aar4
+)
+
+rfs = pd.concat([rfss, rfss2, rfss3], ignore_index=True)
+
+rfs['FORETAKSTYPE'] = 'Støtteforetak'
+HF['FORETAKSTYPE'] = 'HF'
+phob['FORETAKSTYPE'] = 'Oppdrag'
+RHF['FORETAKSTYPE'] = 'RHF'
+
+foretakstyper = (
+    pd.concat([RHF, HF, phob, rfs], ignore_index=True)
+    .drop(columns=["HELSEREGION", "NAVN_KLASS"])
+    .rename(columns={"ORGNR_FORETAK": "ORGNR_FRTK"})
+)
+
+# ## Aktivitet
+
+akt.FORETAKSTYPE.value_counts()
+
+akt.columns
 
 akt = (
-    akt[akt['FORETAKSTYPE']
-        .isin(['Privat', 'Oppdrag'])]
-    .rename(columns={'ORGNR': 'ORGNR_FORETAK'})
-    .drop(columns=['NAVN', 'HELSEREGION', 'RHF', 'REGION', 'ORGNR_REGION'])
+    akt
+    .drop(columns=['NAVN_FRTK', 'TJENESTE_NAVN', 'RHF'])
 )
+
+as_mask = akt['FORETAKSTYPE'] == "Avtalespesialister"
+akt.loc[as_mask, 'ORGNR_FRTK'] = akt.loc[as_mask, 'ORGNR_STATBANK'] 
+
+akt = akt.groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'FORETAKSTYPE', 'HELSEREGION', 'ORGNR_STATBANK']).sum(numeric_only=True).reset_index()
+
+rapport_df(akt)
+
+# ## Regnskap skjema0X
+
+# Merknader:
+# - ADM i regnskapsfilene er kun data for RHFene
+#     - I personellfilen er alle årsverk som ikke er pasientrettet blir regnet som ADM
+#
+
+# +
+# LAB, PTR, PBF, ADM finnes ikke de andre filene. -> settes til SOM
+
+tjenester_til_SOM = [
+    "LAB",
+    "PTR",
+    "PBF",
+    "ADM",
+]
+m_til_SOM = rgn0x['TJENESTE_KODE'].isin(tjenester_til_SOM)
+rgn0x.loc[m_til_SOM, 'TJENESTE_KODE'] = "SOM"
+# -
+
+rgn0x = rgn0x[["ORGNR_FRTK", "TJENESTE_KODE", "TOT_UTG", 'HELSEREGION', "ORGNR_STATBANK", "LONN"]]
+
+rgn0x = rgn0x.groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'HELSEREGION', "ORGNR_STATBANK"]).sum().reset_index()
+
+rgn0x = pd.merge(
+    rgn0x,
+    foretakstyper,
+    on='ORGNR_FRTK',
+    how='left'
+)
+
+rapport_df(rgn0x)
+
+# ---
+
+# ## Regnskap skjema39
+
+# Hvis `SN07_1 == 86.107`, skal `funksjon`/`TJENESTE` være `REH`
+m_86107 = rgn39['SN07_1'] == '86.107'
+rgn39.loc[m_86107, 'TJENESTE_KODE'] = "REH"
+
+rgn39 = rgn39[["ORGNR_VIRK", "TOT_UTG", "TJENESTE_KODE", "ORGNR_FRTK", 'FORETAKSTYPE', "HELSEREGION", "ORGNR_STATBANK", "LONN"]]
 
 rgn39 = (
-    rgn39[['ORGNR', 'funksjon', 'TOT_UTG']]
-    .rename(columns={'ORGNR': 'ORGNR_FORETAK', 'funksjon': 'TJENESTE', 'TOT_UTG': 'REGNSKAP_TOT_UTG'})
+    rgn39.groupby(["ORGNR_FRTK", "TJENESTE_KODE", "FORETAKSTYPE", "HELSEREGION", "ORGNR_STATBANK"])[['TOT_UTG', 'LONN']].sum()
+    .reset_index()
 )
 
-per = per[per['FORETAKSTYPE'].isin(['Privat', 'Oppdrag'])][['ORGNR_FORETAK', 'FRTK_NAVN', 'TJENESTE', 'AARSVERK']]
+rapport_df(rgn39)
 
-per = per.groupby(['ORGNR_FORETAK', 'FRTK_NAVN', 'TJENESTE']).sum().reset_index()
+# ## Personell
+
+per = (
+    per[['ORGNR_FRTK', 'TJENESTE_KODE', 'AARSVERK', 'FORETAKSTYPE', 'HELSEREGION', "ORGNR_STATBANK"]]
+    .groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'FORETAKSTYPE', 'HELSEREGION', "ORGNR_STATBANK"]).sum()
+    .reset_index()
+)
+
+rapport_df(per)
+
+# # Merge alle fire mastertabeller på foretak
+
+dfs = [akt, rgn0x, rgn39, per]
+
+for df in dfs:
+    print(df.columns.to_list())
+
+df_final = ft.reduce(
+    lambda left, right: pd.merge(
+        left, right, on=["ORGNR_FRTK", "TJENESTE_KODE", "FORETAKSTYPE", 'HELSEREGION', "ORGNR_STATBANK"], how="outer"
+    ),
+    dfs,
+)
+
+df_final['TOT_UTG'] = df_final['TOT_UTG_x'].astype(float).fillna(0.0) + df_final['TOT_UTG_y'].astype(float).fillna(0.0)
+df_final['LONN'] = df_final['LONN_x'].astype(float).fillna(0.0) + df_final['LONN_y'].astype(float).fillna(0.0)
+df_final = df_final.drop(columns=['LONN_x', 'LONN_y', 'TOT_UTG_x', 'TOT_UTG_y'])
+
+df_final[['TOT_UTG', 'LONN']] = df_final[['TOT_UTG', 'LONN']].astype(str).replace("0.0", None).astype(float)
+
+df_final.TOT_UTG.sum()
+
+df_final[df_final['ORGNR_FRTK'] == "883971752"]
+
+df_final = df_final.groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'FORETAKSTYPE', "HELSEREGION", "ORGNR_STATBANK"]).sum().reset_index()
+
+sql_str = hjfunk.lag_sql_str(df_final.ORGNR_FRTK.unique())
+
+sporring_for = f"""
+    SELECT ORGNR, NAVN, RECORD_ED, FORETAKS_NR_GDATO
+    FROM DSBBASE.SSB_FORETAK
+    WHERE
+        ORGNR IN {sql_str} AND
+        EXTRACT(YEAR FROM RECORD_ED) >= {aar4} AND
+        EXTRACT(YEAR FROM FORETAKS_NR_GDATO) <= {aar4}
+"""
+
+foretak_navn = hjfunk.les_sql(sporring_for, conn).rename(columns={'ORGNR': 'ORGNR_FRTK'})
 
 
 
-# # Koble masterfiler med 24xx
+df_final = pd.merge(
+    df_final,
+    foretak_navn,
+    on='ORGNR_FRTK',
+    how='left'
+).copy()
+
+tomt_navn = df_final.NAVN.isna()
+df_final.loc[tomt_navn, "NAVN"] = (
+    df_final.loc[tomt_navn, "FORETAKSTYPE"]
+    + " "
+    + df_final.loc[tomt_navn, "TJENESTE_KODE"]
+    + " "
+    + df_final.loc[tomt_navn, "HELSEREGION"]
+)
+
+df_final = df_final[
+    [
+        "ORGNR_FRTK",
+        'NAVN',
+        "TJENESTE_KODE",
+        "FORETAKSTYPE",
+        "HELSEREGION",
+        "ORGNR_STATBANK",
+        "UTSKRIVNINGER",
+        "OPPHOLDSDOGN",
+        "OPPHOLDSDAGER",
+        "POLIKLINIKK",
+        "DOGNPLASSER",
+        "SENGEDOGN",
+        "TOT_UTG",
+        "AARSVERK",
+        "LONN"
+    ]
+]
+
+verdi_kol = [
+    "UTSKRIVNINGER",
+    "OPPHOLDSDOGN",
+    "OPPHOLDSDAGER",
+    "POLIKLINIKK",
+    "DOGNPLASSER",
+    "SENGEDOGN",
+    "TOT_UTG",
+    "AARSVERK",
+    "LONN"
+]
 
 
 
+df_final = df_final.sort_values(['ORGNR_FRTK', 'TJENESTE_KODE', 'HELSEREGION', 'FORETAKSTYPE'])
 
 
 
+# +
+def rapport_missing(df, kol):
+    missing = df[kol].isna().sum()
+    tom = (df[kol] == '').sum()
+    print(f"[{missing + tom}]\tAntall med missing eller tom på {kol}")
+
+def rapport_dublett(df, kols):
+    dups = df[kols].duplicated().sum()
+    print(f"[{dups}]\tAntall foretak med dublett på {kols}")
+
+
+# -
+
+rapport_missing(df_final, "NAVN")
+rapport_missing(df_final, "ORGNR_FRTK")
+rapport_missing(df_final, "TJENESTE_KODE")
+rapport_missing(df_final, "HELSEREGION")
+rapport_missing(df_final, "ORGNR_STATBANK")
+print(100*"-")
+rapport_dublett(df_final, ["ORGNR_FRTK", "TJENESTE_KODE"])
+rapport_dublett(df_final, ["NAVN", "TJENESTE_KODE"])
+rapport_dublett(df_final, ["NAVN", "ORGNR_FRTK", "TJENESTE_KODE", "HELSEREGION", "ORGNR_STATBANK"])
 
 
 
+# ## Fordele AOS (administrasjon) utover de andre tjenestene
+
+pd.options.display.float_format = '{:.5f}'.format
+
+df_final_aarsverk = df_final[['ORGNR_FRTK', 'TJENESTE_KODE', 'AARSVERK', 'LONN']].copy()
+
+df_final_aarsverk["LONN_tot"] = (
+    df_final_aarsverk
+    .groupby(["ORGNR_FRTK"])["LONN"]
+    .transform("sum")
+)
+
+df_lonn_aos = df_final_aarsverk[df_final_aarsverk['TJENESTE_KODE'] == "AOS"][['ORGNR_FRTK', 'LONN']].copy()
+
+df_final_aarsverk = pd.merge(
+    df_final_aarsverk,
+    df_lonn_aos,
+    how='left',
+    on='ORGNR_FRTK',
+    suffixes=('', '_aos')
+).fillna(0.0)
+
+df_aarsverk_aos = df_final_aarsverk[df_final_aarsverk['TJENESTE_KODE'] == "AOS"][['ORGNR_FRTK', 'AARSVERK']].copy()
+
+df_final_aarsverk = pd.merge(
+    df_final_aarsverk,
+    df_aarsverk_aos,
+    how='left',
+    on='ORGNR_FRTK',
+    suffixes=('', '_aos')
+).fillna(0.0)
+
+df_final_aarsverk['LONN_tot_uten_aos'] = df_final_aarsverk['LONN_tot'] - df_final_aarsverk['LONN_aos']
+
+df_final_aarsverk = df_final_aarsverk.drop(columns=['LONN_aos', 'LONN_tot'])
+
+df_final_aarsverk['andel'] = df_final_aarsverk['LONN'] / df_final_aarsverk['LONN_tot_uten_aos']
+
+df_final_aarsverk['AARSVERK_ny'] = df_final_aarsverk['AARSVERK'] + df_final_aarsverk['AARSVERK_aos'] * df_final_aarsverk['andel']
+
+df_final_aarsverk = df_final_aarsverk[['ORGNR_FRTK', 'TJENESTE_KODE', 'AARSVERK_ny']]
 
 
 
+df_final = pd.merge(
+    df_final,
+    df_final_aarsverk,
+    how='left',
+    on=['ORGNR_FRTK', 'TJENESTE_KODE']
+)
+
+# Tar ut AOS etter å ha fordel aarsverk utover de andre tjenestekodene.
+
+df_final = df_final[df_final['TJENESTE_KODE'] != "AOS"].reset_index(drop=True)
+
+# Lager noen interessante sammenstillinger av tall
+
+df_final['SNITTLONN_millioner'] = df_final['LONN'] / df_final['AARSVERK_ny'] / 1000
+
+df_final['sum_verdier_rad'] = round(df_final[verdi_kol].apply(abs).sum(axis=1), 1)
+
+# # Lagring
+
+df_final[df_final['NAVN'].str.contains("SYKEHUSPARTNER")]
 
 
 
+excel_ark = {
+    'Populasjonsanalyse': df_final
+}
+
+if til_lagring:
+    idag = str(pd.Timestamp.today()).split(" ")[0].replace("-", "")
+    sti = f"/ssb/stamme01/fylkhels/speshelse/felles/populasjon/populasjonsanalyse_{idag}.xlsx"
+    lagre_excel(excel_ark, sti)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # Aktivitet: masterfil
-
-# Spørsmål:
-# - Det er 18 virksomheter uten ORGNR og NAVN.
-# - Dubletter på ORGNR
-
-rapporteringsvar_akt = ["UTSKRIVNINGER", "OPPHOLDSDOGN", "OPPHOLDSDAGER", "POLIKLINIKK", "DOGNPLASSER", "SENGEDOGN"]
-
-akt[['ORGNR'] + rapporteringsvar_akt]
-
-akt_gruppering = akt[['ORGNR'] + rapporteringsvar_akt].groupby(['ORGNR']).sum().reset_index().copy()
-
-akt_gruppering['sum'] = akt_gruppering.sum(axis=1, numeric_only=True)
-
-akt_gruppering
-
-print("ORGNR som ikke har rapportert noe i 2022:")
-akt_gruppering[akt_gruppering['sum'] == 0]['ORGNR'].to_numpy()
-
-# Funn:
-# - 922569738 SNUOM PSYKISK HELSE AS
-# - 941455077 MEDI 3 AS
-# - 971427396 STIFTELSEN NORDRE AASEN
-# - 976724895 PTØ NORGE
