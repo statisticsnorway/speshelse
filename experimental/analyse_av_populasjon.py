@@ -21,10 +21,9 @@ from sqlalchemy import create_engine
 import getpass
 # -
 
-################################################################
+""
 til_lagring = True # Sett til True, hvis du vil lagre en ny fil
-################################################################
-
+""
 import functools as ft
 
 pd.options.display.float_format = '{:.1f}'.format
@@ -34,7 +33,6 @@ dsn = "DB1P"
 try:
     engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
 except:
-    print("Passord ikke skrevet inn:")
     password = getpass.getpass(prompt='Oracle-passord: ')
     engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
 
@@ -49,7 +47,6 @@ aar2 = aar4[-2:]
 def rapport_df(df):
     display(df.info())
     display(df.sample(2))
-    df.filter(like="ORG").nunique()
 
 
 # # Innlasting av filer
@@ -65,6 +62,8 @@ rgn39 = pd.read_parquet(sti_rgn39)
 per = pd.read_parquet(sti_per)
 
 # # Bearbeiding av filer
+
+# ### Foretakstype fra KLASS
 
 HF, RHF, phob, rfss, rfss2, rfss3, rapporteringsenheter = hjfunk.hent_enheter_fra_klass(
     aar4
@@ -180,10 +179,6 @@ df_final['LONN'] = df_final['LONN_x'].astype(float).fillna(0.0) + df_final['LONN
 df_final = df_final.drop(columns=['LONN_x', 'LONN_y', 'TOT_UTG_x', 'TOT_UTG_y'])
 
 df_final[['TOT_UTG', 'LONN']] = df_final[['TOT_UTG', 'LONN']].astype(str).replace("0.0", None).astype(float)
-
-df_final.TOT_UTG.sum()
-
-df_final[df_final['ORGNR_FRTK'] == "883971752"]
 
 df_final = df_final.groupby(['ORGNR_FRTK', 'TJENESTE_KODE', 'FORETAKSTYPE', "HELSEREGION", "ORGNR_STATBANK"]).sum().reset_index()
 
@@ -338,9 +333,20 @@ df_final = df_final[df_final['TJENESTE_KODE'] != "AOS"].reset_index(drop=True)
 
 # Lager noen interessante sammenstillinger av tall
 
-df_final['SNITTLONN_millioner'] = df_final['LONN'] / df_final['AARSVERK_ny'] / 1000
+df_final['SNITTLONN_millioner_ny'] = df_final['LONN'] / df_final['AARSVERK_ny'] / 1000
+
+df_final['SNITTLONN_millioner'] = df_final['LONN'] / df_final['AARSVERK'] / 1000
 
 df_final['sum_verdier_rad'] = round(df_final[verdi_kol].apply(abs).sum(axis=1), 1)
+
+
+# +
+def antall_0_eller_missing(row):
+    return ((row != 0.0) & (~row.isnull())).sum()
+
+# Legger til en ny kolonne som teller antall ikke-null og ikke-missing verdier
+df_final['ant_num_verdier'] = df_final[verdi_kol].apply(antall_0_eller_missing, axis=1)
+# -
 
 # # Lagring
 
