@@ -11,6 +11,7 @@ from db1p import query_db1p
 import getpass
 
 from datetime import datetime
+import datetime as dt
 til_lagring = True # Sett til True, hvis du skal gjøre endringer i Databasen
 # -
 
@@ -118,8 +119,6 @@ print(sammen[sammen['status'].isin(['inn', 'ut'])][['ORGNR_FORETAK', 'FORETAK_NA
 
 # ## Gjøre endringer i delreg 20877XX
 
-SFU_enhet.ORGNR_FORETAK.duplicated().sum()
-
 sporring = f"""
     SELECT *
     FROM DSBBASE.DLR_ENHET_I_DELREG
@@ -137,28 +136,72 @@ sammen[sammen['status'] == 'inn']
 til_altinn = SFU_enhet[(SFU_enhet['ORGNR_FORETAK'].isin(orgnr_inn)) & SFU_enhet['H_VAR2_N'].notnull()].copy()
 
 # Omorganiser kun de felles kolonnene, og behold de unike kolonnene som de er
-common_columns = [col for col in altinn_raw.columns if col in til_altinn.columns]
-til_altinn = til_altinn[common_columns + [col for col in til_altinn.columns if col not in common_columns]]
+felles_kol = [col for col in altinn_raw.columns if col in til_altinn.columns]
+til_altinn = til_altinn[felles_kol + [col for col in til_altinn.columns if col not in felles_kol]]
 
 altinn_raw.columns
 
 til_altinn.columns
 
 # Dobbeltsjekk at enhetene ikke allerede ligger i delregisteret
-assert len(altinn_raw[altinn_raw.ORGNR_FORETAK.isin(orgnr_inn)]) == 0
-
-display(til_altinn.sample(1))
-display(altinn_raw.sample(1))
-
-rows = [tuple(x) for x in til_altinn.values]
-
-# ## PASSE PÅ
-# ENDRE `DATO_MED_I_DELREG`, `DATO_INSERT`, `DATO_UPDATE`, `USER_UPDATE` ? 
+assert len(altinn_raw[altinn_raw.ORGNR_FORETAK.isin(orgnr_inn)]) == 0, "Enheter ligger allerede i systemet"
 
 
+# +
+# til_altinn[[col for col in til_altinn.columns if "DATO" in col]]
+# -
+
+def tile_df(df, num_cols, num_rows):
+    n = len(df.columns)
+    num_rows = min(num_rows, len(df))
+
+    for i in range(0, n, num_cols):
+        if i + num_cols < n:
+            display(df.iloc[:, i:i + num_cols].sample(num_rows))
+        else:
+            display(df.iloc[:, i:].sample(num_rows))
 
 
+# ## Tilpasse data som skal inn i delregisteret
 
+til_altinn['DELREG_NR'] = f"20877{aar2}"
+til_altinn['DATO_INSERT'] = pd.Timestamp.now()
+til_altinn['USER_INSERT'] = getpass.getuser().upper()
+til_altinn['DATO_UPDATE'] = None
+til_altinn['USER_UPDATE'] = None
 
+# ## Legge inn data i databasen
+
+# +
+kolonner = ", ".join(til_altinn.columns)
+
+indices = [f":{x}" for x in range(1, len(til_altinn.columns) + 1)]
+indices = ", ".join(indices)
+
+sql_ins = (
+    "INSERT INTO DSBBASE.DLR_KVITTER_TMP (" +
+    kolonner +
+    ") VALUES (" + 
+    indices +
+    ")"
+)
+# -
+
+print(sql_ins)
+
+# +
+# # Oppretter skrivekontakt med Oracle
+# cur = conn.cursor()
+
+# # Stabler om dataframen til SQL-vennlig innlesing
+# rows = [tuple(x) for x in foretak_til_innkvittering_df.values]
+
+# # Hvis til_lagring = True kjøres SQL-inserten
+# if til_lagring and len(rows) != 0:
+#     cur.executemany(sql_ins, rows)
+#     conn.commit()
+#     print(f"Det er gjort {len(rows)} radendringer. Kontroller i SFU.")
+
+# -
 
 
