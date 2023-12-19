@@ -213,10 +213,6 @@ sql_ins
 
 
 
-
-
-
-
 # +
 # kolonner = ", ".join(til_altinn.columns)
 
@@ -245,5 +241,17 @@ sql_ins
 #     print(f"Det er gjort {len(rows)} radendringer. Kontroller i SFU.")
 
 # -
+
+# ## Slette enheter som skal ut
+
+orgnr_ut = list(sammen[sammen['status'] == "ut"]['ORGNR_FORETAK'])
+
+orgnr_ut
+
+
+
+
+
+
 
 
