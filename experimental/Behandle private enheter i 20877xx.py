@@ -119,6 +119,8 @@ print(sammen[sammen['status'].isin(['inn', 'ut'])][['ORGNR_FORETAK', 'FORETAK_NA
 
 # ## Gjøre endringer i delreg 20877XX
 
+# Henter inn informasjon om de nye enhetene fra 2423:
+
 sporring = f"""
     SELECT *
     FROM DSBBASE.DLR_ENHET_I_DELREG
@@ -165,29 +167,69 @@ def tile_df(df, num_cols, num_rows):
 # ## Tilpasse data som skal inn i delregisteret
 
 til_altinn['DELREG_NR'] = f"20877{aar2}"
-til_altinn['DATO_INSERT'] = pd.Timestamp.now()
+til_altinn['DATO_INSERT'] = pd.Timestamp.now().floor('S')
 til_altinn['USER_INSERT'] = getpass.getuser().upper()
 til_altinn['DATO_UPDATE'] = None
 til_altinn['USER_UPDATE'] = None
 
+til_altinn[["DELREG_NR", "DATO_INSERT", "USER_INSERT", "DATO_UPDATE", "USER_UPDATE"]].sample(2)
+
 # ## Legge inn data i databasen
 
+# SAS-kode:
+# ```libname dsbbase oracle user=&bruker  password="&passw" path="DB1P" schema='dsbbase';
+# proc sql;
+# insert into dsbbase.dlr_load_enhet_tmp
+#   (delreg_nr, enhets_type, orgnr)
+# select
+#    delreg_nr, enhets_type, orgnr
+#   from dsbbase.dlr_enhet_i_delreg
+# where delreg_nr = &delreg_nr. and enhets_type = 'FRTK';
+# quit;
+# ```
+
+sql_ins = f"""
+INSERT INTO dsbbase.dlr_load_enhet_tmp
+  (DELREG_NR, ENHETS_TYPE, ORGNR)
+SELECT
+  DELREG_NR, ENHETS_TYPE, ORGNR
+  FROM dsbbase.dlr_enhet_i_delreg
+WHERE DELREG_NR = 20877{aar2} AND ENHETS_TYPE = 'FRTK'
+"""
+
+sql_ins
+
+(", ").join(orgnr_inn)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # +
-kolonner = ", ".join(til_altinn.columns)
+# kolonner = ", ".join(til_altinn.columns)
 
-indices = [f":{x}" for x in range(1, len(til_altinn.columns) + 1)]
-indices = ", ".join(indices)
+# indices = [f":{x}" for x in range(1, len(til_altinn.columns) + 1)]
+# indices = ", ".join(indices)
 
-sql_ins = (
-    "INSERT INTO DSBBASE.DLR_KVITTER_TMP (" +
-    kolonner +
-    ") VALUES (" + 
-    indices +
-    ")"
-)
-# -
-
-print(sql_ins)
+# sql_ins = (
+#     "INSERT INTO DSBBASE.DLR_ENHET_I_DELREG (" +
+#     kolonner +
+#     ") VALUES (" + 
+#     indices +
+#     ")"
+# )
 
 # +
 # # Oppretter skrivekontakt med Oracle
