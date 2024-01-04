@@ -1,15 +1,17 @@
 # +
 import pandas as pd
 import cx_Oracle
-from db1p import query_db1p
+from sqlalchemy import create_engine
 import getpass
 import datetime as dt
 
 til_lagring = True # Sett til True, hvis du skal gjøre endringer i Databasen
 # -
 
-import warnings
-warnings.filterwarnings('ignore')
+import sys
+sys.path.append('../Droplister')
+
+import hjelpefunksjoner as hjfunk
 
 
 def print_size(df):
@@ -21,14 +23,24 @@ pd.set_option('display.max_rows', 300)
 pd.set_option('display.max_colwidth', None)
 
 # +
-år4 = 2022
-år2 = str(år4)[-2:]
+aar4 = 2023
+aar2 = str(aar4)[-2:]
 
-år_før4 = år4 - 1            # året før
-år_før2 = str(år_før4)[-2:]
+aar_før4 = aar4 - 1            # året før
+aar_før2 = str(aar_før4)[-2:]
 # -
 
-conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
+username = getpass.getuser()
+dsn = "DB1P"
+try:
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+except:
+    print("Passord ikke skrevet inn")
+    password = getpass.getpass(prompt='Oracle-passord: ')
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+
+# Opprett en tilkobling fra motoren
+conn = engine.connect()
 
 # ## Andre purrerunde
 #
@@ -37,13 +49,18 @@ conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-pa
 # Man trenger lesetilgang til KOSTRA_EXP@DB1P for aktuelle årganger. Her har spesialisthelsetjenesten en tabell per skjema per årgang. Tabellene er navngitt ‘HELSE’ + skjemanummer + ‘_’ + årgang som gir f.eks `HELSE0X_2021`. 
 #
 
+# +
 sporring = """
 SELECT *
 FROM all_tables
 
 ORDER BY table_name ASC
 """
-tabeller = pd.read_sql_query(sporring, conn)
+
+tabeller = hjfunk.les_sql(sporring, conn)
+
+# -
+
 print_size(tabeller)
 
 tabellnavn = (
@@ -56,8 +73,10 @@ tabellnavn = (
 
 mask_kostra = tabeller['OWNER'] == "KOSTRA_EXP"
 mask_helse = tabeller['TABLE_NAME'].str.startswith("HELSE")
-mask_årgang = tabeller['TABLE_NAME'].str.endswith(str(år_før4))
+mask_årgang = tabeller['TABLE_NAME'].str.endswith(str(aar_før4))
 skjemaer = tabeller[mask_kostra & mask_helse & mask_årgang].TABLE_NAME.unique()
+
+skjemaer
 
 # Velger ut de kolonnene jeg ønsker å ha med videre, men ser at kolonnenavnene ikke er likt på tvers av skjemaene. Har dermed manuelt gått gjennom tabellene og sett hva de heter. Legger til slutt en dictionary med oversikt over hvilke skjemaer som har hvilke kolonnenavn.
 
@@ -113,7 +132,7 @@ def hent_skjema(s):
     SELECT *
     FROM KOSTRA_EXP.{s}
     """
-    df = pd.read_sql_query(sporring, conn)
+    df = hjfunk.les_sql(sporring, conn)
     return df
 
 
@@ -121,7 +140,7 @@ def hent_skjema(s):
 skj_dict = {}
 for skj in skjemaer:
     df = hent_skjema(skj)
-    s = skj.replace("_" + str(år_før4), "")
+    s = skj.replace("_" + str(aar_før4), "")
     skj_dict[s] = df
 
 # lager en tom dataframe setter sammen til en stor mastertabell
@@ -148,15 +167,54 @@ kontakt_df = kontakt_df.drop_duplicates()
 print_size(kontakt_df)
 display(kontakt_df.sample(3))
 
+print("Antall enheter som har levert per skjema:")
+kontakt_df.SKJEMA_TYPE.value_counts()
+
+# # Utsendelse til private
+# Denne listen brukes til å gi personer som leverte skjema39 for fjoråret en melding om at foretaket har fått brukernavn og ident. Koden filtrerer på HELSE39 og sjekker mot den private-populasjonen dette året.
+
+skj39 = kontakt_df[kontakt_df['SKJEMA_TYPE'] == 'HELSE39'].copy()
+print_size(skj39)
+
+sporring = f"""
+    SELECT *
+    FROM DSBBASE.DLR_ENHET_I_DELREG
+    WHERE DELREG_NR IN ('20877{aar2}')
+"""
+private = hjfunk.les_sql(sporring, conn)
+print_size(private)
+
+populasjonsliste = list(private['ORGNR_FORETAK'].unique())
+
+skj39 = skj39[skj39['ORGNR_FORETAK'].isin(populasjonsliste)]
+
+len(skj39)
+
+skj39.columns
+
+skj39gr = skj39.groupby(['KONTAKTPERSON', 'EPOSTADR']).agg(
+    NAVN_FORETAK=('NAVN_FORETAK', 'unique'),
+    ORGNR=('ORGNR_FORETAK', 'unique'),
+)
+
+skj39gr['NAVN_FORETAK'] = skj39gr['NAVN_FORETAK'].apply(lambda x: (", ").join(list(x)))
+
+skj39gr['ORGNR'] = skj39gr['ORGNR'].apply(lambda x: (", ").join(list(x)))
+
+print(skj39gr.to_csv(index=False, sep=";"))
+
+# # Kobler mot SFU
+# Bruker SFU for å se hvilke foretak som ikke har levert enda for filtrering.
+
 # # Vanlig SFU: `dsbbase.dlr_enhet_i_delreg `
 # På enhetsnivå
 
 sporring = f"""
     SELECT *
     FROM DSBBASE.DLR_ENHET_I_DELREG
-    WHERE DELREG_NR IN ('24{år2}')
+    WHERE DELREG_NR IN ('24{aar2}')
 """ 
-SFU_enhet = pd.read_sql_query(sporring, conn)
+SFU_enhet = hjfunk.les_sql(sporring, conn)
 print_size(SFU_enhet)
 
 
@@ -168,9 +226,9 @@ SFU_enhet = SFU_enhet[SFU_enhet['ORGNR'].notnull()]
 sporring = f"""
     SELECT *
     FROM DSBBASE.DLR_ENHET_I_DELREG_SKJEMA
-    WHERE DELREG_NR IN ('24{år2}')
+    WHERE DELREG_NR IN ('24{aar2}')
 """
-SFU_skjema = pd.read_sql_query(sporring, conn)
+SFU_skjema = hjfunk.les_sql(sporring, conn)
 print_size(SFU_skjema)
 
 
