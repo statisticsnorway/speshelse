@@ -9,8 +9,8 @@
 # - Alle foretak med oppdrag og bestillerdokument skal ha skjema: `"39 381 441 451 461 47 48"`
 # - Alle private foretak skal ha skjema: `"39 381 441 451 461 47"`
 
-til_lagring = True
-lag_passord = True
+til_lagring = False
+lag_passord = False
 
 aar4 = 2023
 aar2 = str(aar4)[-2:]
