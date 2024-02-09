@@ -7,7 +7,7 @@
 #
 # OBS: legg til RHF for HF og lokasjon!
 
-aargang <- 2023
+aargang <- 2020
 
 # ### Velger tjenesteområde
 #
@@ -20,7 +20,7 @@ tjeneste <- "SOM"
 
 # ## Flate eller utenhav
 
-utenhav <- TRUE
+utenhav <- FALSE
 
 if (utenhav == TRUE) {
 filsti_med_uten_hav <- "utenhav"
@@ -224,22 +224,81 @@ dplyr::mutate(GRUNNKRETSNUMMER = case_when(
 # ## Laster inn befolkning per opptaksområde
 
 # +
+# if (tjeneste == "PHV"){
+#     tjeneste_SB <- c("VOP", "BUP")
+# } else {
+#    tjeneste_SB <- tjeneste 
+# }
+
+# befolkning_per_opptak <- PxWebApiData::ApiData(13982, 
+#                                                HelseReg = T,
+#                                                HelseTjenomr = tjeneste_SB,
+#                                                Kjonn = "0",
+#                                                Alder = T,
+#                                                Tid = as.character(aargang),
+#                                                ContentsCode = TRUE) [[2]] %>%
+# group_by(HelseReg) %>%
+# summarise(PERSONER = sum(value))
+
+# +
 if (tjeneste == "PHV"){
     tjeneste_SB <- c("VOP", "BUP")
 } else {
    tjeneste_SB <- tjeneste 
 }
 
-befolkning_per_opptak <- PxWebApiData::ApiData(13982, 
-                                               HelseReg = T,
-                                               HelseTjenomr = tjeneste_SB,
-                                               Kjonn = "0",
-                                               Alder = T,
-                                               Tid = as.character(aargang),
-                                               ContentsCode = TRUE) [[2]] %>%
-group_by(HelseReg) %>%
-summarise(PERSONER = sum(value))
+befolkning_per_opptaksomrade_masterfil_filsti <- paste0("/ssb/stamme01/fylkhels/speshelse/felles/opptaksomrader/", aargang, "/befolkning_per_opptaksomrade/masterfil/befolkning_per_opptaksomrade_masterfil_", aargang, ".parquet")
+
+befolkning_per_opptaksomrade_masterfil <- arrow::read_parquet(befolkning_per_opptaksomrade_masterfil_filsti)
+
+if (tjeneste == "DPS"){
+    
+befolkning_per_opptaksomrade_masterfil_DPS <- befolkning_per_opptaksomrade_masterfil %>%
+filter(TJENESTE == "DPS", LEVEL == "DPS", ALDER_KODE == "999", KJOENN == 0) %>%
+rename(HelseReg = OPPTAK_NUMMER) %>%
+select(HelseReg, PERSONER)
+    
+    befolkning_per_opptaksomrade_masterfil_HF <- befolkning_per_opptaksomrade_masterfil %>%
+filter(TJENESTE == tjeneste_SB, LEVEL == "HF", ALDER_KODE == "999", KJOENN == 0) %>%
+rename(HelseReg = ORGNR_HF) %>%
+select(HelseReg, PERSONER)
+
+befolkning_per_opptaksomrade_masterfil_RHF <- befolkning_per_opptaksomrade_masterfil %>%
+filter(TJENESTE == tjeneste_SB, LEVEL == "RHF", ALDER_KODE == "999", KJOENN == 0) %>%
+rename(HelseReg = ORGNR_RHF) %>%
+select(HelseReg, PERSONER)
+    
+befolkning_per_opptak <- rbind(befolkning_per_opptaksomrade_masterfil_DPS, befolkning_per_opptaksomrade_masterfil_HF, befolkning_per_opptaksomrade_masterfil_RHF)
+
+} else {
+
+befolkning_per_opptaksomrade_masterfil_lokasjon <- befolkning_per_opptaksomrade_masterfil %>%
+filter(TJENESTE == tjeneste_SB, LEVEL == "Lokasjon", ALDER_KODE == "999", KJOENN == 0) %>%
+rename(HelseReg = OPPTAK_NUMMER) %>%
+select(HelseReg, PERSONER) %>%
+        group_by(HelseReg) %>%
+summarise(PERSONER = sum(PERSONER))
+
+befolkning_per_opptaksomrade_masterfil_HF <- befolkning_per_opptaksomrade_masterfil %>%
+filter(TJENESTE == tjeneste_SB, LEVEL == "HF", ALDER_KODE == "999", KJOENN == 0) %>%
+rename(HelseReg = ORGNR_HF) %>%
+select(HelseReg, PERSONER) %>%
+        group_by(HelseReg) %>%
+summarise(PERSONER = sum(PERSONER))
+
+befolkning_per_opptaksomrade_masterfil_RHF <- befolkning_per_opptaksomrade_masterfil %>%
+filter(TJENESTE == tjeneste_SB, LEVEL == "RHF", ALDER_KODE == "999", KJOENN == 0) %>%
+rename(HelseReg = ORGNR_RHF) %>%
+select(HelseReg, PERSONER) %>%
+        group_by(HelseReg) %>%
+summarise(PERSONER = sum(PERSONER))
+    
+befolkning_per_opptak <- rbind(befolkning_per_opptaksomrade_masterfil_lokasjon, befolkning_per_opptaksomrade_masterfil_HF, befolkning_per_opptaksomrade_masterfil_RHF) 
+}
 # -
+
+befolkning_per_opptak %>%
+filter(HelseReg == "993467049")
 
 # ## Laster inn kodelister fra KLASS
 
@@ -839,4 +898,6 @@ end.time <- Sys.time()
 time.taken <- end.time - start.time
 time.taken
 
-
+opptaksomrader_lokasjon %>%
+filter(OPPTAK %in% c("Lovisenberg", "Oslo universitetssykehus")) %>%
+data.frame()

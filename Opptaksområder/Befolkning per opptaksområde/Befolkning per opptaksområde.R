@@ -5,7 +5,7 @@
 #
 # Dersom programmet skal kjøres for ny årgang (og `befolkning_per_grunnkrets` og `befolkning_per_postkrets` ikke finnes) må programmet kjøres i RStudio for å ikke kræsje!
 #
-# Kjør 2015-2017 på nytt!
+# Kjør 2015-2023 på nytt!
 
 # +
 aargang_master <- 2023
@@ -25,6 +25,11 @@ lastebruker <- "LAST330"
 if (last_opp_til_statbank == TRUE & exists("username_encryptedpassword") == FALSE){
   username_encryptedpassword <- fellesr:::statbank_encrypt_request(laste_bruker = lastebruker)
 }
+# -
+
+# ### Kommunenummer for Kristiansand og Trondheim
+#
+# OBS: dersom Kristiansand eller Trondheim får nye kommunenummer må det oppdateres i cellen nedenfor.
 
 # +
 if (aargang >= 2020){
@@ -72,17 +77,17 @@ sum(befolkning_per_grunnkrets$PERSONER)
 
 if (aargang %in% 2019){
 befolkning_per_grunnkrets <- befolkning_per_grunnkrets %>%
-    dplyr::mutate(GRUNNKRETSNUMMER = case_when(GRUNNKRETSNUMMER == "09060109" ~ "09061101", TRUE ~ GRUNNKRETSNUMMER))
+    dplyr::mutate(GRUNNKRETSNUMMER = dplyr::case_when(GRUNNKRETSNUMMER == "09060109" ~ "09061101", TRUE ~ GRUNNKRETSNUMMER))
 }
 
 if (aargang %in% 2018){
 befolkning_per_grunnkrets <- befolkning_per_grunnkrets %>%
-    dplyr::mutate(GRUNNKRETSNUMMER = case_when(GRUNNKRETSNUMMER == "03014201" ~ "03014211", TRUE ~ GRUNNKRETSNUMMER))
+    dplyr::mutate(GRUNNKRETSNUMMER = dplyr::case_when(GRUNNKRETSNUMMER == "03014201" ~ "03014211", TRUE ~ GRUNNKRETSNUMMER))
 }
 
 if (aargang %in% 2016){
 befolkning_per_grunnkrets <- befolkning_per_grunnkrets %>%
-    dplyr::mutate(GRUNNKRETSNUMMER = case_when(GRUNNKRETSNUMMER == "01010403" ~ "01010102", TRUE ~ GRUNNKRETSNUMMER))
+    dplyr::mutate(GRUNNKRETSNUMMER = dplyr::case_when(GRUNNKRETSNUMMER == "01010403" ~ "01010102", TRUE ~ GRUNNKRETSNUMMER))
 }
 
 # +
@@ -267,11 +272,50 @@ befolkning_per_opptaksomrade_SOM_RHF <- befolkning_per_opptaksomrade_SOM_lokasjo
 befolkning_per_opptaksomrade_SOM <- rbind(befolkning_per_opptaksomrade_SOM_lokasjon, befolkning_per_opptaksomrade_SOM_HF, befolkning_per_opptaksomrade_SOM_RHF)
 
 # +
-# befolkning_per_opptaksomrade_SOM %>%
-# filter(LEVEL == "Lokasjon",
-#       ALDER_KODE == "999",
-#       KJOENN == "0") %>%
-# summarise(PERSONER = sum(PERSONER))
+# test <- befolkning_per_opptaksomrade_SOM_HF %>%
+# filter(KJOENN == 0, 
+#        NAVN_HF %in% c("LOVISENBERG DIAKONALE SYKEHUS AS", "SYKEHUSET INNLANDET HF"), 
+#        ALDER_KODE != 999) %>%
+# mutate(ALDER = as.numeric(ALDER_KODE))
+
+# options(repr.plot.width = 20, repr.plot.height = 10)
+
+# ggplot(test, aes(x = ALDER, y = PERSONER, color = NAVN_HF, group = NAVN_HF)) +
+#   geom_line() +
+#   labs(x = "Age", y = "Number of People") +
+#   scale_color_manual(values = c("LOVISENBERG DIAKONALE SYKEHUS AS" = "black", "SYKEHUSET INNLANDET HF" = "green")) +
+#   theme_minimal()
+
+# +
+# unique(befolkning_per_opptaksomrade_SOM_HF$NAVN_HF)
+
+# +
+# test <- befolkning_per_opptaksomrade_SOM_HF %>%
+# filter(KJOENN == 0, 
+#        # NAVN_HF %in% c("LOVISENBERG DIAKONALE SYKEHUS AS", 
+#        #                "SYKEHUSET INNLANDET HF", 
+#        #               "DIAKONHJEMMET SYKEHUS AS", 
+#        #               "OSLO UNIVERSITETSSYKEHUS HF"), 
+#        ALDER_KODE != 999) %>%
+# mutate(ALDER = as.numeric(ALDER_KODE)) %>%
+# mutate(ALDER_NY = case_when(ALDER >= 67 ~ "Andel 67+", 
+#                               ALDER_KODE == "105+" ~ "Andel 67+", 
+#                             ALDER %in% 0:5 ~ "Andel 0-5 år", 
+#                             ALDER %in% 6:15 ~ "Andel 6-15 år", 
+#                             ALDER %in% 16:66 ~"Andel 16-66 år",
+#       TRUE ~ "OBS"))
+
+# +
+# tot_per_HF <- test %>%
+# group_by(NAVN_HF) %>%
+# summarise(PERSONER_TOT = sum(PERSONER))
+
+# test %>%
+# group_by(NAVN_HF, ALDER_NY) %>%
+# summarise(PERSONER = sum(PERSONER)) %>%
+# left_join(tot_per_HF, by = "NAVN_HF") %>%
+# mutate(ANDEL = round(PERSONER/PERSONER_TOT*100, digits = 1)) %>%
+# filter(ALDER_NY == "Andel 67+")
 # -
 
 # ## VOP
