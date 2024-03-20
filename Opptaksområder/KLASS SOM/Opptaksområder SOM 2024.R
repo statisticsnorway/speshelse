@@ -171,7 +171,7 @@ distinct(BYDELSNUMMER, BYDELSNAVN, OPPTAK) %>%
 arrange(BYDELSNUMMER) %>%
 rename(OPPTAK_SOM = OPPTAK)
 
-opptaksomrader_KLASS_SOM
+# opptaksomrader_ny_bydel
 # -
 
 # ## Sjekk om antall kommuner blir riktig
@@ -206,38 +206,39 @@ filter(!KOMMUNENR %in% unique(opptaksomrader_ny_kommune$KOMMNR))
 arbeidsmappe_kart <- paste0("/ssb/stamme01/fylkhels/speshelse/felles/kart/", aargang, "/")
 arbeidsmappe_kart_t1 <- paste0("/ssb/stamme01/fylkhels/speshelse/felles/kart/", aargang-1, "/")
 
-grunnkrets_kart_filsti <- paste0(arbeidsmappe_kart, "ABAS_grunnkrets_flate_", aargang, "/")
-grunnkrets_kart_t1_filsti <- paste0(arbeidsmappe_kart_t1, "ABAS_grunnkrets_flate_", aargang-1, "/")
+grunnkrets_kart_filsti <- paste0(arbeidsmappe_kart, "ABAS_grunnkrets_flate_", aargang, ".parquet")
+grunnkrets_kart_t1_filsti <- paste0(arbeidsmappe_kart_t1, "ABAS_grunnkrets_flate_", aargang-1, ".parquet")
 
-opptaksomrader_SOM_lokasjon_filsti <- paste0("/ssb/stamme01/fylkhels/speshelse/felles/opptaksomrader/", aargang-1, 
+opptaksomrader_SOM_lokasjon_t1_filsti <- paste0("/ssb/stamme01/fylkhels/speshelse/felles/opptaksomrader/", aargang-1, 
                                              "/opptaksomrader_SOM_lokasjon_flate_", aargang-1, ".parquet")
 # -
 
-opptaksomrader_SOM_lokasjon_filsti
-
-opptaksomrader_SOM_lokasjon <- arrow::open_dataset(opptaksomrader_SOM_lokasjon_filsti) %>%
+opptaksomrader_SOM_lokasjon_t1 <- arrow::open_dataset(opptaksomrader_SOM_lokasjon_t1_filsti) %>%
     sfarrow::read_sf_dataset() %>%
 sf::st_transform(crs = 4326)
 
+grunnkrets_kart <- arrow::open_dataset(grunnkrets_kart_filsti) %>%
+    sfarrow::read_sf_dataset() %>%
+sf::st_zm(drop = T) %>%
+sf::st_cast("MULTIPOLYGON") %>%
+  sf::st_transform(crs = 4326) %>%
+  dplyr::rename(GRUNNKRETSNUMMER = GRUNNKRETS)
 # +
-grunnkrets_kart <- open_dataset(grunnkrets_kart_filsti) %>%
-    sfarrow::read_sf_dataset() %>%
-sf::st_zm(drop = T) %>%
-sf::st_cast("MULTIPOLYGON") %>%
-  sf::st_transform(crs = 4326) %>%
-  dplyr::rename(GRUNNKRETSNUMMER = GRUNNKRETS) %>%
-dplyr::filter(GRUNNKRETSNUMMER %in% unique(endringer$GRUNNKRETSNUMMER))
+nrow(grunnkrets_kart)
 
-arbeidsmappe_kart_t1 <- paste0("ssb-prod-dapla-felles-data-delt/GIS/Kart/", aargang-1, "/")
-grunnkrets_kart_t1_filsti <- paste0(arbeidsmappe_kart_t1, "ABAS_grunnkrets_flate_", aargang-1, "/")
+opptaksomrader_SOM_lokasjon <- grunnkrets_kart %>%
+dplyr::left_join(opptaksomrader_ny, by = "GRUNNKRETSNUMMER") %>%
+  dplyr::group_by(NAVN_RHF, OPPTAK_NUMMER, OPPTAK) %>%
+  dplyr::summarise(geometry = sf::st_union(sf::st_make_valid(geometry))) %>%
+  dplyr::ungroup()
 
-grunnkrets_kart_t1 <- open_dataset(grunnkrets_kart_t1_filsti) %>%
-    sfarrow::read_sf_dataset() %>%
-sf::st_zm(drop = T) %>%
-sf::st_cast("MULTIPOLYGON") %>%
-  sf::st_transform(crs = 4326) %>%
-  dplyr::rename(GRUNNKRETSNUMMER = GRUNNKRETS) %>%
-dplyr::filter(GRUNNKRETSNUMMER %in% unique(endringer$GRUNNKRETSNUMMER_T1))
+nrow(opptaksomrader_SOM_lokasjon)
 # -
+
+ggplot() +
+geom_sf(data = opptaksomrader_SOM_lokasjon_t1)
+
+ggplot() +
+geom_sf(data = opptaksomrader_SOM_lokasjon)
 
 

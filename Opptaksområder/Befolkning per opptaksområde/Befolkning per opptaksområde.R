@@ -13,7 +13,7 @@ aargang_master <- 2023
 aargang <- aargang_master # aargang_master overskriver aargang dersom denne er definert i script som kjøres i produksjonsløpet
 # -
 
-DPS_OK <- 2021:2023
+DPS_OK <- 2021:2024
 
 # +
 last_opp_til_statbank <- FALSE
@@ -65,6 +65,9 @@ befolkning_per_opptaksomrade_masterfil_filsti <- paste0(arbeidsmappe, "masterfil
 
 befolkning_per_postkrets_filsti <- paste0(arbeidsmappe, "/inndata/befolkning_per_postkrets_", aargang, ".parquet")
 befolkning_per_grunnkrets_filsti <- paste0(arbeidsmappe, "/inndata/befolkning_per_grunnkrets_", aargang, ".parquet")
+
+bosatt_filsti <- paste0("/ssb/stamme03/bestat/folkem/wk14/bosatt/g", aargang, "m01d01.sas7bdat")
+bosatt_filsti
 
 # +
 if (file.exists(befolkning_per_grunnkrets_filsti) == FALSE){

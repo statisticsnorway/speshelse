@@ -52,7 +52,6 @@ sum(T04317$PERSONER)
 # nrow(bereg_koorfil) # 2023: 5483128
 
 # +
-bosatt_filsti <- paste0("/ssb/stamme03/bestat/folkem/wk14/bosatt/g", aargang, "m01d01.sas7bdat")
 bosatte_koorfil <- haven::read_sas(bosatt_filsti) %>%
   dplyr::rename_all(toupper)
 

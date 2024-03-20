@@ -3,7 +3,7 @@
 
 # ### Velger årgang
 
-aargang <- 2022
+aargang <- 2023
 
 # +
 options(repr.matrix.max.rows=600, repr.matrix.max.cols=2000)
