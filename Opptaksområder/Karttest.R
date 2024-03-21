@@ -16,9 +16,9 @@ library(leaflet)
 
 source("/home/rdn/fellesr/R/DAPLA_funcs.R")
 
-tjeneste <- "TSB"
+tjeneste <- "SOM"
 
-aargang <- 2022
+aargang <- 2024
 aargang_t1 <- aargang-1
 
 arbeidsmappe <- "/ssb/stamme01/fylkhels/speshelse/felles/"
