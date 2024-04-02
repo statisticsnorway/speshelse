@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # # Skjemadata til Samdata
+#
+# Kjør alt ned til og med "Laster inn variabelliste per skjema" + cellene for de aktuelle skjemaene du vil ha ut.
 
 # ### Velger årgang
 
@@ -13,12 +15,9 @@ options(repr.matrix.max.rows=600, repr.matrix.max.cols=2000)
 
 suppressPackageStartupMessages({
   library(tidyverse)
-  # library(fellesr)
+  library(fellesr)
   library(klassR)
 })
-
-# OBS: erstatt med fellesr når den er installert på nytt!
-source("/ssb/bruker/rdn/fellesr/R/dynarev_uttrekk.R")
 
 # encoding <- "UTF-8"
 encoding <- "latin1"
@@ -57,7 +56,7 @@ skjema0X_filsti <- paste0(aargangsmappe, "Skj0X_", datomarkering, ".txt")
 # ### Logger på Oracle
 
 # Logg på for å få tilgang til Oracle
-con <- dynarev_uttrekk(con_ask = "con")
+con <- fellesr::dynarev_uttrekk(con_ask = "con")
 
 # ### Kodeliste for tjenesteområder i spesialisthelsetjenesten
 
@@ -80,7 +79,9 @@ tjenesteomrader <- klassR::GetKlass(610, output_level = 2, date = c(paste0(aarga
   SKJEMA_NR = readr::parse_number(SKJEMA),
   SKJEMA_NAVN = paste0(SKJEMA_NR, O_P))
 
-tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "38O",]$DELREG
+# +
+# tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "38O",]$DELREG
+# -
 
 # ## Laster inn variabelliste per skjema
 
@@ -89,7 +90,7 @@ source(here::here("Samdata", "Variabelliste per skjema.R"))
 # ## Skjema 38O
 
 # +
-skjema38O <- dynarev_uttrekk(delregnr = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "38O",]$DELREG,
+skjema38O <- fellesr::dynarev_uttrekk(delregnr = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "38O",]$DELREG,
                              skjema = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "38O",]$SKJEMA,
                              skjema_cols = T,
                              dublettsjekk = T,
@@ -120,7 +121,7 @@ write.table(skjema38O_skjema, skjema38O_filsti,
 # ## Skjema 38P
 
 # +
-skjema38P <- dynarev_uttrekk(delregnr = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "38P",]$DELREG,
+skjema38P <- fellesr::dynarev_uttrekk(delregnr = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "38P",]$DELREG,
                              skjema = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "38P",]$SKJEMA,
                              skjema_cols = T,
                              dublettsjekk = T,
@@ -152,7 +153,7 @@ write.table(skjema38P_skjema, skjema38P_filsti,
 # ## Skjema 44O
 
 # +
-skjema44O <- dynarev_uttrekk(delregnr = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "44O",]$DELREG,
+skjema44O <- fellesr::dynarev_uttrekk(delregnr = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "44O",]$DELREG,
                              skjema = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "44O",]$SKJEMA,
                              skjema_cols = T,
                              dublettsjekk = T,
@@ -213,7 +214,7 @@ write.table(skjema44P_skjema, skjema44P_filsti,
 # ## Skjema 45O
 
 # +
-skjema45O <- dynarev_uttrekk(delregnr = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "45O",]$DELREG,
+skjema45O <- fellesr::dynarev_uttrekk(delregnr = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "45O",]$DELREG,
                              skjema = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "45O",]$SKJEMA,
                              skjema_cols = T,
                              dublettsjekk = T,
@@ -273,7 +274,7 @@ write.table(skjema45P_skjema, skjema45P_filsti,
 # ## Skjema 46O
 
 # +
-skjema46O <- dynarev_uttrekk(delregnr = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "46O",]$DELREG,
+skjema46O <- fellesr::dynarev_uttrekk(delregnr = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "46O",]$DELREG,
                              skjema = tjenesteomrader[tjenesteomrader$SKJEMA_NAVN == "46O",]$SKJEMA,
                              skjema_cols = T,
                              dublettsjekk = T,
@@ -331,7 +332,7 @@ write.table(skjema46P_skjema, skjema46P_filsti,
 # ## Skjema 39
 
 # +
-skjema39 <- dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
+skjema39 <- fellesr::dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
                             skjema = "HELSE39",
                             skjema_cols = TRUE,
                             dublettsjekk = TRUE,
@@ -367,7 +368,7 @@ artskontokoder <- klassR::GetKlass(606, output_level = 3, date = c(paste0(aargan
 
 # +
 # Dublettsjekk
-skjema0X_dubletter <- dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
+skjema0X_dubletter <- fellesr::dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
                             skjema = "HELSE0X",
                             skjema_cols = TRUE,
                             sfu_cols = c("NAVN"),
@@ -387,18 +388,18 @@ skjema0X_skjema <- dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
                             # dublettsjekk = c("ENHETS_ID", "FORETAKSNR", "ART_SEKTOR", "FUNKSJON_KAPITTEL"),
                             con_ask = FALSE)
 
-unique(skjema0X_skjema$REGION)
+sort(unique(skjema0X_skjema$REGION))
 
 # +
-skjema0X_skjema_2021 <- dynarev_uttrekk(delregnr = paste0(24, substr(2019, 3, 4)),
-                            skjema = "HELSE0X",
-                            skjema_cols = TRUE,
-                            sfu_cols = c("NAVN"),
-                            skjema_sfu_merge = TRUE,
-                            # dublettsjekk = c("ENHETS_ID", "FORETAKSNR", "ART_SEKTOR", "FUNKSJON_KAPITTEL"),
-                            con_ask = FALSE)
+# skjema0X_skjema_2021 <- dynarev_uttrekk(delregnr = paste0(24, substr(2019, 3, 4)),
+#                             skjema = "HELSE0X",
+#                             skjema_cols = TRUE,
+#                             sfu_cols = c("NAVN"),
+#                             skjema_sfu_merge = TRUE,
+#                             # dublettsjekk = c("ENHETS_ID", "FORETAKSNR", "ART_SEKTOR", "FUNKSJON_KAPITTEL"),
+#                             con_ask = FALSE)
 
-unique(skjema0X_skjema_2021$REGION)
+# unique(skjema0X_skjema_2021$REGION)
 # -
 
 skjema0X_skjema_2 <- dplyr::full_join(skjema0X_skjema, artskontokoder, by = "ART_SEKTOR")
@@ -434,3 +435,5 @@ write.table(skjema0X_data_long, skjema0X_filsti,
 }
 
 skjema0X_filsti
+
+
