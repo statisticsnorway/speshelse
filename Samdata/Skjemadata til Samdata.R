@@ -51,6 +51,7 @@ skjema46O_filsti <- paste0(aargangsmappe, "Skj46o_", datomarkering, ".txt")
 skjema46P_filsti <- paste0(aargangsmappe, "Skj46p_", datomarkering, ".txt")
 skjema39_filsti <- paste0(aargangsmappe, "Skj39_", datomarkering, ".txt")
 skjema0X_filsti <- paste0(aargangsmappe, "Skj0X_", datomarkering, ".txt")
+skjema48_filsti <- paste0(aargangsmappe, "Skj48_", datomarkering, ".xlsx")
 
 
 # ### Logger på Oracle
@@ -327,6 +328,29 @@ write.table(skjema46P_skjema, skjema46P_filsti,
             na = "",
             dec = ",",
             quote = F)
+}
+
+# ## Skjema 48
+
+# +
+skjema48 <- dynarev_uttrekk(delregnr = paste0('24', substr(aargang, 3,4)),
+                             skjema = 'HELSE48',
+                             skjema_cols = T,
+                             dublettsjekk = T,
+                             con_ask = FALSE)
+
+skjema48_skjema <- data.frame(skjema48[1]) %>%
+  dplyr::select(all_of(variabelliste_48))
+
+skjema48_dubletter <- data.frame(skjema48[2])
+# -
+
+# ### Lagrer filen
+if (nrow(skjema48_dubletter)==0){
+openxlsx::write.xlsx(skjema48_skjema, skjema48_filsti,
+                   rowNames = FALSE,
+                   showNA = FALSE,
+                   overwrite=T)
 }
 
 # ## Skjema 39
