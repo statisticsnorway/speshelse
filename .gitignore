@@ -14,8 +14,6 @@
 *.xls
 *.xlsx
 *.zip
-*.tsv
-*.dat
 
 # The section below is from the GitHub .gitignore template for Python:
 # https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore
@@ -24,6 +22,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.poetry/cache/
 
 # C extensions
 *.so
@@ -47,7 +46,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-.poetry/cache/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -203,3 +201,6 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# ignore poetry in .config
+.poetry/**
