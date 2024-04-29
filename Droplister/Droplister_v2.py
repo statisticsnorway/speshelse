@@ -1112,5 +1112,7 @@ if lagre_filer:
     for x in skjemaer_til_droplister:
         lagre_dropliste_csv(x)
 
+
+
 # Lukk tilkoblingen
 conn.close()
