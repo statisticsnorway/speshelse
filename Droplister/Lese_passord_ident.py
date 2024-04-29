@@ -12,18 +12,6 @@ from datetime import datetime
 import re
 # -
 
-username = getpass.getuser()
-dsn = "DB1P"
-try:
-    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
-except:
-    print("Passord ikke skrevet inn")
-    password = getpass.getpass(prompt='Oracle-passord: ')
-    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
-
-# Opprett en tilkobling fra motoren
-conn = engine.connect()
-
 aar4 = 2023
 aar2 = str(aar4)[-2:]
 aarfør4 = aar4-1
@@ -89,11 +77,23 @@ m_39 = br['SKJEMA_TYPE'].str.contains("47")
 priv = br[m_39].reset_index(drop=True).copy()
 off = br[~m_39].reset_index(drop=True).copy()
 
-til_oversikt_xlsx = priv[['FORETAK_NAVN', 'Username', 'Password']].rename(columns={'FORETAK_NAVN': 'foretak', 'Username': 'orgnr', 'Password': 'pinkode'}).copy()
+til_oversikt_xlsx = (
+    priv[["FORETAK_NAVN", "Username", "Password"]]
+    .rename(
+        columns={"FORETAK_NAVN": "foretak", "Username": "orgnr", "Password": "pinkode"}
+    )
+    .copy()
+)
 
-til_oversikt_csv = priv[['ORGNR_FORETAK', 'Username', 'Password']].rename(columns={'ORGNR_FORETAK': 'orgnr', 'Username': 'orgnr', 'Password': 'pinkode'}).copy()
+til_oversikt_csv = (
+    priv[["ORGNR_FORETAK", "Username", "Password"]]
+    .rename(
+        columns={"ORGNR_FORETAK": "orgnr", "Username": "orgnr", "Password": "pinkode"}
+    )
+    .copy()
+)
 
-
+br
 
 print(til_oversikt_csv.to_csv(sep=";", index=False))
 
