@@ -52,12 +52,41 @@ print(siste_dropliste_dato)
 sti = dropliste_sti + siste_dropliste_dato + "/"
 os.listdir(sti)
 
-filnavn = "Brukerliste_2023_041223.csv"
+filnavn = "Brukerliste_2023_190124.csv"
 sti = sti + filnavn
 
 pop = pd.read_csv(sti, encoding='latin1', sep=";", dtype="object")
 
 pop.sample(3)
+
+# ## Nye enheter
+
+nye = ['914491908',
+'915378404',
+'916269331',
+'919028513',
+'924212446',
+'928882063',
+'931663658',
+'980693732']
+
+nye = pop[pop['ORGNR_FORETAK'].isin(nye)].copy()
+
+nye['SKJEMA'] = nye['SKJEMA_TYPE'].str.split(" ").apply(lambda x: ", HELSE".join(x))
+
+nye['SKJEMA'] = nye['SKJEMA'].str.replace("1", "P")
+
+nye['SKJEMA'] = nye['SKJEMA'].apply(lambda x: "HELSE" + x)
+
+nye['FORETAK'] = "(" + nye['ORGNR_FORETAK'] + ") " + nye['FORETAK_NAVN']
+
+
+
+print(nye[["FORETAK", "SKJEMA"]].to_csv(sep="\t"))
+
+
+
+
 
 priv_pop = pop.loc[pop.SKJEMA_TYPE.str.contains("39")]
 
@@ -75,8 +104,6 @@ altinn_raw = pd.read_sql_query(sporring, conn)
 print(f"Rader:    {altinn_raw.shape[0]}\nKolonner: {altinn_raw.shape[1]}")
 
 altinn = altinn_raw[['IDENT_NR', 'ORGNR', 'ORGNR_FORETAK', 'NAVN']]
-
-altinn.sample(3)
 
 # ## Sammenlikne altinn og ny populasjon
 
@@ -111,11 +138,32 @@ m1 = sammen["status"] == "ut"
 
 tas_ut = sammen[m1]
 
-tas_ut
+
+
+ny_altinn
+
+# DELREGISTER, IDENTNUMMER, ENHETSTYPE
+#
+#
+# ORGNUMMER er ikke viktig for kobling av tabeller. IDENTNUMMER kommer fra VoF. 
+
+
+
+# ### Endringer
+# Dersom det skal gjøres endringer i 20877xx, listes disse opp her:
 
 print(sammen[sammen['status'].isin(['inn', 'ut'])][['ORGNR_FORETAK', 'FORETAK_NAVN', 'NAVN', 'status']].to_markdown(index=False))
 
+print("INN:")
+display(sammen[sammen['status'].isin(['inn'])]['ORGNR_FORETAK'].to_list())
+print("UT:")
+display(sammen[sammen['status'].isin(['ut'])]['ORGNR_FORETAK'].to_list())
 
+
+
+
+
+# # Eksperimentelt
 
 # ## Gjøre endringer i delreg 20877XX
 
@@ -243,6 +291,26 @@ sql_ins
 # -
 
 # ## Slette enheter som skal ut
+
+# +
+# # Definerer SQL DELETE-kommandoen
+# # Anta at vi vil slette rader basert på en spesifikk identifikator
+# sql_delete = "DELETE FROM din_tabell WHERE IDENT_NR = :1"
+
+# # Verdi som identifiserer radene som skal slettes
+# ident_nr_til_sletting = 'ID1'
+
+# # Oppretter en cursor fra din databaseforbindelse
+# cur = conn.cursor()
+
+# # Utfører DELETE-kommandoen
+# cur.execute(sql_delete, [ident_nr_til_sletting])
+
+# # Commiter endringene til databasen
+# conn.commit()
+
+# print("Rader slettet.")
+# -
 
 orgnr_ut = list(sammen[sammen['status'] == "ut"]['ORGNR_FORETAK'])
 
