@@ -9,10 +9,10 @@
 # - Alle foretak med oppdrag og bestillerdokument skal ha skjema: `"39 381 441 451 461 47 48"`
 # - Alle private foretak skal ha skjema: `"39 381 441 451 461 47"`
 
-til_lagring = False
-lag_passord = False
+til_lagring = True
+lag_passord = True
 
-aar4 = 2023
+aar4 = 2024
 aar2 = str(aar4)[-2:]
 aarfør4 = aar4-1
 aarfør2 = str(aarfør4)[-2:]
@@ -208,12 +208,11 @@ passord_master = pd.read_csv(pass_sti, dtype='object', sep=";", encoding='latin1
 passord_master.info()
 
 
-# +
 def get_new_password(dummy_var):
     from random import randint
     
     return randint(10**7, 10**8-1)
-
+# +
 skjema_type_unik = list(brukerliste_df.SKJEMA_TYPE.unique())
 
 for skj in skjema_type_unik:

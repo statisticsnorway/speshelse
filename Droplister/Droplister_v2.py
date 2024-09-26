@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -7,9 +8,9 @@
 #       format_version: '1.5'
 #       jupytext_version: 1.15.2
 #   kernelspec:
-#     display_name: spesh
+#     display_name: Python3
 #     language: python
-#     name: spesh
+#     name: python3
 # ---
 
 # + [markdown] toc-hr-collapsed=true
@@ -81,7 +82,7 @@ pd.set_option('display.float_format', lambda x: '%.0f' % x)
 # NB! For å lagre filene til angitt sti må `lagre_filer` settes til `True`.
 
 # +
-aargang = 2023
+aargang = 2024
 siste_to_siffer_aargang = str(aargang)[-2:]
 
 aar_for = aargang - 1            # året før
