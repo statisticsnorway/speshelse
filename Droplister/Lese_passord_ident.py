@@ -12,7 +12,7 @@ from datetime import datetime
 import re
 # -
 
-aar4 = 2023
+aar4 = 2024
 aar2 = str(aar4)[-2:]
 aarfør4 = aar4-1
 aarfør2 = str(aarfør4)[-2:]
@@ -67,6 +67,8 @@ br = pd.merge(
     left_on='ORGNR_FORETAK',
     right_on='Username'
 )
+
+br
 
 # ## Tabell med orgnr, skjema_type og identer
 
