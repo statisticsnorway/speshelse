@@ -30,7 +30,7 @@ except:
 # Opprett en tilkobling fra motoren
 conn = engine.connect()
 
-n = aar4 - 4
+n = aar4 - 3
 
 siste_år = [x for x in range(n, aar4 + 1)]
 
@@ -55,6 +55,8 @@ for år in siste_år:
     df_temp = df_temp[["AARGANG", "FINST_ORGNR", "SDGN_SUM", "D_HELD"]]
     df_sammen = pd.concat([df_sammen, df_temp])
 
+df_sammen
+
 df_sammen[df_sammen['FINST_ORGNR'] == '974830191']
 
 df_sammen['SDGN_SUM'] = pd.to_numeric(df_sammen['SDGN_SUM'])
@@ -70,10 +72,6 @@ sengedøgn = df_sammen.groupby('FINST_ORGNR').agg(
 ).reset_index()
 
 sengedøgn
-
-sengedøgn[sengedøgn['FINST_ORGNR'] == 976516745]
-
-
 
 sporring = f"""
     SELECT *
@@ -92,15 +90,47 @@ df = pd.merge(
     how='left'
 )
 
+m1 = df['D_HELD'].notna()
+m2 = df['SDGN_SUM'].notna()
+df = df[m1 & m2]
+
 df['SDGN_SUM'] = pd.to_numeric(df['SDGN_SUM'])
 
 df['diff'] = df['sdgn_max_siste_år'] - df['SDGN_SUM']
 
-df.sort_values('diff', ascending=False)
 
 
+df.sort_values("sdgn_min_siste_år", ascending=True)[
+    [
+        "FINST_NAVN",
+        "FINST_ORGNR",
+        "sdgn_max_siste_år",
+        "sdgn_min_siste_år",
+        "sdgn_mean_siste_år",
+        "sdgn_median_siste_år",
+        "sdgn_unique_siste_år",
+        "diff",
+    ]
+]
 
+df1 = df[['FINST_NAVN', 'FINST_ORGNR', 'D_HELD', 'SDGN_SUM', 'sdgn_unique_siste_år']].sort_values('SDGN_SUM').copy()
 
+for_lave_sdgn = ["974116464", "973254618", "924212446"]
+
+df[['MERKNAD0', 'MERKNAD1']].iloc[34]
+
+df[df['FINST_ORGNR'].isin(for_lave_sdgn)][['MERKNAD0', 'MERKNAD1']]
+
+for_lave_dheld = ["912041379",
+"970981071",
+"975984168",
+"983478778",
+"971436875",
+"999087345",]
+
+pd.set_option('display.max_colwidth', None)
+
+df[df['FORETAKETS_ORGNR'].isin(for_lave_dheld)][['MERKNAD0', 'MERKNAD1']]
 
 
 
@@ -142,6 +172,8 @@ df_grp = df.groupby(['FORETAKETS_ORGNR', 'FINST_ORGNR']).agg(
     # D_HELD=('D_HELD', 'first')
 ).sort_values('SDGN_mean', ascending=False)
 
+
+
 df_grp.style.background_gradient(cmap='Blues').format("{:.0f}")
 
 df_grp2 = df.groupby(['FORETAKETS_ORGNR', 'FINST_ORGNR']).agg(
@@ -166,6 +198,14 @@ df_siste = hjfunk.les_sql(sporring, conn)
 
 
 df_siste.sample(1).T
+
+df_siste[df_siste['FINST_ORGNR'] == '997808347']
+
+
+
+df_siste.FINST_ORGNR.value_counts()
+
+df_siste.columns
 
 df_siste[df_siste.duplicated(subset=['FINST_ORGNR'], keep=False)][['FINST_ORGNR']]
 
