@@ -5,9 +5,10 @@
 #
 #
 
+# +
 import pandas as pd
 import cx_Oracle
-# from db1p import query_db1p
+
 import getpass
 import datetime as dt
 import requests
@@ -36,7 +37,6 @@ except:
     password = getpass.getpass(prompt='Oracle-passord: ')
     engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
     conn = engine.connect()
-
 
 
 # ---

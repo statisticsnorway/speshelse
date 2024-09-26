@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # # Brukerlister
+#
+#
+# Dette utgår:
 # Dette er en oversikt over alle foretak som skal ha skjemaer og hvilke skjemaer de skal få. Også kalt _populasjonsliste_ av KOSTRA-IT.
 #
 # - Alle hjelpeforetak som skal rapportere skal ha skjema: `"0X 0Y 40"`
@@ -9,8 +12,8 @@
 # - Alle foretak med oppdrag og bestillerdokument skal ha skjema: `"39 381 441 451 461 47 48"`
 # - Alle private foretak skal ha skjema: `"39 381 441 451 461 47"`
 
-til_lagring = True
-lag_passord = True
+til_lagring = False
+lag_passord = False
 
 aar4 = 2024
 aar2 = str(aar4)[-2:]
@@ -30,139 +33,107 @@ pd.set_option('display.float_format', lambda x: '%.0f' % x)
 
 import hjelpefunksjoner as hjfunk
 
-conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
+from sqlalchemy import create_engine
 
-# ## KLASS
-
-HF, RHF, phob, rfss, rfss2, rfss3, rapporteringsenheter = hjfunk.hent_enheter_fra_klass(
-    aar4
-)
-
-# ## Regionale og felleseide støtteforetak
-
-# rfss skal ikke med, fordi HELSE MIDT-NORGE RHF HELSEPLATTFORMEN ikke skal rapportere. Denne tas ut av klass
-RFSS = pd.concat([rfss2, rfss3], ignore_index=True).rename(
-    columns={"ORGNR_FORETAK": "ORGNR_FORETAK",
-             "NAVN_KLASS": "FORETAK_NAVN"}
-)
-
-RFSS
+username = getpass.getuser()
+dsn = "DB1P"
+try:
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+    conn = engine.connect()
+except:
+    print("Passord ikke skrevet inn")
+    password = getpass.getpass(prompt='Oracle-passord: ')
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+    conn = engine.connect()
 
 # +
-RFSS['SKJEMA_TYPE'] = "0X 0Y 40"
-
-print("Antall: ", RFSS.shape[0])
-RFSS.sample(3)
+# conn.close()
 # -
 
-RHF = (
-    RHF[['NAVN_KLASS', 'ORGNR_FORETAK']]
-    .rename(columns={'NAVN_KLASS': 'FORETAK_NAVN',
-                     'ORGNR_FORETAK': 'ORGNR_FORETAK'})
-)
+# # DSBBASE.DLR_ENHET_I_DELREG_SKJEMA
+# Inneholder enheter som skal svare på skjema
 
-RHF['SKJEMA_TYPE'] = "0X 0Y 40 41 48"
-
-print("Antall: ", RHF.shape[0])
-RHF.sample(3)
-
-# ## HF
-
-HF = (
-    HF.rename(columns={'NAVN_KLASS': 'FORETAK_NAVN'}
-             )
-    [['ORGNR_FORETAK', 'FORETAK_NAVN']]
-)
-
-HF['SKJEMA_TYPE'] = "0X 0Y 40 380 440 450 460 48"
-print("Antall: ", HF.shape[0])
-HF.sample(3)
-
-
-# ## Private
-
-def lag_sql_str(arr):
-    s = "("
-    for nr in arr:
-        s += "'" + str(nr) + "',"
-    s = s[:-1] + ")"
-    s = (
-        s.replace("[", "")
-         .replace("]", "")
-         .replace("''", "'")
-    )
-    return s
-
-
-# +
-## Henter ORGNR_FORETAK fra 24xx
 sporring = f"""
     SELECT *
     FROM DSBBASE.DLR_ENHET_I_DELREG
     WHERE DELREG_NR IN ('24{aar2}')
 """
-SFU_data = pd.read_sql_query(sporring, conn)
+SFU_data = hjfunk.les_sql(sporring, conn)
 print(f"Fra '24{aar2}'\nRader:    {SFU_data.shape[0]}\nKolonner: {SFU_data.shape[1]}")
 
-foretak = SFU_data[SFU_data['H_VAR2_A'] == 'PRIVAT'][['ORGNR_FORETAK']].to_numpy()
-
-sql_str = lag_sql_str(foretak)
-
-## Henter navn fra SSB_FORETAK-databasen:
-sporring_for = f"""
-    SELECT *
-    FROM DSBBASE.SSB_FORETAK
-    WHERE STATUSKODE = 'B' AND ORGNR IN {sql_str}
+sporring = f"""
+    SELECT DELREG_NR, IDENT_NR, ENHETS_TYPE, SKJEMA_TYPE
+    FROM DSBBASE.DLR_ENHET_I_DELREG_SKJEMA
+    WHERE DELREG_NR IN ('24{aar2}')
 """
+SFU_skj = hjfunk.les_sql(sporring, conn)
+print(f"Fra '24{aar2}'\nRader:    {SFU_skj.shape[0]}\nKolonner: {SFU_skj.shape[1]}")
 
-PRIV = pd.read_sql_query(sporring_for, conn)[['NAVN', 'ORGNR']]
-PRIV = PRIV.rename(columns={'NAVN': 'FORETAK_NAVN',
-                            'ORGNR': 'ORGNR_FORETAK'})
-PRIV['SKJEMA_TYPE'] = "39 381 441 451 461 47"
+SFU_skj = SFU_skj[SFU_skj['SKJEMA_TYPE'] != 'RA-0595'].copy()
 
-print("\nFra DSBBASE.SSB_FORETAK\nAntall foretak: ", PRIV.shape[0])
-PRIV.sample(3)
-# -
+skjema_mapping = {
+    "HELSE47": '47',
+    "HELSE44P": '441',
+    "HELSE45P": '451',
+    "HELSE38P": '381',
+    "HELSE39": '39',
+    "HELSE46P": '461',
+    "HELSE0X": '0X',
+    "HELSE48": '48',
+    "HELSE0Y": '0Y',
+    "HELSE40": '40',
+    "HELSE41": '41',
+    "HELSE38O": '380',
+    "HELSE44O": '440',
+    "HELSE45O": '450',
+}
 
-# ## Oppdrags- og bestillerdokument
+SFU_skj['SKJEMA_TYPE_NY'] = SFU_skj['SKJEMA_TYPE'].map(skjema_mapping)
 
-phob
+SFU_skj = SFU_skj.sort_values('SKJEMA_TYPE_NY')
 
-PHOB = (
-    phob.rename(columns={
-        'NAVN_KLASS': 'FORETAK_NAVN'
-    })
-    [['ORGNR_FORETAK', 'FORETAK_NAVN']]
-).copy()
+# resultat = SFU_skj.groupby(['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE'])['SKJEMA_TYPE_NY'].apply(lambda x: ' '.join(x)).reset_index()
+resultat = SFU_skj.groupby(['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE'])['SKJEMA_TYPE_NY'].unique().reset_index()
 
-# +
-PHOB['SKJEMA_TYPE'] = "39 381 441 451 461 47 48"
-
-print("Antall: ", PHOB.shape[0])
-PHOB.sample(3)
-# -
-
-# DIAKONHJEMMET SKAL HA 0X istedenfor 39
-PHOB.loc[PHOB['ORGNR_FORETAK'] == "982791952", 'SKJEMA_TYPE'] = "0X 381 441 451 461 47 48"
-
-# ## Slå sammen til en dataframe som eksporteres til `.csv`
-
-# +
-brukerliste_dfs = [RFSS, RHF, HF, PRIV, PHOB]
-brukerliste_df = pd.concat(brukerliste_dfs)
-print("Antall foretak i brukerlisten: ", brukerliste_df.shape[0])
+resultat['SKJEMA_TYPE_NY_NUM'] = resultat.SKJEMA_TYPE_NY.apply(lambda x: ("_").join(x))
 
 
-brukerliste_df['FORETAK_NAVN'] = brukerliste_df['FORETAK_NAVN'].str.upper()
-
-brukerliste_df = brukerliste_df.reset_index(drop=True)
-# -
 
 
-brukerliste_df.sample(3)
 
-# Dublettsjekk på foretaksnummer (ORGNR_FRTK)
-assert brukerliste_df.ORGNR_FORETAK.duplicated().sum() == 0
+brukerliste = pd.merge(
+    resultat,
+    SFU_data[['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE', 'NAVN', 'ORGNR', 'ORGNR_FORETAK']],
+    on=['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE']
+)
+
+brukerliste[brukerliste['ORGNR_FORETAK'] == '941455077']
+
+brukerliste[brukerliste['ORGNR_FORETAK'] == '980693732']
+
+
+brukerliste[brukerliste['ORGNR_FORETAK'] == '916269331']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ---
 
 dato_idag = pd.Timestamp("today").strftime("%d%m%y")
 filnavn = "Brukerliste" + "_" + str(aar4) + "_" + dato_idag + ".csv"
