@@ -118,7 +118,7 @@ sporring_for = f"""
 PRIV = pd.read_sql_query(sporring_for, conn)[['NAVN', 'ORGNR']]
 PRIV = PRIV.rename(columns={'NAVN': 'FORETAK_NAVN',
                             'ORGNR': 'ORGNR_FORETAK'})
-PRIV['SKJEMA_TYPE'] = "39 381 441 451 461 47"
+PRIV['SKJEMA_TYPE'] = "381 441 451 461 47"
 
 print("\nFra DSBBASE.SSB_FORETAK\nAntall foretak: ", PRIV.shape[0])
 PRIV.sample(3)
