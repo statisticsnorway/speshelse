@@ -136,14 +136,15 @@ PHOB = (
 ).copy()
 
 # +
-PHOB['SKJEMA_TYPE'] = "39 381 441 451 461 47 48"
+PHOB['SKJEMA_TYPE'] = "0X 381 441 451 461 47 48"
 
 print("Antall: ", PHOB.shape[0])
 PHOB.sample(3)
-# -
 
+# +
 # DIAKONHJEMMET SKAL HA 0X istedenfor 39
-PHOB.loc[PHOB['ORGNR_FORETAK'] == "982791952", 'SKJEMA_TYPE'] = "0X 381 441 451 461 47 48"
+#PHOB.loc[PHOB['ORGNR_FORETAK'] == "982791952", 'SKJEMA_TYPE'] = "0X 381 441 451 461 47 48"
+# -
 
 # ## Slå sammen til en dataframe som eksporteres til `.csv`
 
