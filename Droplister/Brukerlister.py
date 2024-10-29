@@ -118,7 +118,7 @@ sporring_for = f"""
 PRIV = pd.read_sql_query(sporring_for, conn)[['NAVN', 'ORGNR']]
 PRIV = PRIV.rename(columns={'NAVN': 'FORETAK_NAVN',
                             'ORGNR': 'ORGNR_FORETAK'})
-PRIV['SKJEMA_TYPE'] = "39 381 441 451 461 47"
+PRIV['SKJEMA_TYPE'] = "381 441 451 461 47"
 
 print("\nFra DSBBASE.SSB_FORETAK\nAntall foretak: ", PRIV.shape[0])
 PRIV.sample(3)
@@ -136,14 +136,15 @@ PHOB = (
 ).copy()
 
 # +
-PHOB['SKJEMA_TYPE'] = "39 381 441 451 461 47 48"
+PHOB['SKJEMA_TYPE'] = "0X 381 441 451 461 47 48"
 
 print("Antall: ", PHOB.shape[0])
 PHOB.sample(3)
-# -
 
+# +
 # DIAKONHJEMMET SKAL HA 0X istedenfor 39
-PHOB.loc[PHOB['ORGNR_FORETAK'] == "982791952", 'SKJEMA_TYPE'] = "0X 381 441 451 461 47 48"
+#PHOB.loc[PHOB['ORGNR_FORETAK'] == "982791952", 'SKJEMA_TYPE'] = "0X 381 441 451 461 47 48"
+# -
 
 # ## Slå sammen til en dataframe som eksporteres til `.csv`
 
