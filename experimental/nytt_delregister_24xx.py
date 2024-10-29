@@ -19,7 +19,7 @@ warnings.filterwarnings('ignore')
 conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
 
 # +
-aar4 = 2023
+aar4 = 2024
 aar2 = str(aar4)[-2:]
 
 aar_før4 = aar4 - 1            # året før
@@ -48,6 +48,9 @@ print(f"Rader:    {SFU_enhet.shape[0]}\nKolonner: {SFU_enhet.shape[1]}")
 #     - S: slettet
 #     - D: slettet som dublett
 #     - F: slette for sammenslåing
+# - [ ] Ute etter H_VAR1_A med missing og SEKTOR_2014 ulik "6100". Disse bør listes ut
+
+
 
 ut = SFU_enhet[SFU_enhet['ORGNR'].isna()]
 
@@ -167,6 +170,12 @@ rapporteringsenheter = pd.concat(
 
 # Delreg 20877xx er et register med formål å kommunisere med private virksomheter via altinn. Det kan hende at dette ikke er godt nok oppdatert.
 
+# > Hente fra 2423 fra feltet med `"PRIVAT"`. Slippe at 20877xx er oppdatert
+
+
+
+
+
 sporring = f"""
     SELECT *
     FROM DSBBASE.DLR_ENHET_I_DELREG
@@ -175,13 +184,17 @@ sporring = f"""
 SFU_priv = pd.read_sql_query(sporring, conn)
 print(f"Rader:    {SFU_priv.shape[0]}\nKolonner: {SFU_priv.shape[1]}")
 
+SFU_priv[SFU_priv['ORGNR'] != SFU_priv['ORGNR_FORETAK']]
+
+SFU_priv[['ORGNR_FORETAK', 'ORGNR', 'NAVN1']]
+
 orgnr_priv_sfu = list(SFU_priv['ORGNR'])
 
 orgnr_priv_ikke_sfu = list(set(orgnr_priv_sfu) - set(SFU_enhet['ORGNR']))
 
 ut = SFU_priv[SFU_priv['ORGNR'].isin(orgnr_priv_ikke_sfu)][['ORGNR', 'NAVN', 'SN07_1', 'STATUS', 'TILSTAND']]
 
-rapportsamling['priv. i 2087722, ikke 2423'] = ut
+rapportsamling[f'priv. i 20877{aar_før2}, ikke 24{aar2}'] = ut
 
 orgnr_foretak_priv_sfu = list(SFU_priv['ORGNR']) # liste over private virksomheter som ligger i SFU
 
@@ -323,7 +336,7 @@ vof_tilstand_uten_private.shape
 # +
 orgnr_i_SFU_ikke_VOF = list(set(SFU_tilstand.ORGNR) - set(vof_tilstand.ORGNR))
 
-print("Antall virksomheter/foretak som ikke er i delreg 2423:")
+print(f"Antall virksomheter/foretak som ikke er i delreg 24{aar2}:")
 SFU_tilstand[SFU_tilstand.ORGNR.isin(orgnr_i_SFU_ikke_VOF)].shape[0]
 # -
 
@@ -331,38 +344,27 @@ ut = SFU_tilstand[SFU_tilstand['ORGNR'].isin(orgnr_i_SFU_ikke_VOF)][['ORGNR', 'N
 
 rapportsamling['i 24, ikke klass eller 20778'] = ut
 
-# ### Sammenlikne virksomheter: VOF -> SFU
-
-orgnr_i_VOF_ikke_SFU = list(set(vof_tilstand.ORGNR) - set(SFU_tilstand.ORGNR))
-
-print("Antall virksomheter/foretak som ligger under alle offentlige og private helseforetak,")
-print("men som ikke har match i SFU:")
-vof_tilstand[vof_tilstand.ORGNR.isin(orgnr_i_VOF_ikke_SFU)].shape[0]
-
-ut = vof_tilstand[vof_tilstand['ORGNR'].isin(orgnr_i_VOF_ikke_SFU)][['ORGNR', 'NAVN', 'KARAKTERISTIKK', 'STATUSKODE', 'SN07_1']]
-
-rapportsamling['i klass og 20778, ikke i 24'] = ut
-
-# ### Sammenlikne virksomheter: SFU -> VOF (uten private)
-
-orgnr_i_VOF_ikke_SFU_uten_private = list(set(vof_tilstand_uten_private.ORGNR) - set(SFU_tilstand.ORGNR))
-
-print("Antall virksomheter som ligger under alle offentlige helseforetak,")
-print("men som ikke har match i SFU:")
-vof_tilstand_uten_private[vof_tilstand_uten_private.ORGNR.isin(orgnr_i_VOF_ikke_SFU_uten_private)].shape[0]
-
-ut = (
-    vof_tilstand_uten_private[
-        vof_tilstand_uten_private['ORGNR']
-        .isin(orgnr_i_VOF_ikke_SFU_uten_private)
-    ]
-    [['ORGNR', 'NAVN', 'KARAKTERISTIKK', 'STATUSKODE', 'SN07_1']]
-)
-
-rapportsamling['i klass, ikke i 24xx'] = ut
-
 # ### Private som ikke har missing på HVAR_1_A i SFU:
 # Det betyr at det rapporteres tall fra dem på skjema 39?
+
+region = {"03":	"H12",
+"11":	"H03",
+"15":	"H04",
+"18":	"H05",
+"31":	"H12",
+"32":	"H12",
+"33":	"H12",
+"34":	"H12",
+"39":	"H12",
+"40":	"H12",
+"42":	"H12",
+"46":	"H03",
+"50":	"H04",
+"55":	"H05",
+"56":	"H05",
+"99":	"Uoppgitt"}
+
+SFU_enhet['HELSEREGION'] = SFU_enhet['F_KOMMUNENR'].str[:2].map(region)
 
 ut = (
     SFU_enhet[
@@ -370,10 +372,14 @@ ut = (
         (SFU_enhet['H_VAR2_A'] == "PRIVAT")
         # (SFU_enhet['SKJEMA_TYPE'].str.contains("39"))
     ]
-    [['ORGNR', 'NAVN_HEL_SFU', 'SN07_1', 'ENHETS_TYPE', 'SKJEMA_TYPE', 'H_VAR1_A', 'H_VAR2_A']]
+    [['ORGNR', 'NAVN_HEL_SFU', 'SN07_1', 'ENHETS_TYPE', 'SKJEMA_TYPE', 'H_VAR1_A', 'H_VAR2_A', 'HELSEREGION']]
 )
 
+ut = ut.sort_values(['H_VAR1_A', 'SKJEMA_TYPE'])
+
 rapportsamling['private i SFU'] = ut
+
+
 
 # # Sammenlikne STATUS og SN07 i VOF og SFU
 
@@ -455,7 +461,25 @@ ut = sammenlikne_tilstand[mask_status][['NAVN_HEL_SFU', 'ORGNR', 'STATUS_SFU', '
 
 rapportsamling['avvik STATUS og TILSTAND'] = ut
 
+# ### Blindpassasjerer
+
+m1 = SFU_enhet['H_VAR1_A'].isna()
+m2 = SFU_enhet['SEKTOR_2014'] != '6100'
+m3 = SFU_enhet['ORGNR'] != SFU_enhet['ORGNR_FORETAK']
+m4 = ~(SFU_enhet['ORGNR_FORETAK'].isin(list(rapporteringsenheter['ORGNR_FORETAK'].unique())))
+
+rapportsamling['Blindpassasjerer'] = SFU_enhet[m1 & m2 & m3 & m4][['NAVN', 'NAVN1', 'NAVN2', 'NAVN3'] + ['ORGNR', 'ORGNR_FORETAK']]
+
 # # Lagring
 
-if til_lagring:
+import sys
+import os
+sys.path.append(os.path.dirname(os.getcwd()))
+from functions.hjelpefunksjoner import lagre_excel
+
+
+
+if True:
     lagre_excel(rapportsamling, filsti_output)
+
+
