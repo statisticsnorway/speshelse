@@ -8,9 +8,9 @@
 #       format_version: '1.5'
 #       jupytext_version: 1.15.2
 #   kernelspec:
-#     display_name: Python3
+#     display_name: spesh
 #     language: python
-#     name: python3
+#     name: spesh
 # ---
 
 # + [markdown] toc-hr-collapsed=true
@@ -142,7 +142,7 @@ print(f"HF: \t\t\t\t\t\t\t\t\t{HF.shape[0]} enheter")
 print(f"RHF: \t\t\t\t\t\t\t\t\t{RHF.shape[0]} enheter")
 print(f"Private helseforetak med oppdrag og bestillerdokument: \t\t\t{phob.shape[0]} enheter")
 print(f"Regionale og felleseide støtteforetak i spesialisthelsetjenesten: \t{rfss.shape[0]+rfss2.shape[0]+rfss3.shape[0]} enheter")
-print(f"rapporteringsenheter: \t\t\t\t\t\t\t{rapporteringsenheter.shape[0]} enheter")
+print(f"Rapporteringsenheter: \t\t\t\t\t\t\t{rapporteringsenheter.shape[0]} enheter")
 
 # ## VOF: liste over alle helseforetak
 
@@ -413,9 +413,9 @@ skj38O = pd.merge(skj38O, regionoppslag, how="left", on="HELSEREGION")
 
 skj38O = skj38O[onskede_kolonner]
 
-# ### skj44O (Psykisk helsevern for voksne PHFV)
 
-# OBS: Nye enheter 2022
+
+# ### skj44O (Psykisk helsevern for voksne PHFV)
 
 # Alle offentlige helseforetak foruten ```SUNNAAS```. Bruker ```HF```-tabellen laget i kapittel 2.1.1
 
@@ -562,15 +562,7 @@ kolonner = (
 
 
 # +
-# Oppdater denne i tråd med skj38O
-# -
-
-
-
-
-
-
-
+# Oppdater denne i tråd med skj38O (Løst?)
 # +
 skj46O["tmp_bool"] = True
 
@@ -585,6 +577,8 @@ finne_virksomheter_df = finne_virksomheter_df[
 finne_virksomheter_df = finne_virksomheter_df[
     ["ORGNR", "ORGNR_FORETAK", "NAVN", "NAVN_KLASS"]
 ]
+# -
+
 
 finne_virksomheter_df = pd.merge(
     finne_virksomheter_df,
@@ -594,9 +588,11 @@ finne_virksomheter_df = pd.merge(
     right_on="FINST_ORGNR",
 )
 
+
 finne_virksomheter_df[["SEN_HT_FJOR", "SDGN_HT_FJOR"]] = finne_virksomheter_df[
     ["SEN_HT_FJOR", "SDGN_HT_FJOR"]
 ].astype("Int64")
+
 
 finne_virksomheter_df = (
     finne_virksomheter_df.groupby(["ORGNR_FORETAK", "NAVN_KLASS"])
@@ -606,10 +602,10 @@ finne_virksomheter_df = (
 finne_virksomheter_df = finne_virksomheter_df.drop(columns=["NAVN_KLASS"])
 
 
-# +
 finne_virksomheter_df2 = pd.merge(
     SFUklass, skj46O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"]
 )
+
 finne_virksomheter_df2 = finne_virksomheter_df2.query(
     'tmp_bool == True and SN07_1 in ["86.101", "86.102", "86.103","86.107",]'
 )
@@ -618,11 +614,13 @@ finne_virksomheter_df2 = finne_virksomheter_df2[
     ["ORGNR", "ORGNR_FORETAK", "NAVN", "NAVN_KLASS"]
 ]
 
-# +
+
+
 undervirksomheter_navn_og_kolonner = hjfunk.lag_navn_orgnr_kolonner(
-    finne_virksomheter_df2, 24, False
+    finne_virksomheter_df2, 26, False
 )
 
+# +
 skj46O = pd.merge(
     skj46O, undervirksomheter_navn_og_kolonner, how="left", on="ORGNR_FORETAK"
 )
@@ -1113,7 +1111,7 @@ if lagre_filer:
     for x in skjemaer_til_droplister:
         lagre_dropliste_csv(x)
 
-
-
 # Lukk tilkoblingen
 conn.close()
+
+
