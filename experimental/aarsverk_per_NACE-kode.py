@@ -34,7 +34,7 @@
 # ## Velger årgang
 
 # +
-aargang = 2022
+aargang = 2023
 
 # Næringskoder som skal med
 naring = ["86.101", "86.102", "86.906"]
@@ -150,4 +150,4 @@ def lagre_fil(skj):
 lagre_fil("virk_i_delreg")
 lagre_fil("virk_ikke_i_delreg")
 
-
+virk_ikke_i_delreg
