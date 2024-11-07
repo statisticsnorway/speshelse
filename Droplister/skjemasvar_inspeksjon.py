@@ -1,3 +1,5 @@
+# # Sammenlikn enhetsresultater og -navn
+
 # - Sjekke tidligere skjemasvar.
 #     - Har enheten levert tidligere?
 #     - Står det noe i merknadsfeltet?
@@ -10,10 +12,34 @@
 #     - Velg Skjema Type nederst og trykk fjern post-knappen
 #     - Lagre
 # - Hvis enheten skal tas ut av delregisteret (har ingen avtale)
-#     - Sett Kvitteringstype til "Avgang"
+#     - Sett Kvitteringstype til "Avgang" og "Feilaktig i utvalget"
 #     - Slett også alle hjelpefelt
 #     - Slett Skjema Type nederst (fjern post-knapp)
 # - Eventeuelle nye enheter legges til til slutt i delregisteret
+
+# +
+import pandas as pd
+import difflib
+import glob
+import getpass
+from sqlalchemy import create_engine
+
+import hjelpefunksjoner as hjfunk
+# -
+
+username = getpass.getuser()
+dsn = "DB1P"
+try:
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+except:
+    print("Passord ikke skrevet inn")
+    password = getpass.getpass(prompt='Oracle-passord: ')
+    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+
+# Opprett en tilkobling fra motoren
+conn = engine.connect()
+
+# ## Private rehabiliteringsenheter med RHF-avtale
 
 data = """Avonova Ringerike Rehabilitering AS	SOROST
 Beitostølen Helsesportsenter AS	SOROST
@@ -62,7 +88,7 @@ Røde Kors Haugland Rehabiliteringssenter i Fjaler	VEST
 Åstveit Helsesenter i Bergen	VEST
 Barnas Fysioterapisenter i Bergen	VEST
 Ravneberghaugen, Senter for meistring og rehabilitering i Hagavik	VEST
-Rehabilitering Vest i Haugesund (1. mai 2024)	VEST
+Rehabilitering Vest i Haugesund	VEST
 Falck Norge i Randaberg	VEST
 PTØ-senteret i Stavanger	VEST
 Nærland Rehabilitering på Jæren 	VEST
@@ -80,11 +106,27 @@ Lovisenberg Rehabilitering	NORD
 
 datalist = data.split("\n")
 
-import pandas as pd
-
-import difflib
-
 df = pd.DataFrame([x.split("\t") for x in datalist], columns = ['NAVN_RHF', 'REGION'])
+
+df.head(3)
+
+# ## Masterfilanalyse fra fjorårets datainnsamling
+# Brukes til å fange opp enheter som ikke har rapportert oppholdsdøgn på foretaksnivå.
+
+# +
+# Finn siste fil manuelt ved å bytte ut årstallet
+sti_an = "/ssb/stamme01/fylkhels/speshelse/felles/populasjon/2023/**"
+
+glob.glob(sti_an)
+# -
+
+an_df = pd.read_excel('/ssb/stamme01/fylkhels/speshelse/felles/populasjon/2023/populasjonsanalyse_2023_2024-06-06-1050.xlsx')
+
+an_reh = an_df[(an_df['TJENESTE_KODE'] == 'REH')]
+
+an_reh.head(3)
+
+# ## Populasjon SFU delreg 24XX
 
 sporring = f"""
     SELECT *
@@ -109,22 +151,42 @@ SFU_data["NAVN_FULL"] = (
 
 SFU_kols = (['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE', 'SKJEMA_TYPE']
          + [x for x in SFU_data.columns if "ORGNR" in x]
-         + ['NAVN_FULL']
-         + [x for x in SFU_data.columns if "H_VAR" in x])
-SFU_data[SFU_kols]
+         + ['NAVN_FULL'])
+SFU_data[SFU_kols].sample(3)
 
 SFU47 = SFU_data[SFU_data['SKJEMA_TYPE'].fillna("").str.contains("47")][SFU_kols]
 
-SFU47
+SFU47.head(3)
 
 
 
-dropliste_sti = "/ssb/stamme01/fylkhels/speshelse/felles/droplister/2024/291024/Dropliste_skj47_2024_291024.csv"
+# ### Merge SFU skjema 47 med analyserapporten
+
+sjekk = pd.merge(
+    SFU47,
+    an_reh,
+    how='outer',
+    left_on='ORGNR_FORETAK',
+    right_on='ORGNR_FRTK',
+    suffixes=('_SFU', '_ANALYSE'),
+    indicator=True
+)
+
+sjekk[sjekk['OPPHOLDSDOGN'] == 0].head(3)
+
+# ## Dropliste
+
+glob.glob("/ssb/stamme01/fylkhels/speshelse/felles/droplister/2024/**")
+
+# Bruk glob til å finne siste filsti
+dropliste_sti = '/ssb/stamme01/fylkhels/speshelse/felles/droplister/2024/061124/Dropliste_skj47_2024_061124.csv'
 
 dropliste = pd.read_csv(dropliste_sti, sep=";", encoding='latin1')
 
+# ## Sammenlikn SFU-navn i listen av enheter med RHF-avtale 
+
 # +
-import pandas as pd
+import re
 from difflib import SequenceMatcher
 
 def match_names(
@@ -133,6 +195,7 @@ def match_names(
     df2_name_col,
     df1_additional_cols=None,
     df2_additional_cols=None,
+    exclude_words=None,
     score_threshold=0,
     preprocess=True
 ):
@@ -153,6 +216,8 @@ def match_names(
         Valgfrie kolonner i df1 som skal beholdes i resultatet.
     - df2_additional_cols: liste av str eller None
         Valgfrie kolonner i df2 som skal legges til resultatet basert på matchene.
+    - exclude_words: liste av str eller None
+        Liste over ord som skal fjernes fra navnene under forhåndsbehandling.
     - score_threshold: float
         Minimum score for å vurdere en match (mellom 0 og 1).
     - preprocess: bool
@@ -175,9 +240,23 @@ def match_names(
 
     # Forhåndsbehandle navn hvis ønsket
     if preprocess:
+        # Lag regex-mønster for å fjerne ekskluderte ord
+        if exclude_words:
+            # Escape spesialtegn i exclude_words
+            exclude_pattern = r'\b(' + '|'.join(map(re.escape, exclude_words)) + r')\b'
+        else:
+            exclude_pattern = None
+
         for col in df1_name_cols:
-            df1[col + '_clean'] = df1[col].astype(str).str.lower().str.strip()
-        df2['df2_name_clean'] = df2[df2_name_col].astype(str).str.lower().str.strip()
+            clean_col = df1[col].astype(str).str.lower().str.strip()
+            if exclude_pattern:
+                clean_col = clean_col.str.replace(exclude_pattern, '', regex=True)
+            df1[col + '_clean'] = clean_col.str.replace(r'\s+', ' ', regex=True).str.strip()
+
+        clean_col = df2[df2_name_col].astype(str).str.lower().str.strip()
+        if exclude_pattern:
+            clean_col = clean_col.str.replace(exclude_pattern, '', regex=True)
+        df2['df2_name_clean'] = clean_col.str.replace(r'\s+', ' ', regex=True).str.strip()
     else:
         for col in df1_name_cols:
             df1[col + '_clean'] = df1[col]
@@ -185,6 +264,10 @@ def match_names(
 
     # Kombiner navnekolonner i df1 til en enkelt streng for matching
     df1['combined_name_clean'] = df1[[col + '_clean' for col in df1_name_cols]].fillna('').agg(' '.join, axis=1).str.strip()
+
+    # Fjern doble mellomrom
+    df1['combined_name_clean'] = df1['combined_name_clean'].str.replace(r'\s+', ' ', regex=True)
+    df2['df2_name_clean'] = df2['df2_name_clean'].str.replace(r'\s+', ' ', regex=True)
 
     # Opprett liste over unike navn i df2 for matching
     df2_names = df2['df2_name_clean'].dropna().unique()
@@ -235,83 +318,48 @@ result_df = match_names(
     df2_name_col='NAVN_RHF',      # Kolonne i df2 å matche mot
     df1_additional_cols=['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE', 'SKJEMA_TYPE', 'ORGNR', 'ORGNR_FORETAK'],  # Behold denne kolonnen fra df1
     df2_additional_cols=['REGION'],  # Ta med disse kolonnene fra df2
-    score_threshold=0.2,
+    exclude_words=['as', 'rehabilitering', 'avd'],
+    score_threshold=0,
     preprocess=True
 )
 
-result_df.sort_values('match_score')
+# ### Sjekk enheter uten 100% match på navn
+
+result_df[result_df['match_score'] <= 1].sort_values('match_score')
 
 
 
-# +
-import pandas as pd
-from difflib import SequenceMatcher
+# ## Søk etter tekst i to navnekolonner
 
-# Forhåndsbehandle navnene
-dropliste['FORETAK_NAVN_clean'] = dropliste['FORETAK_NAVN'].str.lower().str.strip()
-dropliste['FINST_NAVN_clean'] = dropliste['FINST_NAVN'].str.lower().str.strip()
-df['NAVN_clean'] = df['NAVN'].str.lower().str.strip()
+def search_text(df, col, search_text) -> None:
+    stu = search_text.upper()
+    res = df.loc[df[col].fillna("").str.upper().str.contains(stu)]
+    
+    res = res[[col] + [x for x in res.columns if x != col]]
+    display(res)
 
-# Funksjon for å finne beste match og score
-def get_best_match_and_score(name, choices):
-    best_match = None
-    highest_score = 0
-    for choice in choices:
-        score = SequenceMatcher(None, name, choice).ratio()
-        if score > highest_score:
-            highest_score = score
-            best_match = choice
-    return pd.Series([best_match, highest_score])
 
-# Finn beste matcher og scorer
-dropliste[['FORETAK_NAVN_MATCH_clean', 'FORETAK_NAVN_SCORE']] = dropliste['FORETAK_NAVN_clean'].apply(
-    lambda x: get_best_match_and_score(x, df['NAVN_clean'])
+search_text(df, 'NAVN_RHF', 'NÆRLAND')
+
+search_text(SFU47, 'NAVN_FULL', 'nærland')
+
+
+
+result_df2 = match_names(
+    df1=dropliste,
+    df2=df,
+    df1_name_col=['FINST_NAVN'],  # Kolonner i df1 som inneholder navn å matche
+    df2_name_col='NAVN_RHF',      # Kolonne i df2 å matche mot
+    df1_additional_cols=['FORETAK_ORGNR', 'FINST_ORGNR', 'D_HELD_IFJOR', 'SDGN_HT_FJOR'],  # Behold kolonner fra df1
+    df2_additional_cols=['REGION'],  # Ta med disse kolonnene fra df2
+    exclude_words=['as', 'rehabilitering', 'avd'],
+    score_threshold=0,
+    preprocess=True
 )
 
-dropliste[['FINST_NAVN_MATCH_clean', 'FINST_NAVN_SCORE']] = dropliste['FINST_NAVN_clean'].apply(
-    lambda x: get_best_match_and_score(x, df['NAVN_clean'])
-)
+result_df2.sort_values('match_score')
 
-# Lag mappings
-navn_dict = df.set_index('NAVN_clean')['NAVN'].to_dict()
-region_dict = df.set_index('NAVN_clean')['REGION'].to_dict()
-
-# Kartlegg tilbake til originale navn og legg til REGION
-dropliste['FORETAK_NAVN_MATCH'] = dropliste['FORETAK_NAVN_MATCH_clean'].map(navn_dict)
-dropliste['FORETAK_NAVN_REGION'] = dropliste['FORETAK_NAVN_MATCH_clean'].map(region_dict)
-dropliste['FINST_NAVN_MATCH'] = dropliste['FINST_NAVN_MATCH_clean'].map(navn_dict)
-dropliste['FINST_NAVN_REGION'] = dropliste['FINST_NAVN_MATCH_clean'].map(region_dict)
-
-# +
-m_score1 = dropliste['FINST_NAVN_SCORE'] < 1
-m_score2 = dropliste['FORETAK_NAVN_SCORE'] < 1
-
-m_na = dropliste['D_HELD_IFJOR'].isna() | dropliste['SDGN_HT_FJOR'].isna()
-
-m_mangler_data_og_har_ikke_100prs_treff = m_score1 & m_score2 & m_na
-# -
-
-dropliste.columns
-
-kolonner = ['FORETAK_ORGNR', 'FINST_ORGNR', 'FORETAK_NAVN', 'FORETAK_NAVN_MATCH', 'FORETAK_NAVN_SCORE', 'FORETAK_NAVN_REGION', 'FINST_NAVN', 'FINST_NAVN_MATCH', 'FINST_NAVN_SCORE', 'FINST_NAVN_REGION', 'SDGN_HT_FJOR', 'D_HELD_IFJOR']
-
-dropliste[m_mangler_data_og_har_ikke_100prs_treff][kolonner].sort_values(['FINST_NAVN_SCORE', 'FORETAK_NAVN_SCORE'])
-
-import hjelpefunksjoner as hjfunk
-from sqlalchemy import create_engine
-import getpass
-
-username = getpass.getuser()
-dsn = "DB1P"
-try:
-    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
-except:
-    print("Passord ikke skrevet inn")
-    password = getpass.getpass(prompt='Oracle-passord: ')
-    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
-
-# Opprett en tilkobling fra motoren
-conn = engine.connect()
+# ## Skjema 47-svar fra siste årganger
 
 # +
 årganger = ['23', '22', '21']
