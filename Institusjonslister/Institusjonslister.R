@@ -211,6 +211,8 @@ delreg_private <- delreg %>%
     ORGNR_FORETAK %in% unique(oppdrag$ORGNR_FORETAK) ~ "Private med oppdragsdokument", 
     TRUE ~ "Private med kjøpsavtale"))
 
+unique(delreg_private$SKJEMA_TYPE)
+
 delreg_private_test <- delreg_private %>%
   select(Foretakstype, Helseregion, RHF, ORGNR_FORETAK, H_VAR1_A, ORGNR, NYTT_NAVN,
          SKJEMA_TYPE, SN07_1, SN07_1_navn, F_POSTNR, F_POSTSTED, F_KOMMUNENR) %>%
@@ -251,19 +253,47 @@ delreg_private_test <- delreg_private %>%
 delreg_private_test <- delreg_private_test %>%
   dplyr::filter(!is.na(Rapporteringsnr))
 
+# ### Lager liste over rapporteringsenhetene
+# For å kunne koble på tjenesteområde på alle underenhetene.
+
+rapporteringsenheter <- delreg_private_test  %>% 
+  mutate(Tjenesteomraade = case_when(
+    Skjematype == "381" ~ "TSB",
+    Skjematype == "461" ~ "Somatikk",
+    Skjematype == "441" ~ "VOP",
+    Skjematype == "451" ~ "BUP",
+    Skjematype == "47"  ~ "Rehabilitering",
+    Rapporteringsnr == "47" ~ "Rehabilitering",
+    Rapporteringsnr == "46P" ~ "Somatikk"))  %>% 
+filter(Tjenesteomraade != "NA")  %>% 
+distinct(Rapporteringsnr, Tjenesteomraade)
+
+delreg_private_tjenesteomraade <- left_join(delreg_private_test, rapporteringsenheter, join_by(Rapporteringsnr))
+
+# +
+rapporteringsenheter  %>% 
+filter(Rapporteringsnr == "974124262")
+
+delreg_private_test  %>% 
+filter(Rapporteringsnr == "974124262")
+
+delreg_private_tjenesteomraade  %>% 
+filter(Rapporteringsnr == "974124262")
+# -
+
 # ### Sjekker for dubletter i Institusjonsnavn (?)
 
-delreg_private_test_duplikater <- delreg_private_test %>%
+delreg_private_test_duplikater <- delreg_private_tjenesteomraade %>%
   janitor::get_dupes(Institusjonsnavn)
 print(paste0("Dubletter finnes for: ", unique(delreg_private_test_duplikater$Institusjonsnavn)))
 
 # Sorterer etter helseregion #
-delreg_private_test <- delreg_private_test %>%
+delreg_private_tjenesteomraade <- delreg_private_tjenesteomraade %>%
   dplyr::arrange(Helseregion)
 
 # ## Lagrer filen
 
-openxlsx::write.xlsx(delreg_private_test,
+openxlsx::write.xlsx(delreg_private_tjenesteomraade,
                      file = paste0(filsti_institusjonslister, aargang, " Private institusjoner spesialisthelsetjenesten (", format(Sys.Date(), "%d%m%y"), ").xlsx"),
                      rowNames = FALSE,
                      showNA = FALSE)
