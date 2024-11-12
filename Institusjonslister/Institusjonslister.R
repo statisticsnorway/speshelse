@@ -270,17 +270,6 @@ distinct(Rapporteringsnr, Tjenesteomraade)
 
 delreg_private_tjenesteomraade <- left_join(delreg_private_test, rapporteringsenheter, join_by(Rapporteringsnr))
 
-# +
-rapporteringsenheter  %>% 
-filter(Rapporteringsnr == "974124262")
-
-delreg_private_test  %>% 
-filter(Rapporteringsnr == "974124262")
-
-delreg_private_tjenesteomraade  %>% 
-filter(Rapporteringsnr == "974124262")
-# -
-
 # ### Sjekker for dubletter i Institusjonsnavn (?)
 
 delreg_private_test_duplikater <- delreg_private_tjenesteomraade %>%
