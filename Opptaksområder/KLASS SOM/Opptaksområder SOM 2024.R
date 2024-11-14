@@ -174,6 +174,9 @@ rename(OPPTAK_SOM = OPPTAK)
 # opptaksomrader_ny_bydel
 # -
 
+opptaksomrader_ny_bydel %>%
+filter(OPPTAK_SOM == "Lovisenberg")
+
 # ## Sjekk om antall kommuner blir riktig
 
 # +
@@ -241,4 +244,46 @@ geom_sf(data = opptaksomrader_SOM_lokasjon_t1)
 ggplot() +
 geom_sf(data = opptaksomrader_SOM_lokasjon)
 
+# ### Lagrer filen som skal lastes opp i KLASS
 
+# +
+test <- opptaksomrader_ny %>%
+  dplyr::mutate(TOM_FORELDER = "") %>%
+  # dplyr::filter(opptak %in% c("Stavanger", "Ålesund")) %>%
+  dplyr::select(GRUNNKRETSNUMMER, GRUNNKRETS_NAVN, OPPTAK_NUMMER, ORGNR_HF, NAVN_HF, OPPTAK, ORGNR_RHF, NAVN_RHF, TOM_FORELDER)
+
+level_1 <- test %>%
+  dplyr::select(ORGNR_RHF, TOM_FORELDER, NAVN_RHF) %>%
+  dplyr::rename('ns1:kode' = ORGNR_RHF, 
+                'ns1:forelder' = TOM_FORELDER, 
+                'ns1:navn_bokmål' = NAVN_RHF) %>%
+  dplyr::distinct()
+
+level_2 <- test %>%
+  dplyr::select(ORGNR_HF, ORGNR_RHF, NAVN_HF) %>%
+  dplyr::rename('ns1:kode' = ORGNR_HF, 
+                'ns1:forelder' = ORGNR_RHF, 
+                'ns1:navn_bokmål' = NAVN_HF) %>%
+  dplyr::distinct() 
+
+level_3 <- test %>%
+  dplyr::select(OPPTAK_NUMMER, ORGNR_HF, OPPTAK) %>%
+  dplyr::rename('ns1:kode' = OPPTAK_NUMMER, 
+                'ns1:forelder' = ORGNR_HF, 
+                'ns1:navn_bokmål' = OPPTAK) %>%
+  dplyr::distinct()
+
+level_4 <- test %>%
+  dplyr::select(GRUNNKRETSNUMMER, OPPTAK_NUMMER, GRUNNKRETS_NAVN) %>%
+  dplyr::rename('ns1:kode' = GRUNNKRETSNUMMER, 
+                'ns1:forelder' = OPPTAK_NUMMER, 
+                'ns1:navn_bokmål' = GRUNNKRETS_NAVN) %>%
+  dplyr::distinct()
+
+KLASS <- rbind(level_1, level_2, level_3, level_4)
+# -
+
+openxlsx::write.xlsx(KLASS, file = paste0("/ssb/bruker/rdn/opptak_SOM_", aargang, ".xlsx"),
+                     rowNames = FALSE,
+                     showNA = FALSE,
+                     overwrite=T) # T = overskriver dersom filen allerede finnes, F = gir feilmelding dersom filen finnes

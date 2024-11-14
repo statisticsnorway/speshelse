@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 # # Korrespondansetabell opptaksområde-kommune
 
-aargang <- 2023
+aargang <- 2024
 
 # +
 options(repr.matrix.max.rows=600, repr.matrix.max.cols=2000)

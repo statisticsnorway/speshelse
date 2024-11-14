@@ -42,6 +42,8 @@ if (aargang %in% 2015:2017){
   trondheim_kommnr <- "1601"
 }
 
+# oslo_kommnr <- "0301"
+
 
 # +
 T07459 <- PxWebApiData::ApiData(07459, ContentsCode = "Personer",
@@ -57,33 +59,41 @@ dplyr::summarise(PERSONER = sum(value))
 
 # ### Laster inn bereg fra Linux
 
-bereg_filsti <- paste0("/ssb/stamme04/bereg/person/wk24/bosatte_koorfil_g", aargang, "m01d01eslep.sas7bdat")
+# bereg_filsti <- paste0("/ssb/stamme04/bereg/person/wk24/bosatte_koorfil_g", aargang, "m01d01eslep.sas7bdat")
+
 
 # +
-bosatte_koorfil <- haven::read_sas(bereg_filsti)
+bosatte_koorfil <- haven::read_sas(bereg_filsti) %>% 
+  dplyr::rename_all(toupper)
 
 bosatte_koorfil <- bosatte_koorfil %>%
-  dplyr::mutate(grunnkrets = paste0(KOMMNR, gkrets),
+  dplyr::mutate(grunnkrets = paste0(KOMMNR, GKRETS),
                 XY = paste0(X_KOORDINAT, ", ", Y_KOORDINAT)) %>%
-  dplyr::mutate(ID = paste0(KOMMNR, "-",  # Lager ID
-                       GATENR_GAARDSNR, "-",
-                       HUSNR_BRUKSNR, "-",
-                       BOKSTAV_FESTENR, "-",
-                       XY)) %>%
+  # dplyr::mutate(ID = paste0(KOMMNR, "-",  # Lager ID
+  #                      GATENR_GAARDSNR, "-",
+  #                      HUSNR_BRUKSNR, "-",
+  #                      BOKSTAV_FESTENR, "-",
+  #                      XY)) %>%
   dplyr::filter(!is.na(X_KOORDINAT), # Sletter personer uten adressekoordinater
                 !is.na(Y_KOORDINAT))
 
 # +
-colnames(bosatte_koorfil)
+# colnames(bosatte_koorfil)
 
 # Lager aldersvariabel per 1. januar
 x_date   <- as.Date(paste0(aargang, "-01-01"))
 
+# colnames(bosatte_koorfil)
+
 bosatte_koorfil_fix <- bosatte_koorfil %>%
- dplyr::mutate(FOEDSELSDATO = as.Date(FOEDSELSDATO, "%Y%m%d"),
-                # alder = aargang-as.numeric(substr(FOEDSELSDATO, 1, 4))) %>%
-               ALDER = trunc((FOEDSELSDATO %--% x_date) / lubridate::years(1))) %>%
-dplyr::select(FOEDSELSDATO, ALDER, KJOENN, ID, KOMMNR, GATENR_GAARDSNR, HUSNR_BRUKSNR, BOKSTAV_FESTENR, grunnkrets, XY, X_KOORDINAT, Y_KOORDINAT)
+  dplyr::mutate(GRUNNKRETSNUMMER = paste0(KOMMNR, GKRETS)) %>% 
+ # dplyr::mutate(FOEDSELSDATO = as.Date(FOEDSELSDATO, "%Y%m%d"),
+ #                # alder = aargang-as.numeric(substr(FOEDSELSDATO, 1, 4))) %>%
+ #               ALDER = trunc((FOEDSELSDATO %--% x_date) / lubridate::years(1))) %>%
+dplyr::select(ALDER, KJOENN, 
+              # ID, KOMMNR, GATENR_GAARDSNR, HUSNR_BRUKSNR, BOKSTAV_FESTENR, 
+              KOMMNR, GRUNNKRETSNUMMER, XY, 
+              X_KOORDINAT, Y_KOORDINAT) # FOEDSELSDATO
 
 head(bosatte_koorfil_fix)
 # -
@@ -126,6 +136,7 @@ postkretser_kart <- postkretser_kart %>%
   dplyr::filter(KOMMUNENR %in% c(kristiansand_kommnr, trondheim_kommnr)) %>%
   sf::st_zm(drop = T) %>%
   sf::st_cast("MULTIPOLYGON") %>%
+  sf::st_set_crs(25833) %>% 
   sf::st_transform(crs = valgt_crs) # %>%
   # dplyr::rename(GRUNNKRETSNUMMER = POSTNR)
 
