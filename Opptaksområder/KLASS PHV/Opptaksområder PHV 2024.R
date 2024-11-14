@@ -273,5 +273,40 @@ sf::st_transform(crs = 4326)
 #   dplyr::rename(GRUNNKRETSNUMMER = GRUNNKRETS) %>%
 # dplyr::filter(GRUNNKRETSNUMMER %in% unique(endringer$GRUNNKRETSNUMMER_T1))
 # -
+# ### Lagrer filen
 
 
+# +
+test <- opptaksomrader_ny %>%
+  dplyr::mutate(TOM_FORELDER = "") %>%
+  # dplyr::filter(opptak %in% c("Stavanger", "Ålesund")) %>%
+  dplyr::select(GRUNNKRETSNUMMER, GRUNNKRETS_NAVN, ORGNR_HF, NAVN_HF, ORGNR_RHF, NAVN_RHF, TOM_FORELDER)
+
+level_1 <- test %>%
+  dplyr::select(ORGNR_RHF, TOM_FORELDER, NAVN_RHF) %>%
+  dplyr::distinct() %>%
+  dplyr::rename('ns1:kode' = ORGNR_RHF, 
+                'ns1:forelder' = TOM_FORELDER, 
+                'ns1:navn_bokmål' = NAVN_RHF)
+
+level_2 <- test %>%
+  dplyr::select(ORGNR_HF, ORGNR_RHF, NAVN_HF) %>%
+  dplyr::rename('ns1:kode' = ORGNR_HF, 
+                'ns1:forelder' = ORGNR_RHF, 
+                'ns1:navn_bokmål' = NAVN_HF) %>%
+  dplyr::distinct()
+
+level_3 <- test %>%
+  dplyr::select(GRUNNKRETSNUMMER, ORGNR_HF, GRUNNKRETS_NAVN) %>%
+  dplyr::rename('ns1:kode' = GRUNNKRETSNUMMER, 
+                'ns1:forelder' = ORGNR_HF, 
+                'ns1:navn_bokmål' = GRUNNKRETS_NAVN) %>%
+  dplyr::distinct()
+
+opptaksomrader_KLASS_med_fix_KLASS <- rbind(level_1, level_2, level_3)
+# -
+
+openxlsx::write.xlsx(opptaksomrader_KLASS_med_fix_KLASS, file =paste0("/ssb/bruker/rdn/opptak_PHV_", aargang, ".xlsx"),
+                     rowNames = FALSE,
+                     showNA = FALSE,
+                     overwrite=T) # T = overskriver dersom filen allerede finnes, F = gir feilmelding dersom filen finnes

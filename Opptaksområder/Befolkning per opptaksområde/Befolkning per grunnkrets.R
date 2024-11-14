@@ -52,7 +52,10 @@ sum(T04317$PERSONER)
 # nrow(bereg_koorfil) # 2023: 5483128
 
 # +
-bosatte_koorfil <- haven::read_sas(bosatt_filsti) %>%
+# bosatte_koorfil <- haven::read_sas(bosatt_filsti) %>%
+#   dplyr::rename_all(toupper)
+
+bosatte_koorfil <- haven::read_sas(bereg_filsti) %>%
   dplyr::rename_all(toupper)
 
 nrow(bosatte_koorfil)
@@ -67,9 +70,9 @@ x_date   <- as.Date(paste0(aargang, "-01-01"))
 
 bosatte_koorfil_fix <- bosatte_koorfil %>%
   dplyr::mutate(GRUNNKRETSNUMMER = paste0(KOMMNR, GKRETS)) %>%
-  select(GRUNNKRETSNUMMER, KJOENN, FOEDSELSDATO) %>%
-  dplyr::mutate(FOEDSELSDATO = as.Date(FOEDSELSDATO, "%Y%m%d"),
-                ALDER = trunc((FOEDSELSDATO %--% x_date) / lubridate::years(1)))
+  select(GRUNNKRETSNUMMER, KJOENN, ALDER) #  %>% # FOEDSELSDATO
+  # dplyr::mutate(FOEDSELSDATO = as.Date(FOEDSELSDATO, "%Y%m%d"),
+  #               ALDER = trunc((FOEDSELSDATO %--% x_date) / lubridate::years(1)))
 
 # +
 # # OBS: Frydenlund ble splittet i 2021

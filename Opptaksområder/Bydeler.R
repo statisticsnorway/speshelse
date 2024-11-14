@@ -2,7 +2,7 @@
 
 library(tidyverse)
 
-aargang <- 2023
+aargang <- 2024
 
 bydeler_KLASS <- klassR::GetKlass(1, 
                                   correspond = 103,

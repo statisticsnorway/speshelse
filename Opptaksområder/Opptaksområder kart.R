@@ -7,7 +7,7 @@
 #
 # OBS: legg til RHF for HF og lokasjon!
 
-aargang <- 2020
+aargang <- 2024
 
 # ### Velger tjenesteområde
 #
@@ -20,7 +20,7 @@ tjeneste <- "SOM"
 
 # ## Flate eller utenhav
 
-utenhav <- FALSE
+utenhav <- TRUE
 
 if (utenhav == TRUE) {
 filsti_med_uten_hav <- "utenhav"
@@ -901,3 +901,6 @@ time.taken
 opptaksomrader_lokasjon %>%
 filter(OPPTAK %in% c("Lovisenberg", "Oslo universitetssykehus")) %>%
 data.frame()
+
+# +
+# head(opptaksomrader_HF_simpl)
