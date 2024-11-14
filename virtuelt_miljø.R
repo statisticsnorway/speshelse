@@ -1,23 +1,18 @@
 
-getwd()
+renv::init()
 
-renv::init(project = "/ssb/bruker/rdn/speshelse")
+renv::autoload()
 
-# renv::install("tidyverse")
-library(tidyverse)
+# # renv::install("tidyverse")
+# library(tidyverse)
+#
+# library(fellesr)
 
-# devtools::install_github("statisticsnorway/fellesr", auth_token = getPass::getPass("PAT: "))
-library(fellesr)
-
-Sys.time()
-
-renv::install("arrow")
-library(arrow)
-
-
-
-renv::install("png")
-library(png)
+# renv::install("arrow")
+# library(arrow)
+#
+# renv::install("png")
+# library(png)
 
 
 renv::snapshot()

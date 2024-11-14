@@ -20,7 +20,7 @@ filsti_med_uten_hav <- "utenhav"
 filsti_med_uten_hav
 # -
 
-# ### Laster inn pakker 
+# ### Laster inn pakker
 
 # OBS: cartography må installeres med renv!
 
@@ -28,13 +28,13 @@ filsti_med_uten_hav
 sf::sf_use_s2(FALSE)
 CRS <- 25833
 
-suppressPackageStartupMessages({ 
+suppressPackageStartupMessages({
 library(tidyverse)
 library(readxl)
 library(klassR)
 library(sf)
 library(leaflet)
-library(sfarrow)    
+library(sfarrow)
 library(htmlwidgets)
         })
 
@@ -50,11 +50,11 @@ aargang <- 2022
 
 # +
 if (grepl("onprem", Sys.getenv("JUPYTER_IMAGE_SPEC")) | Sys.getenv("JUPYTER_IMAGE_SPEC") == "") {
-    
+
     arbeidsmappe <- "/ssb/stamme01/fylkhels/speshelse/felles/"
     arbeidsmappe_kart <- paste0(arbeidsmappe, "kart/", aargang, "/")
     arbeidsmappe_opptak <- paste0(arbeidsmappe, "opptaksomrader/", aargang, "/")
-    
+
     if (utenhav == FALSE) {
     grunnkrets_kart_filsti <- paste0(arbeidsmappe_kart, "ABAS_grunnkrets_flate_", aargang, ".parquet")
         }
@@ -62,16 +62,16 @@ if (grepl("onprem", Sys.getenv("JUPYTER_IMAGE_SPEC")) | Sys.getenv("JUPYTER_IMAG
     grunnkrets_kart_filsti <- paste0(arbeidsmappe_kart, "ABAS_grunnkrets_utenhav_", aargang, ".parquet")
 
         }
-    
+
     grunnkrets_kart <- sfarrow::st_read_parquet(grunnkrets_kart_filsti)
-    
+
 } else if (grepl("dapla", Sys.getenv("JUPYTER_IMAGE_SPEC"))) {
-    
+
     source("/home/jovyan/fellesr/R/DAPLA_funcs.R")
-    
+
     arbeidsmappe_kart <- paste0("ssb-prod-dapla-felles-data-delt/GIS/Kart/", aargang, "/")
     # arbeidsmappe <- "/ssb/stamme01/fylkhels/speshelse/felles/"
-    
+
     if (utenhav == FALSE) {
     grunnkrets_kart_filsti <- paste0(arbeidsmappe_kart, "ABAS_grunnkrets_flate_", aargang, "/")
         }
@@ -129,9 +129,9 @@ dplyr::mutate(GRUNNKRETSNUMMER = case_when(
 # ### SSB fargepalett
 
 ssb_farger <- klassR::GetKlass(614, output_style = "wide") %>%
-  dplyr::rename(farge_nummer = code3, 
-                HEX = name3, 
-                farge = name2, 
+  dplyr::rename(farge_nummer = code3,
+                HEX = name3,
+                farge = name2,
                 type = name1) %>%
   dplyr::select(-code1, -code2) %>%
   dplyr::filter(farge != "Hvit")
@@ -163,13 +163,13 @@ ssb_farger <- klassR::GetKlass(614, output_style = "wide") %>%
 
 # +
 opptaksomrader_KLASS <- klassR::GetKlass(632, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
-dplyr::rename(GRUNNKRETSNUMMER = code4, 
-             GRUNNKRETS_NAVN = name4, 
-             OPPTAK_NUMMER = code3, 
-             OPPTAK = name3, 
-             ORGNR_HF = code2, 
-             NAVN_HF = name2, 
-             ORGNR_RHF = code1, 
+dplyr::rename(GRUNNKRETSNUMMER = code4,
+             GRUNNKRETS_NAVN = name4,
+             OPPTAK_NUMMER = code3,
+             OPPTAK = name3,
+             ORGNR_HF = code2,
+             NAVN_HF = name2,
+             ORGNR_RHF = code1,
              NAVN_RHF = name1)
 
 nrow(opptaksomrader_KLASS)
@@ -217,7 +217,7 @@ nrow(opptaksomrader_KLASS_grunnkrets)
 grunnkrets_uten_trondheim_kristiansand_kart <- dplyr::left_join(grunnkrets_kart_uten_trondheim_kristiansand, opptaksomrader_KLASS_grunnkrets, by = "GRUNNKRETSNUMMER")
 
 # +
-# ggplot() + 
+# ggplot() +
 # geom_sf(data = opptaksomrader_KLASS_grunnkrets_kart)
 # -
 
@@ -229,7 +229,7 @@ dplyr::group_by(KOMMUNENR) %>%
   dplyr::summarise(geometry = sf::st_union(sf::st_make_valid(geometry))) %>%
   dplyr::ungroup()
 
-ggplot() + 
+ggplot() +
 geom_sf(data = grunnkrets_kart_trondheim)
 # -
 
@@ -241,7 +241,7 @@ opptaksomrader_DPS_trondheim <- open_dataset(paste0("ssb-prod-helse-speshelse-da
   dplyr::filter(OPPTAK %in% c("Nidelv", "Nidaros")) %>%
   sfarrow::read_sf_dataset()
 
-ggplot() + 
+ggplot() +
 geom_sf(data = opptaksomrader_DPS_trondheim) +
 geom_sf(data = grunnkrets_kart_trondheim, color = "red")
 
@@ -254,7 +254,7 @@ dplyr::filter(OPPTAK == "Nidaros")
 nidelv <- opptaksomrader_DPS_trondheim_2 %>%
 dplyr::filter(OPPTAK == "Nidelv")
 
-ggplot() + 
+ggplot() +
 geom_sf(data = nidaros, fill = "blue") +
 geom_sf(data = nidelv, fill = "red")
 # -
@@ -267,7 +267,7 @@ dplyr::group_by(KOMMUNENR) %>%
   dplyr::summarise(geometry = sf::st_union(sf::st_make_valid(geometry))) %>%
   dplyr::ungroup()
 
-ggplot() + 
+ggplot() +
 geom_sf(data = grunnkrets_kart_kristiansand)
 
 # +
@@ -275,7 +275,7 @@ opptaksomrader_DPS_kristiansand <- open_dataset(paste0("ssb-prod-helse-speshelse
   dplyr::filter(OPPTAK %in% c("Solvang", "Strømme")) %>%
   sfarrow::read_sf_dataset()
 
-ggplot() + 
+ggplot() +
 geom_sf(data = opptaksomrader_DPS_kristiansand) +
 geom_sf(data = grunnkrets_kart_kristiansand, color = "red")
 
@@ -288,7 +288,7 @@ dplyr::filter(OPPTAK == "Solvang")
 stromme <- opptaksomrader_DPS_kristiansand_2 %>%
 dplyr::filter(OPPTAK == "Strømme")
 
-ggplot() + 
+ggplot() +
 geom_sf(data = solvang, fill = "blue") +
 geom_sf(data = stromme, fill = "red")
 
@@ -308,7 +308,7 @@ grunnkrets_med_trondheim_kristiansand_kart <- rbind(grunnkrets_uten_trondheim_kr
 # ## Lager opptaksområder for DPS-områder
 
 # +
-opptaksomrader_DPS_befolkning <- open_dataset(paste0("ssb-prod-helse-speshelse-data-kilde/felles/Kart/", aargang, "/Opptaksområder/opptaksomrader_DPS_DPS_flate_", aargang, "/"))) %>%
+opptaksomrader_DPS_befolkning <- open_dataset(paste0("ssb-prod-helse-speshelse-data-kilde/felles/Kart/", aargang, "/Opptaksområder/opptaksomrader_DPS_DPS_flate_", aargang, "/")) %>%
 sfarrow::read_sf_dataset() %>%
 data.frame() %>%
 dplyr::select(OPPTAK, PERSONER)
@@ -332,7 +332,7 @@ if (grepl("onprem", Sys.getenv("JUPYTER_IMAGE_SPEC"))) {
 }
 # -
 
-ggplot() + 
+ggplot() +
 geom_sf(data = opptaksomrader_lokasjon)
 
 # ## Lager opptaksområder for DPS-områder (HF)
@@ -353,7 +353,7 @@ if (grepl("onprem", Sys.getenv("JUPYTER_IMAGE_SPEC"))) {
 }
 # -
 
-ggplot() + 
+ggplot() +
 geom_sf(data = opptaksomrader_DPS_HF)
 
 # ## Lager opptaksområder for DPS-områder (RHF)
@@ -374,5 +374,5 @@ if (grepl("onprem", Sys.getenv("JUPYTER_IMAGE_SPEC"))) {
 }
 # -
 
-ggplot() + 
+ggplot() +
 geom_sf(data = opptaksomrader_DPS_RHF)
