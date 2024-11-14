@@ -15,7 +15,7 @@ bokeh @ file:///home/conda/feedstock_root/build_artifacts/bokeh_1592869569111/wo
 Bottleneck==1.3.2
 brotlipy==0.7.0
 cachetools==4.1.1
-certifi==2023.7.22
+certifi==2024.7.4
 certipy==0.1.3
 cffi @ file:///home/conda/feedstock_root/build_artifacts/cffi_1595805769248/work
 chardet==3.0.4
