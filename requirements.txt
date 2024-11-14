@@ -1,4 +1,4 @@
-aiohttp==3.8.5
+aiohttp==3.10.2
 alembic==1.4.2
 ansiwrap==0.8.4
 appdirs==1.4.4
