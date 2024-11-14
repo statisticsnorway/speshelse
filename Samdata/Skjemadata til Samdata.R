@@ -55,6 +55,8 @@ skjema0X_filsti <- paste0(aargangsmappe, "Skj0X_", datomarkering, ".txt")
 
 # ### Logger på Oracle
 
+library(ROracle)
+
 # Logg på for å få tilgang til Oracle
 con <- fellesr::dynarev_uttrekk(con_ask = "con")
 
@@ -346,6 +348,7 @@ skjema39_dubletter <- data.frame(skjema39[2])
 # -
 
 # ### Lagrer filen
+
 if (nrow(skjema39_dubletter)==0){
 write.table(skjema39_skjema, skjema39_filsti,
             sep = "¤",
@@ -423,6 +426,7 @@ dplyr::select(all_of(variabelliste_0X))
 skjema0X_data_long[is.na(skjema0X_data_long)] <- 0
 
 # ### Lagrer filen
+
 if (nrow(skjema0X_dubletter)==0){
 write.table(skjema0X_data_long, skjema0X_filsti,
             sep = "¤",
