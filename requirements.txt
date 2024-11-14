@@ -94,7 +94,7 @@ nest-asyncio==1.4.0
 networkx==2.4
 notebook @ file:///home/conda/feedstock_root/build_artifacts/notebook_1594078840609/work
 numba==0.48.0
-numexpr==2.7.1
+numexpr==2.8.5
 numpy @ file:///home/conda/feedstock_root/build_artifacts/numpy_1595522867729/work
 oauthlib==3.0.1
 olefile==0.46
