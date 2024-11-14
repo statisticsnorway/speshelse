@@ -208,6 +208,8 @@ passord_master = pd.read_csv(pass_sti, dtype='object', sep=";", encoding='latin1
 
 passord_master.info()
 
+passord_master.head(5)
+
 
 def get_new_password(dummy_var):
     from random import randint
@@ -273,7 +275,11 @@ for skj in skjema_type_unik:
         # --- Test
         if not os.path.exists(sti_test):
             os.makedirs(sti_test)
-        skjema_type_df['Password'] = 12341234
+            
+        with open("/ssb/stamme01/fylkhels/speshelse/felles/brukere/test_passord.txt", 'r') as file:
+            test_passord = file.readline().strip()
+        
+        skjema_type_df['Password'] = int(test_passord)
         skjema_type_df.to_csv(
             sti_test + filnavn, sep=";", encoding="latin1", index=False
         )
@@ -283,5 +289,3 @@ for skj in skjema_type_unik:
         print("Lagret passord masterfil.")
         print(80*"-")
         
-# -
-
