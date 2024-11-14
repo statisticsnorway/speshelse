@@ -8,7 +8,7 @@ attrs==19.3.0
 backcall @ file:///home/conda/feedstock_root/build_artifacts/backcall_1592338393461/work
 backports.functools-lru-cache==1.6.1
 beautifulsoup4 @ file:///home/conda/feedstock_root/build_artifacts/beautifulsoup4_1589761506780/work
-black==20.8b1
+black==24.3.0
 bleach @ file:///home/conda/feedstock_root/build_artifacts/bleach_1588608214987/work
 blinker==1.4
 bokeh @ file:///home/conda/feedstock_root/build_artifacts/bokeh_1592869569111/work
