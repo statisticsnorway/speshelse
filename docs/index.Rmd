@@ -1,5 +1,5 @@
 ---
-title: "Opptaksområder for spesialisthelsetjenesten 2023"
+title: "Opptaksområder for spesialisthelsetjenesten 2024"
 author: "Sindre Mikael Haugen"
 date: "`r Sys.Date()`"
 output:
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 ```{r include=FALSE}
 
-aargang <- 2023
+aargang <- 2024
 
 suppressPackageStartupMessages({ 
 library(tidyverse)
@@ -63,6 +63,45 @@ akuttmottak <- klassR::GetKlass(683, output_style = "wide", date = c(paste0(aarg
                 lat = gsub(",", ".", lat)) %>%
   sf::st_as_sf(coords = c("lon", "lat"), crs = 25833) %>%
   sf::st_transform(crs = 4326)
+
+# Fødested
+fodeavdeling <- klassR::GetKlass(608, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
+  dplyr::rename(region = code1,
+                orgnummer_RHF = code2,
+                RHF = name2,
+                HF = name3,
+                orgnummer_HF = code3,
+                Fodested = name4,
+                ID = code4,
+                adresse = name5,
+                postnummer = code5,
+                lon = code6, 
+                lat = name6) %>%
+  dplyr::mutate(lon = gsub(",", ".", lon), 
+                lat = gsub(",", ".", lat)) %>%
+  sf::st_as_sf(coords = c("lon", "lat"), crs = 25833) %>%
+  sf::st_transform(crs = 4326) %>%
+  mutate(Type = "Fødeavdeling")
+
+fodestue <- klassR::GetKlass(609, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
+  dplyr::rename(region = code1,
+                orgnummer_RHF = code2,
+                RHF = name2,
+                HF = name3,
+                orgnummer_HF = code3,
+                Fodested = name4,
+                ID = code4,
+                adresse = name5,
+                postnummer = code5,
+                lon = code6, 
+                lat = name6) %>%
+  dplyr::mutate(lon = gsub(",", ".", lon), 
+                lat = gsub(",", ".", lat)) %>%
+  sf::st_as_sf(coords = c("lon", "lat"), crs = 25833) %>%
+  sf::st_transform(crs = 4326) %>%
+  mutate(Type = "Fødestue")
+
+fodested <- rbind(fodeavdeling, fodestue)
 
 # PHV
 opptaksomrader_PHV_RHF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_PHV_RHF_flate_", aargang, ".parquet")) %>%
@@ -188,6 +227,28 @@ opptaksomrader_SOM_akutt_leaflet <- leaflet::leaflet(height=500, width = "100%",
 opptaksomrader_SOM_akutt_leaflet
 ```
 
+### Fødesteder
+
+Listen over fødesteder er hentet fra [Kodeliste for fødeavdelinger](https://www.ssb.no/klass/klassifikasjoner/608) og [Kodeliste for fødestuer](https://www.ssb.no/klass/klassifikasjoner/609).
+
+```{r echo=FALSE}
+icons_fodested <- leaflet::makeAwesomeIcon(text = fontawesome::fa("baby"), 
+                                                iconColor = "blue",
+                                                markerColor = "white")
+
+opptaksomrader_SOM_akutt_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(stroke = F, data = opptaksomrader_SOM_lokasjon,
+                       weight = 1,
+                       fillColor = pal_lokasjon(opptaksomrader_SOM_lokasjon$OPPTAK),
+                       fillOpacity = 0.5, smoothFactor = 0.5,
+                       popup = paste0("Opptaksområde: ", opptaksomrader_SOM_lokasjon$OPPTAK, " / Befolkning: ", prettyNum(opptaksomrader_SOM_lokasjon$PERSONER, big.mark = " ", scientific = FALSE))) %>%
+  leaflet::addAwesomeMarkers(data = fodested$geometry,
+                      popup = paste0("Fødested: ", fodested$Fodested, " (", fodested$HF, ")"), 
+                      icon = icons_fodested)
+
+opptaksomrader_SOM_akutt_leaflet
+```
 
 ## Opptaksområder for spesialisthelsetjenesten (psykisk helsevern) 
 
