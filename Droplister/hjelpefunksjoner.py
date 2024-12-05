@@ -279,7 +279,7 @@ def instlist_med_riktig_antall_n(finst_orgnr_df, SFUklass):
     """
     df_til_instlist = pd.merge(SFUklass, finst_orgnr_df, left_on="H_VAR1_A", right_on="FINST_ORGNR")
     df_til_instlist['rapporterer_til_annen_virksomhet'] = (df_til_instlist.ORGNR != df_til_instlist.H_VAR1_A)
-    df_til_instlist = df_til_instlist[['NAVN', 'ORGNR', "FINST_ORGNR", 'rapporterer_til_annen_virksomhet']]
+    df_til_instlist = df_til_instlist[['NAVN', 'ORGNR', "FINST_ORGNR", 'rapporterer_til_annen_virksomhet']].copy()
     df_til_instlist['orgnr_navn'] = df_til_instlist['ORGNR'] + " - " + df_til_instlist['NAVN']
 
     rapporterer_ikke_til_annen_v = df_til_instlist.query('~rapporterer_til_annen_virksomhet')[['ORGNR', 'orgnr_navn']]
@@ -299,7 +299,9 @@ def instlist_med_riktig_antall_n(finst_orgnr_df, SFUklass):
     
     if df is not None:
         df = df.transpose()
-        df.columns = ['FINST_ORGNR', 'INSTLISTE_HALE']   
+        df.columns = ['FINST_ORGNR', 'INSTLISTE_HALE']
+    else:
+        df = pd.DataFrame(columns=['FINST_ORGNR', 'INSTLISTE_HALE'])
     
     rapporterer_ikke_til_annen_v = rapporterer_ikke_til_annen_v.rename(columns={'ORGNR': 'FINST_ORGNR'})
     return rapporterer_ikke_til_annen_v, df
