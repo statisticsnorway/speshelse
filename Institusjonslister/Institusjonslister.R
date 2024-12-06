@@ -264,7 +264,10 @@ rapporteringsenheter <- delreg_private_test  %>%
     Skjematype == "451" ~ "BUP",
     Skjematype == "47"  ~ "Rehabilitering",
     Rapporteringsnr == "47" ~ "Rehabilitering",
-    Rapporteringsnr == "46P" ~ "Somatikk"))  %>% 
+    Rapporteringsnr == "46P" ~ "Somatikk",
+    Rapporteringsnummer == "45P" ~ "BUP",
+    Rapporteringsnummer == "44P" ~ "VOP",
+    Rapporteringsnummer == "38P" ~ "TSB"))  %>% 
 filter(Tjenesteomraade != "NA")  %>% 
 distinct(Rapporteringsnr, Tjenesteomraade)
 
