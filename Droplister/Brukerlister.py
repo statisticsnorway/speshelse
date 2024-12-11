@@ -46,8 +46,6 @@ RFSS = pd.concat([rfss2, rfss3], ignore_index=True).rename(
              "NAVN_KLASS": "FORETAK_NAVN"}
 )
 
-RFSS
-
 # +
 RFSS['SKJEMA_TYPE'] = "0X 0Y 40"
 
@@ -143,6 +141,7 @@ PHOB.sample(3)
 
 # +
 # DIAKONHJEMMET SKAL HA 0X istedenfor 39
+# Rettelse: Alle private helseforetak med oppdrags- og bestillerdokument skal 0X istedenfor 39
 #PHOB.loc[PHOB['ORGNR_FORETAK'] == "982791952", 'SKJEMA_TYPE'] = "0X 381 441 451 461 47 48"
 # -
 
@@ -210,6 +209,44 @@ passord_master.info()
 
 passord_master.head(5)
 
+sammenslå_passordfil_og_brukerliste = pd.merge(
+    passord_master,
+    brukerliste_df,
+    how='outer',
+    left_on='Username',
+    right_on='ORGNR_FORETAK',
+    indicator='_kobling'
+)
+
+sammenslå_passordfil_og_brukerliste['_kobling'].map({
+    'both': 'enhet både i brukerliste og passordfil',
+    'left_only': 'enhet bare i passordfil',
+    'right_only': 'enhet bare_i_brukerliste'
+}).value_counts()
+
+m_tas_ut = sammenslå_passordfil_og_brukerliste['_kobling'] == 'left_only'
+
+sammenslå_passordfil_og_brukerliste[m_tas_ut]
+
+
+# ### Ta ut enheter fra passord_master.csv
+
+# +
+## Kjøres kun når passord_master.csv skal endres.
+
+# passord_master = pd.merge(
+#     passord_master,
+#     brukerliste_df['ORGNR_FORETAK'],
+#     how='inner',
+#     left_on='Username',
+#     right_on='ORGNR_FORETAK',
+# ).drop(columns='ORGNR_FORETAK')
+
+# passord_master.to_csv(pass_sti, encoding="latin1", sep=";", index=False)
+# print("Det er nå fullstendig overensstemmelse mellom brukerliste og password_master.csv.\n", pass_sti)
+# -
+
+# # Lage passordfiler til produksjon
 
 def get_new_password(dummy_var):
     from random import randint
@@ -289,3 +326,6 @@ for skj in skjema_type_unik:
         print("Lagret passord masterfil.")
         print(80*"-")
         
+# -
+
+

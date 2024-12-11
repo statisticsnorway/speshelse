@@ -748,9 +748,10 @@ rapporteringsenhet, undervirksomheter = hjfunk.instlist_med_riktig_antall_n(
     pd.DataFrame(skj39["FINST_ORGNR"]), SFUklass
 )
 
-skj39 = pd.merge(skj39, rapporteringsenhet, how="left", on="FINST_ORGNR")
-skj39 = pd.merge(skj39, undervirksomheter, how="left", on="FINST_ORGNR")
-skj39 = hjfunk.legg_paa_hale_med_n(skj39)
+# +
+# skj39 = pd.merge(skj39, rapporteringsenhet, how="left", on="FINST_ORGNR")
+# skj39 = pd.merge(skj39, undervirksomheter, how="left", on="FINST_ORGNR")
+# skj39 = hjfunk.legg_paa_hale_med_n(skj39)
 
 # +
 institusjonstype = {
@@ -769,8 +770,10 @@ skj39['INSTTYPE'] = skj39['INSTTYPE'].map(institusjonstype)
 # Hvis FORETAK_NAVN er tom, bruk NAVN1 fra SFU:
 skj39.loc[skj39['FORETAK_NAVN'].isnull(), 'FORETAK_NAVN'] = skj39['NAVN1']
 
+# +
 # Tar kun vare på de kolonnene jeg spesifiserer i begynnelsen
-skj39 = skj39[kolonner]
+# skj39 = skj39[kolonner]
+# -
 
 # ### skj39b (Resultatregnskap for private helseforetak) nytt format
 
@@ -1060,6 +1063,8 @@ skj47 = pd.merge(
 skj47["REGION_NAVN"] = skj47["HELSEREGION_NAVN"]
 skj47.REGION_NAVN = skj47.REGION_NAVN.fillna("PRIVATE INSTITUSJONER")
 # -
+
+
 
 # Henter foretaksnavn til virksomhetene fra SFU
 foretak = hjfunk.hent_foretaksnavn_til_virksomhetene_fra_SFU(
