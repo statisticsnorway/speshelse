@@ -3,6 +3,8 @@
 # - Etter kopiering av fjorårets enheter
 # - Sjekker kopieringen mot de nye droplistene
 # - Legger inn nye og fjerner utgåtte enheter
+#
+# **ADVARSEL** Ikke kjør all koden ukritis
 
 # +
 import pandas as pd
@@ -279,6 +281,8 @@ sql_ins
 
 # ## Slette enheter som skal ut
 
+
+
 ut_ident_nr = ut['IDENT_NR'].to_list()
 
 sporring = f"""
@@ -288,7 +292,26 @@ sporring = f"""
 """ 
 altinn_raw = pd.read_sql_query(sporring, conn)
 
-ut_identer = altinn_raw[altinn_raw['IDENT_NR'].isin(ut_ident_nr)][['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE']]
+phob_orgnr = ['996380041',
+'984027737',
+'965985166',
+'985962170',
+'982791952',
+'986106839',
+'922716552',
+'981275721',
+'919865636',
+'916270097',
+'985773238',
+'987554401',]
+
+altinn_raw[altinn_raw['ORGNR'].isin(phob_orgnr)]
+
+
+
+ut_identer = altinn_raw[altinn_raw['ORGNR'].isin(phob_orgnr)][['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE']]
+
+ut_identer
 
 # +
 import cx_Oracle
@@ -316,10 +339,10 @@ try:
 except cx_Oracle.DatabaseError as e:
     print(f"En feil oppstod: {e}")
     conn.rollback()  # Rull tilbake hvis noe går galt
-finally:
-    # Lukk cursor og forbindelse
-    cur.close()
-    conn.close()
+# finally:
+#     # Lukk cursor og forbindelse
+#     cur.close()
+#     conn.close()
 # -
 
 
@@ -330,71 +353,74 @@ ut
 
 
 
+# # Legge til enheter i nytt delregister 25468
+# For å sende brev til private helseforetak med oppdrags- og bestillerdokument
 
-
-
-
+# Definer delregister og enhetstype
+ny_delreg_nr = '25468'  # Delregisteret som du vil legge inn i
+gammelt_delreg_nr = '2424'  # Delregisteret du henter data fra
+enhets_type = 'FRTK'  # Enhetstypen du vil hente
+h_var2_a_filter = 'OPPDRAG'  # Filter for H_VAR2_A
 
 
 # +
-# # Definerer SQL DELETE-kommandoen
-# # Anta at vi vil slette rader basert på en spesifikk identifikator
-# sql_delete = "DELETE FROM din_tabell WHERE IDENT_NR = :1"
+# SQL for å sjekke utvalgte enheter
+check_sql = """
+SELECT enhets_type, orgnr, H_VAR2_A, NAVN
+FROM dsbbase.dlr_enhet_i_delreg
+WHERE delreg_nr = :gammelt_delreg_nr
+  AND enhets_type = :enhets_type
+  AND H_VAR2_A = :h_var2_a_filter
+"""
 
-# # Verdi som identifiserer radene som skal slettes
-# ident_nr_til_sletting = 'ID1'
+# Hent resultatene
+try:
+    cursor.execute(check_sql, {
+        'gammelt_delreg_nr': gammelt_delreg_nr,
+        'enhets_type': enhets_type,
+        'h_var2_a_filter': h_var2_a_filter
+    })
+    rows = cursor.fetchall()
+    print("Følgende enheter vil bli valgt:")
+    for row in rows:
+        print(row)
+except cx_Oracle.DatabaseError as e:
+    error, = e.args
+    print(f"Databasefeil: {error.message}")
 
-# # Oppretter en cursor fra din databaseforbindelse
-# cur = conn.cursor()
-
-# # Utfører DELETE-kommandoen
-# cur.execute(sql_delete, [ident_nr_til_sletting])
-
-# # Commiter endringene til databasen
-# conn.commit()
-
-# print("Rader slettet.")
 # -
 
 
 
 
 
+cursor = conn.cursor()
 
-
-
-
-
-
-
-
-orgnr_ut = list(sammen[sammen['status'] == "ut"]['ORGNR_FORETAK'])
-
-orgnr_ut
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-sporring = f"""
-    SELECT *
-    FROM DSBBASE.DLR_ENHET_I_DELREG
-    WHERE DELREG_NR IN ('138555{aar2}')
+# SQL-setning for å legge til enheter i TMP-tabellen med filter
+sql = """
+INSERT INTO dsbbase.dlr_load_enhet_tmp (delreg_nr, enhets_type, orgnr)
+SELECT :ny_delreg_nr, enhets_type, orgnr
+FROM dsbbase.dlr_enhet_i_delreg
+WHERE delreg_nr = :gammelt_delreg_nr 
+  AND enhets_type = :enhets_type
+  AND H_VAR2_A = :h_var2_a_filter
 """
-idun = pd.read_sql_query(sporring, conn)
+
+# Utfør spørringen
+try:
+    cursor.execute(sql, {
+        'ny_delreg_nr': ny_delreg_nr,
+        'gammelt_delreg_nr': gammelt_delreg_nr,
+        'enhets_type': enhets_type,
+        'h_var2_a_filter': h_var2_a_filter  # Legger til den manglende parameteren
+    })
+    conn.commit()  # Lagre endringene
+    print(f"Enheter fra delregister {gammelt_delreg_nr} med enhetstype '{enhets_type}' og H_VAR2_A = '{h_var2_a_filter}' er lagt til i {ny_delreg_nr}.")
+except cx_Oracle.DatabaseError as e:
+    error, = e.args
+    print(f"Databasefeil: {error.message}")
+# finally:
+    # cursor.close()
+    # conn.close()
 
 
