@@ -17,7 +17,7 @@ pd.set_option('display.max_colwidth', None)
 conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
 
 # +
-aar4 = 2023
+aar4 = 2024
 aar2 = str(aar4)[-2:]
 
 aar_før4 = aar4 - 1            # året før
@@ -72,7 +72,7 @@ SFU['NAVN_NY'] = SFU['NAVN_NY'].str.strip()
 
 (
     SFU[
-        (SFU['KVITT_TYPE_skj'].isna()) & (SFU['SKJEMA_TYPE_skj'] != "HELSE39")]
+        (SFU['SKJEMA_TYPE_skj'].isna()) & (SFU['SKJEMA_TYPE_skj'] != "HELSE39")]
     .groupby(['ORGNR_FORETAK', 'ORGNR', 'NAVN_NY'])
     .agg(skjema=('SKJEMA_TYPE_skj', 'unique'),
          ant_rader=('IDENT_NR', 'count')).reset_index().sort_values('ant_rader', ascending=False)
@@ -131,8 +131,8 @@ print(f"Disse fordeler seg på {len(foretak_til_purring)} unike foretak.")
 # -
 
 purring_df.groupby('SKJEMA_TYPE_skj').agg(
-    ant_foretak=('ORGNR_FORETAK', 'count'),
-    ant_virk=('ORGNR', 'count'),
+    ant_foretak=('ORGNR_FORETAK', 'nunique'),
+    ant_virk=('ORGNR', 'nunique'),
 ).reset_index().style.set_caption("Gjenstående foretak og virksomheter per skjema")
 
 purring_df.groupby(['NAVN_NY']).agg(
@@ -163,6 +163,12 @@ print("Foretak som er markert for purring, men som ikke er i 20877xx:\n",
       set(foretak_til_purring) - set(foretak_til_purring_i_altinn_df))
 print("Foretak som er i 20877xx, men som ikke finnes i SFU:\n",
       set(foretak_til_purring_i_altinn_df) - set(foretak_til_purring))
+
+
+
+SFU_skjema[['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE']].sort_values('IDENT_NR')
+
+
 
 # Ettersom vi ønsker å sende purring til de som er innkvittert, må vi invertere listene. Dvs, at foretak i delreg `20877XX` som som IKKE er i listen `foretak_til_purring`, skal innkvitteres.
 
@@ -201,8 +207,6 @@ foretak_til_innkvittering_df = (
 na_mask = foretak_til_innkvittering_df.KVITT_TYPE.isna()
 foretak_til_innkvittering_df = foretak_til_innkvittering_df[na_mask].copy()
 # -
-
-foretak_til_innkvittering_df
 
 # Setter nye verdier på kolonnene som skal endres
 foretak_til_innkvittering_df['KVITT_TYPE'] = 'K'

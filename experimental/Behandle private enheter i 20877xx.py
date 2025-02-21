@@ -4,7 +4,7 @@
 # - Sjekker kopieringen mot de nye droplistene
 # - Legger inn nye og fjerner utgåtte enheter
 #
-# **ADVARSEL** Ikke kjør all koden ukritis
+# **ADVARSEL** Ikke kjør all koden ukritisk, da koden gjør endringer i delregisterne.
 
 # +
 import pandas as pd
@@ -14,7 +14,6 @@ import getpass
 
 from datetime import datetime
 import datetime as dt
-til_lagring = False # Sett til True, hvis du skal gjøre endringer i Databasen
 # -
 
 import os
@@ -251,31 +250,31 @@ sql_ins
 
 
 # +
-# kolonner = ", ".join(til_altinn.columns)
+kolonner = ", ".join(til_altinn.columns)
 
-# indices = [f":{x}" for x in range(1, len(til_altinn.columns) + 1)]
-# indices = ", ".join(indices)
+indices = [f":{x}" for x in range(1, len(til_altinn.columns) + 1)]
+indices = ", ".join(indices)
 
-# sql_ins = (
-#     "INSERT INTO DSBBASE.DLR_ENHET_I_DELREG (" +
-#     kolonner +
-#     ") VALUES (" + 
-#     indices +
-#     ")"
-# )
+sql_ins = (
+    "INSERT INTO DSBBASE.DLR_ENHET_I_DELREG (" +
+    kolonner +
+    ") VALUES (" + 
+    indices +
+    ")"
+)
 
 # +
-# # Oppretter skrivekontakt med Oracle
-# cur = conn.cursor()
+# Oppretter skrivekontakt med Oracle
+cur = conn.cursor()
 
-# # Stabler om dataframen til SQL-vennlig innlesing
-# rows = [tuple(x) for x in foretak_til_innkvittering_df.values]
+# Stabler om dataframen til SQL-vennlig innlesing
+rows = [tuple(x) for x in foretak_til_innkvittering_df.values]
 
-# # Hvis til_lagring = True kjøres SQL-inserten
-# if til_lagring and len(rows) != 0:
-#     cur.executemany(sql_ins, rows)
-#     conn.commit()
-#     print(f"Det er gjort {len(rows)} radendringer. Kontroller i SFU.")
+# Hvis til_lagring = True kjøres SQL-inserten
+if til_lagring and len(rows) != 0:
+    cur.executemany(sql_ins, rows)
+    conn.commit()
+    print(f"Det er gjort {len(rows)} radendringer. Kontroller i SFU.")
 
 # -
 
