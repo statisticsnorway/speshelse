@@ -15,7 +15,7 @@ pd.set_option('display.max_colwidth', None)
 conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
 
 # +
-aar4 = 2022
+aar4 = 2024
 aar2 = str(aar4)[-2:]
 
 aar_før4 = aar4 - 1            # året før
@@ -89,14 +89,7 @@ skjemaoversikt['levert'] = skjemaoversikt['tot'] - skjemaoversikt['ikke_levert']
 skjemaoversikt['prosentandel_levert'] = round(skjemaoversikt['levert'] / skjemaoversikt['tot'] * 100)
 skjemaoversikt = skjemaoversikt.sort_values('prosentandel_levert',
                                             ascending=False)
-(skjemaoversikt.style
-               .format('{:.0f}', na_rep="")
-               .background_gradient(subset=['prosentandel_levert'],
-                                    cmap="RdYlGn",
-                                    vmin=0,
-                                    vmax=100)
-               .set_properties(**{'text-align': 'center'})
-)
+skjemaoversikt
 # -
 
 # # Foretak med oppdrags- og bestillerdokument
@@ -192,10 +185,11 @@ df = (
 # +
 df['ANDEL RAPPORTERT'] = df['SUM LEVERT'] / df['SUM FORVENTET'] * 100
 
-(
-    df
-    .style
-    .format('{:.0f}', na_rep="")
-    .background_gradient(subset=['ANDEL RAPPORTERT'],cmap="RdYlGn", vmin=0, vmax=100)
-    .set_properties(**{'text-align': 'center'})
-)
+df
+# -
+
+
+
+
+
+

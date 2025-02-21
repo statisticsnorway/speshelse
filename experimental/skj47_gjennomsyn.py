@@ -5,7 +5,7 @@ import getpass
 import datetime as dt
 
 # +
-aar4 = 2023
+aar4 = 2024
 aar2 = str(aar4)[-2:]
 
 aar_før4 = aar4 - 1            # året før
