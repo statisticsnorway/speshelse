@@ -6,7 +6,7 @@
     "cookiecutter": {
       "full_name": "Magne F. Myhren",
       "email": "mfm@ssb.no",
-      "project_name": "spesh",
+      "project_name": "speshelse",
       "description": "",
       "license_year": "2023",
       "_template": "https://github.com/statisticsnorway/ssb-project-template-stat"
