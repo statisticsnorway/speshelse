@@ -5,6 +5,7 @@ description = ""
 authors = ["Magne F. Myhren <mfm@ssb.no>"]
 license = "MIT"
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
@@ -18,13 +19,8 @@ numpy = "^2.2.0"
 itables = "^2.2.4"
 ssb-fagfunksjoner = "^1.0.7"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 ipykernel = "^6.15.3"
-
-[[tool.poetry.source]]
-name = "nexus"
-url = "https://pypi.org/simple"
-priority = "primary"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
