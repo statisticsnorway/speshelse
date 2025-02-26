@@ -3,6 +3,8 @@
 # - Etter kopiering av fjorårets enheter
 # - Sjekker kopieringen mot de nye droplistene
 # - Legger inn nye og fjerner utgåtte enheter
+#
+# **ADVARSEL** Ikke kjør all koden ukritisk, da koden gjør endringer i delregisterne.
 
 # +
 import pandas as pd
@@ -12,7 +14,6 @@ import getpass
 
 from datetime import datetime
 import datetime as dt
-til_lagring = True # Sett til True, hvis du skal gjøre endringer i Databasen
 # -
 
 import os
@@ -24,7 +25,7 @@ pd.set_option('display.max_colwidth', None)
 conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
 
 # +
-aar4 = 2023
+aar4 = 2024
 aar2 = str(aar4)[-2:]
 
 aar_før4 = aar4 - 1            # året før
@@ -39,61 +40,24 @@ os.path.exists(dropliste_sti)
 
 droplistemapper = os.listdir(dropliste_sti)
 
-print(droplistemapper)
-
 date_folders = [f for f in droplistemapper if f.isdigit() and len(f) == 6]
 date_folders.sort(key=lambda x: datetime.strptime(x, '%d%m%y'))
 siste_dropliste_dato = date_folders[-1]
 
-print(date_folders)
-
 print(siste_dropliste_dato)
 
 sti = dropliste_sti + siste_dropliste_dato + "/"
-os.listdir(sti)
+filnavn = os.listdir(sti)[0]
 
-filnavn = "Brukerliste_2023_190124.csv"
-sti = sti + filnavn
+sti += filnavn
+
+sti
 
 pop = pd.read_csv(sti, encoding='latin1', sep=";", dtype="object")
 
+len(pop)
+
 pop.sample(3)
-
-# ## Nye enheter
-
-nye = ['914491908',
-'915378404',
-'916269331',
-'919028513',
-'924212446',
-'928882063',
-'931663658',
-'980693732']
-
-nye = pop[pop['ORGNR_FORETAK'].isin(nye)].copy()
-
-nye['SKJEMA'] = nye['SKJEMA_TYPE'].str.split(" ").apply(lambda x: ", HELSE".join(x))
-
-nye['SKJEMA'] = nye['SKJEMA'].str.replace("1", "P")
-
-nye['SKJEMA'] = nye['SKJEMA'].apply(lambda x: "HELSE" + x)
-
-nye['FORETAK'] = "(" + nye['ORGNR_FORETAK'] + ") " + nye['FORETAK_NAVN']
-
-
-
-print(nye[["FORETAK", "SKJEMA"]].to_csv(sep="\t"))
-
-
-
-
-
-priv_pop = pop.loc[pop.SKJEMA_TYPE.str.contains("39")]
-
-display(priv_pop.sample(3))
-print(f"Rader:    {priv_pop.shape[0]}\nKolonner: {priv_pop.shape[1]}")
-
-# ## Hente inn enheter i siste 20877XX
 
 sporring = f"""
     SELECT *
@@ -105,40 +69,64 @@ print(f"Rader:    {altinn_raw.shape[0]}\nKolonner: {altinn_raw.shape[1]}")
 
 altinn = altinn_raw[['IDENT_NR', 'ORGNR', 'ORGNR_FORETAK', 'NAVN']]
 
-# ## Sammenlikne altinn og ny populasjon
+# ## Nye enheter
 
-sammen = pd.merge(
-    priv_pop,
+sette_sammen = pd.merge(
     altinn,
-    how='outer',
+    pop,
     on='ORGNR_FORETAK',
+    how='outer',
     indicator=True
 )
 
-sammen._merge.value_counts()
+sette_sammen._merge.map({'both': 'både i delreg altinn og brukerliste',
+                                        'right_only': 'kun i brukerliste',
+                                        'left_only': 'kun på altinn delreg'}).value_counts()
 
-sammen['status'] = sammen._merge.map(
-    {'both': 'behold',
-     'right_only': 'ut',
-     'left_only': 'inn'}
-)
+nye = sette_sammen[(sette_sammen['_merge'] == 'right_only') & (sette_sammen['SKJEMA_TYPE'] == '381 441 451 461 47')]
+
+nye
+
+
+
+ut = sette_sammen.query('_merge == "left_only"').copy()
+
+ut
+
+
+
+
+
+sporring = f"""
+    SELECT *
+    FROM DSBBASE.DLR_ENHET_I_DELREG
+    WHERE DELREG_NR IN ('24{aar2}')
+"""
+SFU = pd.read_sql_query(sporring, conn)
+print(f"Rader:    {altinn_raw.shape[0]}\nKolonner: {altinn_raw.shape[1]}")
+
+skjematyper_per_foretak = SFU[SFU['H_VAR2_A'] == 'PRIVAT'].groupby(['ORGNR_FORETAK']).SKJEMA_TYPE.unique()
+
+# +
+# skjematyper_per_foretak
+# -
+
+
+
+# +
+## Lage skjema navn utfra SKJEMA_TYPE-variabel:
+# nye['SKJEMA'] = nye['SKJEMA_TYPE'].str.split(" ").apply(lambda x: ", HELSE".join(x))
+# nye['SKJEMA'] = nye['SKJEMA'].str.replace("1", "P")
+# nye['SKJEMA'] = nye['SKJEMA'].apply(lambda x: "HELSE" + x)
+# nye['FORETAK'] = "(" + nye['ORGNR_FORETAK'] + ") " + nye['FORETAK_NAVN']
+# nye
+# -
+
+
+
+# ## Hente inn enheter i siste 20877XX
 
 # ## Bestemme ny populasjon
-
-sammen.loc[sammen['ORGNR_FORETAK'] == "982791952", "status"] = "behold"
-
-m1 = sammen["status"] == "behold"
-m2 = sammen["status"] == "inn"
-ny_altinn = sammen[m1 | m2].copy()
-
-len(ny_altinn)
-ny_altinn.sample(3)
-
-m1 = sammen["status"] == "ut"
-
-tas_ut = sammen[m1]
-
-
 
 ny_altinn
 
@@ -262,64 +250,176 @@ sql_ins
 
 
 # +
-# kolonner = ", ".join(til_altinn.columns)
+kolonner = ", ".join(til_altinn.columns)
 
-# indices = [f":{x}" for x in range(1, len(til_altinn.columns) + 1)]
-# indices = ", ".join(indices)
+indices = [f":{x}" for x in range(1, len(til_altinn.columns) + 1)]
+indices = ", ".join(indices)
 
-# sql_ins = (
-#     "INSERT INTO DSBBASE.DLR_ENHET_I_DELREG (" +
-#     kolonner +
-#     ") VALUES (" + 
-#     indices +
-#     ")"
-# )
+sql_ins = (
+    "INSERT INTO DSBBASE.DLR_ENHET_I_DELREG (" +
+    kolonner +
+    ") VALUES (" + 
+    indices +
+    ")"
+)
 
 # +
-# # Oppretter skrivekontakt med Oracle
-# cur = conn.cursor()
+# Oppretter skrivekontakt med Oracle
+cur = conn.cursor()
 
-# # Stabler om dataframen til SQL-vennlig innlesing
-# rows = [tuple(x) for x in foretak_til_innkvittering_df.values]
+# Stabler om dataframen til SQL-vennlig innlesing
+rows = [tuple(x) for x in foretak_til_innkvittering_df.values]
 
-# # Hvis til_lagring = True kjøres SQL-inserten
-# if til_lagring and len(rows) != 0:
-#     cur.executemany(sql_ins, rows)
-#     conn.commit()
-#     print(f"Det er gjort {len(rows)} radendringer. Kontroller i SFU.")
+# Hvis til_lagring = True kjøres SQL-inserten
+if til_lagring and len(rows) != 0:
+    cur.executemany(sql_ins, rows)
+    conn.commit()
+    print(f"Det er gjort {len(rows)} radendringer. Kontroller i SFU.")
 
 # -
 
 # ## Slette enheter som skal ut
 
+
+
+ut_ident_nr = ut['IDENT_NR'].to_list()
+
+sporring = f"""
+    SELECT *
+    FROM DSBBASE.DLR_ENHET_I_DELREG
+    WHERE DELREG_NR IN ('20877{aar2}')
+""" 
+altinn_raw = pd.read_sql_query(sporring, conn)
+
+phob_orgnr = ['996380041',
+'984027737',
+'965985166',
+'985962170',
+'982791952',
+'986106839',
+'922716552',
+'981275721',
+'919865636',
+'916270097',
+'985773238',
+'987554401',]
+
+altinn_raw[altinn_raw['ORGNR'].isin(phob_orgnr)]
+
+
+
+ut_identer = altinn_raw[altinn_raw['ORGNR'].isin(phob_orgnr)][['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE']]
+
+ut_identer
+
 # +
-# # Definerer SQL DELETE-kommandoen
-# # Anta at vi vil slette rader basert på en spesifikk identifikator
-# sql_delete = "DELETE FROM din_tabell WHERE IDENT_NR = :1"
+import cx_Oracle
 
-# # Verdi som identifiserer radene som skal slettes
-# ident_nr_til_sletting = 'ID1'
+# Anta at DataFrame heter df og inneholder kolonnene 'DELREG_NR', 'IDENT_NR', og 'ENHETS_TYPE'
+verdier_til_sletting = ut_identer.values.tolist()
 
-# # Oppretter en cursor fra din databaseforbindelse
-# cur = conn.cursor()
+# SQL DELETE-kommando tilpasset tabellen
+sql_delete = """
+DELETE FROM DSBBASE.DLR_ENHET_I_DELREG
+WHERE DELREG_NR = :1 AND IDENT_NR = :2 AND ENHETS_TYPE = :3
+"""
 
-# # Utfører DELETE-kommandoen
-# cur.execute(sql_delete, [ident_nr_til_sletting])
+# Opprett en databaseforbindelse
+cur = conn.cursor()
 
-# # Commiter endringene til databasen
-# conn.commit()
+try:
+    # Utfør DELETE med executemany for flere rader
+    cur.executemany(sql_delete, verdier_til_sletting)
 
-# print("Rader slettet.")
+    # Bekreft endringene
+    conn.commit()
+
+    print(f"{cur.rowcount} rader slettet.")
+except cx_Oracle.DatabaseError as e:
+    print(f"En feil oppstod: {e}")
+    conn.rollback()  # Rull tilbake hvis noe går galt
+# finally:
+#     # Lukk cursor og forbindelse
+#     cur.close()
+#     conn.close()
 # -
 
-orgnr_ut = list(sammen[sammen['status'] == "ut"]['ORGNR_FORETAK'])
-
-orgnr_ut
 
 
+ut
 
 
 
 
+
+# # Legge til enheter i nytt delregister 25468
+# For å sende brev til private helseforetak med oppdrags- og bestillerdokument
+
+# Definer delregister og enhetstype
+ny_delreg_nr = '25468'  # Delregisteret som du vil legge inn i
+gammelt_delreg_nr = '2424'  # Delregisteret du henter data fra
+enhets_type = 'FRTK'  # Enhetstypen du vil hente
+h_var2_a_filter = 'OPPDRAG'  # Filter for H_VAR2_A
+
+
+# +
+# SQL for å sjekke utvalgte enheter
+check_sql = """
+SELECT enhets_type, orgnr, H_VAR2_A, NAVN
+FROM dsbbase.dlr_enhet_i_delreg
+WHERE delreg_nr = :gammelt_delreg_nr
+  AND enhets_type = :enhets_type
+  AND H_VAR2_A = :h_var2_a_filter
+"""
+
+# Hent resultatene
+try:
+    cursor.execute(check_sql, {
+        'gammelt_delreg_nr': gammelt_delreg_nr,
+        'enhets_type': enhets_type,
+        'h_var2_a_filter': h_var2_a_filter
+    })
+    rows = cursor.fetchall()
+    print("Følgende enheter vil bli valgt:")
+    for row in rows:
+        print(row)
+except cx_Oracle.DatabaseError as e:
+    error, = e.args
+    print(f"Databasefeil: {error.message}")
+
+# -
+
+
+
+
+
+cursor = conn.cursor()
+
+# SQL-setning for å legge til enheter i TMP-tabellen med filter
+sql = """
+INSERT INTO dsbbase.dlr_load_enhet_tmp (delreg_nr, enhets_type, orgnr)
+SELECT :ny_delreg_nr, enhets_type, orgnr
+FROM dsbbase.dlr_enhet_i_delreg
+WHERE delreg_nr = :gammelt_delreg_nr 
+  AND enhets_type = :enhets_type
+  AND H_VAR2_A = :h_var2_a_filter
+"""
+
+# Utfør spørringen
+try:
+    cursor.execute(sql, {
+        'ny_delreg_nr': ny_delreg_nr,
+        'gammelt_delreg_nr': gammelt_delreg_nr,
+        'enhets_type': enhets_type,
+        'h_var2_a_filter': h_var2_a_filter  # Legger til den manglende parameteren
+    })
+    conn.commit()  # Lagre endringene
+    print(f"Enheter fra delregister {gammelt_delreg_nr} med enhetstype '{enhets_type}' og H_VAR2_A = '{h_var2_a_filter}' er lagt til i {ny_delreg_nr}.")
+except cx_Oracle.DatabaseError as e:
+    error, = e.args
+    print(f"Databasefeil: {error.message}")
+# finally:
+    # cursor.close()
+    # conn.close()
 
 

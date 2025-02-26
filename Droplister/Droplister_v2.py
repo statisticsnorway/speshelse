@@ -49,7 +49,7 @@
 #   skj46O        |  46O             |  Somatiske sykehus, offentlige                        
 #   skj46P        |  HELSE46P        |  Somatiske sykehus, private                           
 #   skj47         |  HELSE47         |  Somatiske institusjoner                              
-#   skj48         |  HELSE48         |  Praksiskonsulentordningen                            
+#   skj48         |  HELSE48         |  Samhandlingsleger                            
 
 # + [markdown] toc-hr-collapsed=true
 # # Setup
