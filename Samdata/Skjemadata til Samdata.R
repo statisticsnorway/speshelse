@@ -5,7 +5,7 @@
 
 # ### Velger årgang
 
-aargang <- 2023
+aargang <- 2024
 
 # +
 options(repr.matrix.max.rows=600, repr.matrix.max.cols=2000)
@@ -353,35 +353,6 @@ openxlsx::write.xlsx(skjema48_skjema, skjema48_filsti,
                    rowNames = FALSE,
                    showNA = FALSE,
                    overwrite=T)
-}
-
-# ## Skjema 39
-
-# +
-skjema39 <- fellesr::dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
-                            skjema = "HELSE39",
-                            skjema_cols = TRUE,
-                            dublettsjekk = TRUE,
-                            con_ask = FALSE, 
-                            raadata = TRUE)
-
-skjema39_skjema <- data.frame(skjema39[1]) %>%
-  dplyr::select(all_of(variabelliste_39))
-
-skjema39_dubletter <- data.frame(skjema39[2])
-# -
-
-# ### Lagrer filen
-
-if (nrow(skjema39_dubletter)==0){
-write.table(skjema39_skjema, skjema39_filsti,
-            sep = "¤",
-            fileEncoding = encoding,
-            # col.names = FALSE,
-            row.names = FALSE,
-            na = "",
-            dec = ",",
-            quote = F)
 }
 
 # ## Skjema 0X
