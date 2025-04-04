@@ -67,7 +67,7 @@ jupyter-server-proxy==3.2.4
 jupyter-telemetry==0.0.5
 jupyterhub @ file:///home/conda/feedstock_root/build_artifacts/jupyterhub-feedstock_1596084592517/work
 jupyterlab==3.6.8
-jupyterlab-git==0.21.1
+jupyterlab-git==0.51.1
 jupyterlab-server @ file:///home/conda/feedstock_root/build_artifacts/jupyterlab_server_1593951277307/work
 kiwisolver==1.2.0
 koalas==1.2.0
