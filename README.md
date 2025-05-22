@@ -22,7 +22,7 @@ I dette repoet ligger hovedsakelig programmer som er felles for alle produksjons
 
 ## KLASS
 
-Før noen av produksjonsløpene kan kjøres må alle kodelistene som omfatter spesialisthelsetjenesten være oppdatert for statistikkåret. 
+Før produksjonsløpene kan kjøres må alle kodelistene som omfatter spesialisthelsetjenesten være oppdatert for statistikkåret. 
 
 ### Felles
 + `KLASS 603`: [Standard for offentlige helseforetak](https://www.ssb.no/klass/klassifikasjoner/603)
@@ -32,7 +32,6 @@ Før noen av produksjonsløpene kan kjøres må alle kodelistene som omfatter sp
 + [Korrespondansetabell mellom `KLASS 610` og `KLASS 6`](https://www.ssb.no/klass/klassifikasjoner/610/korrespondanser/898)
 + [Korrespondansetabell mellom `KLASS 610` og `KLASS 603`](https://www.ssb.no/klass/klassifikasjoner/603/korrespondanser/1320)
 + [Korrespondansetabell mellom `KLASS 610` og `KLASS 604`](https://www.ssb.no/klass/klassifikasjoner/604/versjon/1721/korrespondanser/1262)
-+ Korrespondansetabell mellom `KLASS 610` og `KLASS 605`
 
 ### Regnskap
 + `KLASS 602`: [Kodeliste for funksjonskontoinndeling til helseforetakenes regnskapsdata](https://www.ssb.no/klass/klassifikasjoner/602/)
@@ -73,12 +72,24 @@ Før noen av produksjonsløpene kan kjøres må alle kodelistene som omfatter sp
 + `KLASS 630`: [Kodeliste for opptaksområder i spesialisthelsetjenesten (psykisk helsevern)](https://www.ssb.no/klass/klassifikasjoner/630)
 + `KLASS 631`: [Kodeliste for opptaksområder i spesialisthelsetjenesten (rusbehandling)](https://www.ssb.no/klass/klassifikasjoner/631)
 + `KLASS 632`: [Kodeliste for opptaksområder i spesialisthelsetjenesten (DPS)](https://www.ssb.no/klass/klassifikasjoner/632)
+
+#### Korrespondanse til kommuneinndeling
++ [Korrespondansetabell mellom `KLASS 603` og `KLASS 131`](https://www.ssb.no/klass/klassifikasjoner/603/korrespondanser/2577)
 + [Korrespondansetabell mellom `KLASS 629` og `KLASS 131`](https://www.ssb.no/klass/klassifikasjoner/629/korrespondanser/1026)
 + [Korrespondansetabell mellom `KLASS 630` og `KLASS 131`](https://www.ssb.no/klass/klassifikasjoner/630/korrespondanser/1046)
 + [Korrespondansetabell mellom `KLASS 631` og `KLASS 131`](https://www.ssb.no/klass/klassifikasjoner/631/korrespondanser/1048)
-+ [Korrespondansetabell mellom `KLASS 631` og `KLASS 131`](https://www.ssb.no/klass/klassifikasjoner/632/korrespondanser/1098)
++ [Korrespondansetabell mellom `KLASS 632` og `KLASS 131`](https://www.ssb.no/klass/klassifikasjoner/632/korrespondanser/1098)
+
+#### Korrespondanse til bydelsinndeling
++ [Korrespondansetabell mellom `KLASS 629` og `KLASS 103`](https://www.ssb.no/klass/klassifikasjoner/629/korrespondanser/2519)
++ [Korrespondansetabell mellom `KLASS 630` og `KLASS 103`](https://www.ssb.no/klass/klassifikasjoner/630/korrespondanser/2520)
++ [Korrespondansetabell mellom `KLASS 631` og `KLASS 103`](https://www.ssb.no/klass/klassifikasjoner/631/korrespondanser/2521)
++ [Korrespondansetabell mellom `KLASS 632` og `KLASS 103`](https://www.ssb.no/klass/klassifikasjoner/632/korrespondanser/2522)
+
+#### Korrespondanse til postnummerområder 
++ [Korrespondansetabell mellom `KLASS 632` og `KLASS 616`](https://www.ssb.no/klass/klassifikasjoner/616/korrespondanser/2524)
 
 
-## Opptaksområder
+## Kart over opptaksområder
 
 [Opptaksområder](https://statisticsnorway.github.io/speshelse/)
