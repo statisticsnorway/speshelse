@@ -136,6 +136,30 @@ purring_df.groupby('SKJEMA_TYPE_skj').agg(
 
 purring_df
 
+# ### SKJEMA 47 
+
+df47 = purring_df[purring_df['SKJEMA_TYPE_skj'] == 'HELSE47'].copy()
+
+aar2_for = int(aar2) -1
+
+sporring = f"""
+    SELECT *
+    FROM DSBBASE.DLR_ENHET_I_DELREG_SKJEMA
+    WHERE DELREG_NR IN ('24{aar2_for}')
+"""
+kontakt = hjfunk.les_sql(sporring, conn)
+
+
+df47 = pd.merge(
+    kontakt,
+    df47,
+    on=['IDENT_NR', 'ENHETS_TYPE']
+)
+
+kontakt[kontakt['KONTAKTPERSON_EPOST'].notna()]
+
+df47
+
 # ---
 
 purring_df2 = purring_df.groupby('ORGNR_FORETAK').agg(
@@ -143,8 +167,6 @@ purring_df2 = purring_df.groupby('ORGNR_FORETAK').agg(
     ORGNR=('ORGNR', 'unique'),
     NAVN=('NAVN_NY', 'unique')
 ).reset_index()
-
-purring_df2
 
 df = pd.merge(
     altinn,

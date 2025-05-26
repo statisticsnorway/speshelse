@@ -24,7 +24,7 @@ pd.set_option('display.max_rows', 300)
 pd.set_option('display.max_colwidth', None)
 
 # +
-aar4 = 2023
+aar4 = 2024
 aar2 = str(aar4)[-2:]
 
 aar_før4 = aar4 - 1            # året før
@@ -168,7 +168,9 @@ kontakt_df = kontakt_df.drop_duplicates()
 print_size(kontakt_df)
 display(kontakt_df.sample(3))
 
-print(kontakt_df[kontakt_df['SKJEMA_TYPE'] == "HELSE39"].EPOSTADR.to_csv(index=False))
+kontakt_df[kontakt_df['ORGNR_FORETAK'].isin(['983478778', '980684997', '986923845'])]
+
+print(kontakt_df[kontakt_df['SKJEMA_TYPE'] == "HELSE47"].EPOSTADR.to_csv(index=False))
 
 # +
 # print(kontakt_df.to_csv(sep="\t", index=False))
@@ -180,7 +182,7 @@ kontakt_df.SKJEMA_TYPE.value_counts()
 # # Utsendelse til private
 # Denne listen brukes til å gi personer som leverte skjema for fjoråret en melding om at foretaket har fått brukernavn og ident. Koden filtrerer og sjekker mot den private-populasjonen dette året.
 
-private_skjema = ['HELSE38P', 'HELSE39', 'HELSE44P', 'HELSE45P', 'HELSE46P', 'HELSE47']
+private_skjema = ['HELSE38P', 'HELSE44P', 'HELSE45P', 'HELSE46P', 'HELSE47']
 
 priv_kontakt = kontakt_df[kontakt_df['SKJEMA_TYPE'].isin(private_skjema)].copy()
 print_size(priv_kontakt)
@@ -285,7 +287,7 @@ purre_df = (
         suffixes=("_purre", "_kontakt")
     )
 )
-purre_df.sample(3)
+purre_df.head(3)
 # -
 
 print("Skjematyper ikke alt er levert i:")
