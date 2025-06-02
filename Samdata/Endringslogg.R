@@ -19,7 +19,7 @@ suppressPackageStartupMessages({
 # ### Angir aargang, skjema og dato til filene (i prompt, default angir kun standardverdi)
 
 # +
-aargang <- 2022
+aargang <- 2024
 # aargang <- as.numeric(readline("Skriv inn årgang:"))
 
 skjema <- readline("Skriv inn skjema:") # F.eks. 44o
@@ -131,6 +131,33 @@ if ("HELSEREGIONÂ" %in% colnames(gammel_fil)) {
                          header = TRUE,
                          quote = "",
                          check.names = FALSE)
+}
+# -
+
+colnames(ny_fil)
+
+if (skjema == "48"){
+ny_fil <- ny_fil %>%
+    mutate(FINST_NAVN = FORETAKETS_NAVN, 
+          FINST_ORGNR = FORETAKETS_ORGNR, 
+          HELSEREGION_NAVN = HELSEREGION_NAVN)
+    
+    gammel_fil <- gammel_fil %>%
+    mutate(FINST_NAVN = FORETAKETS_NAVN, 
+          FINST_ORGNR = FORETAKETS_ORGNR, 
+          HELSEREGION_NAVN = HELSEREGION_NAVN)
+}
+
+if (skjema == "46p"){
+ny_fil <- ny_fil %>%
+    mutate(FORETAKETS_NAVN = FORETAK_NAVN, 
+          FORETAKETS_ORGNR = FORETAK_ORGNR, 
+          HELSEREGION_NAVN = REGION_NAVN)
+    
+    gammel_fil <- gammel_fil %>%
+    rename(FORETAKETS_NAVN = FORETAK_NAVN, 
+          FORETAKETS_ORGNR = FORETAK_ORGNR, 
+          HELSEREGION_NAVN = REGION_NAVN)
 }
 
 # +

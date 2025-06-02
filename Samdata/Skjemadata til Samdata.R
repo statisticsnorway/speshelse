@@ -355,6 +355,18 @@ openxlsx::write.xlsx(skjema48_skjema, skjema48_filsti,
                    overwrite=T)
 }
 
+# ### Lagrer filen
+if (nrow(skjema48_dubletter)==0){
+write.table(skjema48_skjema, paste0(aargangsmappe, "Skj48_", datomarkering, ".txt"),
+            sep = "¤",
+            fileEncoding = encoding,
+            # col.names = FALSE,
+            row.names = FALSE,
+            na = "",
+            dec = ",",
+            quote = F)
+}
+
 # ## Skjema 0X
 #
 # OBS: fjernet kolonnen F551 for 2022. Kan også INST_NR og INST_NAVN slettes?
