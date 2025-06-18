@@ -1,4 +1,3 @@
-```python
 # Spesialisthelsetjenesten
 
 Her finnes programmer som brukes i produksjonssløp for statistikkene som inngår i [Spesialisthelsetjenesten](https://www.ssb.no/helse/helsetjenester/statistikk/spesialisthelsetjenesten). 
@@ -19,7 +18,6 @@ I dette repoet ligger hovedsakelig programmer som er felles for alle produksjons
 + [Overføring av skjemadata til Samdata](https://github.com/statisticsnorway/speshelse/tree/master/Samdata)
 
 <img src="./images/Bilde_årshjul_2025.png" width="1200">
-```
 
 ## KLASS
 
@@ -94,3 +92,4 @@ Før produksjonsløpene kan kjøres må alle kodelistene som omfatter spesialist
 ## Kart over opptaksområder
 
 [Opptaksområder](https://statisticsnorway.github.io/speshelse/)
+
