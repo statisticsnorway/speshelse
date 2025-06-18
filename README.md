@@ -1,3 +1,4 @@
+```python
 # Spesialisthelsetjenesten
 
 Her finnes programmer som brukes i produksjonssløp for statistikkene som inngår i [Spesialisthelsetjenesten](https://www.ssb.no/helse/helsetjenester/statistikk/spesialisthelsetjenesten). 
@@ -13,12 +14,12 @@ I tillegg ligger programmer relatert til geografiske analyser (GIS) her:
 ## Årshjul
 
 I dette repoet ligger hovedsakelig programmer som er felles for alle produksjonsløpene i statistikkområdene. Disse oppgavene er følgende:
-+ [Dropplister](https://github.com/statisticsnorway/speshelse/blob/master/experimental/Droplister%20forenkling.ipynb)
-+ [Institusjonslister](https://github.com/statisticsnorway/speshelse/blob/master/Institusjonslister/Institusjonslister.R)
++ [Prefill ("droplister")](https://github.com/statisticsnorway/speshelse/tree/master/Droplister)
++ [Institusjonslister](https://github.com/statisticsnorway/speshelse/tree/master/Institusjonslister)
 + [Overføring av skjemadata til Samdata](https://github.com/statisticsnorway/speshelse/tree/master/Samdata)
 
-<img src="./images/Årshjul.PNG" width="1200">
-
+<img src="./images/Bilde_årshjul_2025.png" width="1200">
+```
 
 ## KLASS
 
