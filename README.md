@@ -93,6 +93,3 @@ Før produksjonsløpene kan kjøres må alle kodelistene som omfatter spesialist
 
 [Opptaksområder](https://statisticsnorway.github.io/speshelse/)
 
-```python
-
-```
