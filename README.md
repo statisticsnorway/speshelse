@@ -92,3 +92,7 @@ Før produksjonsløpene kan kjøres må alle kodelistene som omfatter spesialist
 ## Kart over opptaksområder
 
 [Opptaksområder](https://statisticsnorway.github.io/speshelse/)
+
+```python
+
+```
