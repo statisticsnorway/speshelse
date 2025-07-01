@@ -1,5 +1,5 @@
 ---
-title: "Opptaksområder for spesialisthelsetjenesten 2024"
+title: "Opptaksområder for spesialisthelsetjenesten 2025"
 author: "Sindre Mikael Haugen"
 date: "`r Sys.Date()`"
 output:
@@ -20,8 +20,7 @@ knitr::opts_chunk$set(
 
 
 ```{r include=FALSE}
-
-aargang <- 2024
+aargang <- 2025
 
 suppressPackageStartupMessages({ 
 library(tidyverse)
@@ -46,6 +45,9 @@ opptaksomrader_SOM_HF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "o
 opptaksomrader_SOM_lokasjon <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_SOM_lokasjon_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
   
+```
+
+```{r include=FALSE}
  # Akuttmottak
 akuttmottak <- klassR::GetKlass(683, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
   dplyr::rename(region = code1,
@@ -63,7 +65,9 @@ akuttmottak <- klassR::GetKlass(683, output_style = "wide", date = c(paste0(aarg
                 lat = gsub(",", ".", lat)) %>%
   sf::st_as_sf(coords = c("lon", "lat"), crs = 25833) %>%
   sf::st_transform(crs = 4326)
+```
 
+```{r include=FALSE}
 # Fødested
 fodeavdeling <- klassR::GetKlass(608, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
   dplyr::rename(region = code1,
@@ -82,7 +86,9 @@ fodeavdeling <- klassR::GetKlass(608, output_style = "wide", date = c(paste0(aar
   sf::st_as_sf(coords = c("lon", "lat"), crs = 25833) %>%
   sf::st_transform(crs = 4326) %>%
   mutate(Type = "Fødeavdeling")
+```
 
+```{r include=FALSE}
 fodestue <- klassR::GetKlass(609, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
   dplyr::rename(region = code1,
                 orgnummer_RHF = code2,
@@ -102,7 +108,9 @@ fodestue <- klassR::GetKlass(609, output_style = "wide", date = c(paste0(aargang
   mutate(Type = "Fødestue")
 
 fodested <- rbind(fodeavdeling, fodestue)
+```
 
+```{r include=FALSE}
 # PHV
 opptaksomrader_PHV_RHF <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader_PHV_RHF_flate_", aargang, ".parquet")) %>%
   sf::st_transform(4326)
