@@ -17,9 +17,7 @@ import getpass
 from sqlalchemy import create_engine
 import datetime as dt
 
-""
 til_lagring = True # Sett til True, hvis du vil lagre en ny fil
-""
 
 username = getpass.getuser()
 dsn = "DB1P"
@@ -95,6 +93,11 @@ if len(akt) > 0:
 
 per = pd.read_parquet(sti_per)
 
+unike_nace_df = per.groupby("ORGNR_FRTK").agg(
+    unike_nace07=("VIRK_NACE1_SN07", "unique"),
+    unike_nace07_ant=("VIRK_NACE1_SN07", "nunique")
+).reset_index()
+
 per.loc[per["TJENESTE_KODE"] == "REH", "TJENESTE_KODE"] = "SOM"
 
 per = (
@@ -131,16 +134,12 @@ per = per.drop(columns="ORGNR_STATBANK")
 
 dfs = [akt, rgn0x, per]
 
-del df_final
-
 df_final = ft.reduce(
     lambda left, right: pd.merge(
         left, right, on=["ORGNR_FRTK", "TJENESTE_KODE", "FORETAKSTYPE", 'HELSEREGION'], how="outer"
     ),
     dfs,
 )
-
-df_final
 
 sql_str = hjfunk.lag_sql_str(df_final.ORGNR_FRTK.unique())
 
@@ -153,11 +152,143 @@ sporring_for = f"""
         EXTRACT(YEAR FROM FORETAKS_NR_GDATO) <= {aar4}
 """
 
-sporring_for = f"""
-    SELECT FORETAKS_NR, ORGNR, NAVN
-    FROM DSBBASE.SSB_FORETAK
-"""
+foretak_navn = (
+    hjfunk
+    .les_sql(sporring_for, conn)
+    .rename(columns={'ORGNR': 'ORGNR_FRTK'})
+    .dropna(subset=["ORGNR_FRTK"])
+    .drop_duplicates(subset=["ORGNR_FRTK"])
+    .reset_index(drop=True)
+    .drop(columns=["RECORD_ED", "FORETAKS_NR_GDATO"])
+)
 
-foretak_navn = hjfunk.les_sql(sporring_for, conn).rename(columns={'ORGNR': 'ORGNR_FRTK'})
+df_final = pd.merge(
+    df_final,
+    foretak_navn,
+    how="left",
+    on="ORGNR_FRTK",
+)
 
-df_final
+df_final = df_final[[df_final.columns[0], df_final.columns[-1], *df_final.columns[1:-1]]]
+
+# ## Tilpass fil
+
+df_final_aarsverk = df_final[['ORGNR_FRTK', 'TJENESTE_KODE', 'AARSVERK', 'LONN']].copy()
+
+df_final_aarsverk["LONN_tot"] = (
+    df_final_aarsverk
+    .groupby(["ORGNR_FRTK"])["LONN"]
+    .transform("sum")
+)
+
+df_lonn_aos = df_final_aarsverk[df_final_aarsverk['TJENESTE_KODE'] == "AOS"][['ORGNR_FRTK', 'LONN']].copy()
+
+df_final_aarsverk = pd.merge(
+    df_final_aarsverk,
+    df_lonn_aos,
+    how='left',
+    on='ORGNR_FRTK',
+    suffixes=('', '_aos')
+).fillna(0.0)
+
+df_aarsverk_aos = df_final_aarsverk[df_final_aarsverk['TJENESTE_KODE'] == "AOS"][['ORGNR_FRTK', 'AARSVERK']].copy()
+
+df_final_aarsverk = pd.merge(
+    df_final_aarsverk,
+    df_aarsverk_aos,
+    how='left',
+    on='ORGNR_FRTK',
+    suffixes=('', '_aos')
+).fillna(0.0)
+
+df_final_aarsverk['LONN_tot_uten_aos'] = df_final_aarsverk['LONN_tot'] - df_final_aarsverk['LONN_aos']
+
+df_final_aarsverk = df_final_aarsverk.drop(columns=['LONN_aos', 'LONN_tot'])
+
+df_final_aarsverk['andel'] = df_final_aarsverk['LONN'] / df_final_aarsverk['LONN_tot_uten_aos']
+
+df_final_aarsverk['AARSVERK_ny'] = df_final_aarsverk['AARSVERK'] + df_final_aarsverk['AARSVERK_aos'] * df_final_aarsverk['andel']
+
+df_final_aarsverk = df_final_aarsverk[['ORGNR_FRTK', 'TJENESTE_KODE', 'AARSVERK_ny']]
+
+
+
+df_final = pd.merge(
+    df_final,
+    df_final_aarsverk,
+    how='left',
+    on=['ORGNR_FRTK', 'TJENESTE_KODE']
+)
+
+# Tar ut AOS etter å ha fordel aarsverk utover de andre tjenestekodene.
+
+df_final = df_final[df_final['TJENESTE_KODE'] != "AOS"].reset_index(drop=True)
+
+# Lager noen interessante sammenstillinger av tall
+
+df_final['SNITTLONN_millioner_ny'] = df_final['LONN'] / df_final['AARSVERK_ny'] / 1000
+
+df_final['SNITTLONN_millioner'] = df_final['LONN'] / df_final['AARSVERK'] / 1000
+
+verdi_kol = [
+    "UTSKRIVNINGER",
+    "OPPHOLDSDOGN",
+    "OPPHOLDSDAGER",
+    "POLIKLINIKK",
+    "DOGNPLASSER",
+    "SENGEDOGN",
+    "TOT_UTG",
+    "AARSVERK",
+    "LONN"
+]
+
+df_final['sum_verdier_rad'] = round(df_final[verdi_kol].fillna(0.0).apply(abs).sum(axis=1), 1)
+
+
+# +
+def antall_0_eller_missing(row):
+    return ((row != 0.0) & (~row.isnull())).sum()
+
+# Legger til en ny kolonne som teller antall ikke-null og ikke-missing verdier
+df_final['ant_num_verdier'] = df_final[verdi_kol].apply(antall_0_eller_missing, axis=1)
+# -
+
+# ## Koble på unike NACE
+
+df_final = pd.merge(
+    df_final,
+    unike_nace_df,
+    on="ORGNR_FRTK",
+    how="left"
+)
+
+# # Lagring
+
+excel_ark = {
+    'Populasjonsanalyse': df_final
+}
+
+idag = pd.Timestamp.today().strftime('%Y-%m-%d-%H%M')
+
+idag
+
+if til_lagring:
+    idag = pd.Timestamp.today().strftime('%Y-%m-%d-%H%M')
+    sti = f"/ssb/stamme01/fylkhels/speshelse/felles/populasjon/{aar4}/populasjonsanalyse_{aar4}_{idag}.xlsx"
+    lagre_excel(excel_ark, sti)
+
+
+
+
+
+
+
+
+
+
+
+per[per["ORGNR_FRTK"] == "924212446"]
+
+df_final[(df_final["OPPHOLDSDOGN"] > 0) & (df_final["AARSVERK"].isna())]  # <- Stemmer dette?? Dobbeltsjekk disse
+
+df_final[df_final["ORGNR_FRTK"] == "953557088"]
