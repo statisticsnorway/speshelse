@@ -12,7 +12,7 @@
 til_lagring = True
 lag_passord = True
 
-aar4 = 2024
+aar4 = 2025
 aar2 = str(aar4)[-2:]
 aarfør4 = aar4-1
 aarfør2 = str(aarfør4)[-2:]
@@ -47,7 +47,7 @@ RFSS = pd.concat([rfss2, rfss3], ignore_index=True).rename(
 )
 
 # +
-RFSS['SKJEMA_TYPE'] = "0X 0Y 40"
+RFSS['SKJEMA_TYPE'] = "0X 0Y"
 
 print("Antall: ", RFSS.shape[0])
 RFSS.sample(3)
@@ -59,7 +59,7 @@ RHF = (
                      'ORGNR_FORETAK': 'ORGNR_FORETAK'})
 )
 
-RHF['SKJEMA_TYPE'] = "0X 0Y 40 41 48"
+RHF['SKJEMA_TYPE'] = "0X 0Y"
 
 print("Antall: ", RHF.shape[0])
 RHF.sample(3)
@@ -72,7 +72,7 @@ HF = (
     [['ORGNR_FORETAK', 'FORETAK_NAVN']]
 )
 
-HF['SKJEMA_TYPE'] = "0X 0Y 40 380 440 450 460 48"
+HF['SKJEMA_TYPE'] = "0X 0Y 380 440 450 460"
 print("Antall: ", HF.shape[0])
 HF.sample(3)
 
@@ -134,15 +134,10 @@ PHOB = (
 ).copy()
 
 # +
-PHOB['SKJEMA_TYPE'] = "0X 381 441 451 461 47 48"
+PHOB['SKJEMA_TYPE'] = "0X 381 441 451 461 47"
 
 print("Antall: ", PHOB.shape[0])
 PHOB.sample(3)
-
-# +
-# DIAKONHJEMMET SKAL HA 0X istedenfor 39
-# Rettelse: Alle private helseforetak med oppdrags- og bestillerdokument skal 0X istedenfor 39
-#PHOB.loc[PHOB['ORGNR_FORETAK'] == "982791952", 'SKJEMA_TYPE'] = "0X 381 441 451 461 47 48"
 # -
 
 # ## Slå sammen til en dataframe som eksporteres til `.csv`
@@ -200,6 +195,8 @@ if not os.path.exists(pass_sti):
     empty_df = pd.DataFrame(columns=["Description", "Username", "Password"])
     empty_df.to_csv(pass_sti, sep=";", encoding='latin1', index=False)
     print("Opprettet ny tom passordfil")
+else:
+    print(pass_sti, "finnes allerede")
 
 
 
@@ -252,9 +249,8 @@ def get_new_password(dummy_var):
     from random import randint
     
     return randint(10**7, 10**8-1)
-# +
 skjema_type_unik = list(brukerliste_df.SKJEMA_TYPE.unique())
-
+print(skjema_type_unik)
 for skj in skjema_type_unik:
     skjema_type_df = brukerliste_df[brukerliste_df["SKJEMA_TYPE"] == skj].copy()
     ant_enheter = len(skjema_type_df)
@@ -326,6 +322,5 @@ for skj in skjema_type_unik:
         print("Lagret passord masterfil.")
         print(80*"-")
         
-# -
 
 
