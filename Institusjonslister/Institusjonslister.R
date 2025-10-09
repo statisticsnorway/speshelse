@@ -12,9 +12,11 @@ suppressPackageStartupMessages({
   library(fellesr)
 })
 
+
+
 # ## Angir årgang og kobler til Oracle
 
-aargang <- 2024
+aargang <- 2025
 
 # Logg på for å få tilgang til Oracle 
 con <- fellesr::dynarev_uttrekk(con_ask = "con") # fellesr::
@@ -109,8 +111,10 @@ delreg <- fellesr::dynarev_uttrekk(delregnr = c(paste0(24, substr(aargang, 3, 4)
                                    sfu_cols = T, 
                                    con_ask = F)
 
-delreg %>%
-filter(ORGNR == "918098275")
+# +
+#delreg %>%
+#filter(ORGNR == "918098275")
+# -
 
 delreg <- delreg %>%
   dplyr::filter(is.na(KVITT_TYPE)) %>%
@@ -158,6 +162,8 @@ offentlig <- offentlig %>%
 delreg$ORGNR_FORETAK <- as.character(delreg$ORGNR_FORETAK)
 delreg_offentlig <- dplyr::inner_join(offentlig, delreg, by = c("ORGNR_FORETAK"))
 
+# #### Orgnr 983658776 er helseplattformen, bedrift under Helse Midt. Usikker på hvorfor det er filtrert på denne her #####
+
 # +
 # delreg_offentlig %>%
 # filter(ORGNR_FORETAK == "983658776")
@@ -202,6 +208,8 @@ openxlsx::write.xlsx(delreg_offentlig_test,
                      rowNames = FALSE,
                      showNA = FALSE)
 
+filsti_institusjonslister
+
 # ## Private (med og uten oppdragsdokument)
 
 delreg_private <- delreg %>%
@@ -212,6 +220,8 @@ delreg_private <- delreg %>%
     TRUE ~ "Private med kjøpsavtale"))
 
 unique(delreg_private$SKJEMA_TYPE)
+
+# ### Beholder kun enheter med rapporteringsnummer
 
 delreg_private_test <- delreg_private %>%
   select(Foretakstype, Helseregion, RHF, ORGNR_FORETAK, H_VAR1_A, ORGNR, NYTT_NAVN,
@@ -241,7 +251,7 @@ delreg_private_test <- delreg_private %>%
                 Postnummer = F_POSTNR,
                 Poststed = F_POSTSTED)
 
-# ### Beholder kun enheter med rapporteringsnummer
+colnames(delreg_private_test)
 
 # +
 # delreg_private_test_obs <- delreg_private_test %>%
@@ -256,6 +266,14 @@ delreg_private_test <- delreg_private_test %>%
 # ### Lager liste over rapporteringsenhetene
 # For å kunne koble på tjenesteområde på alle underenhetene.
 
+delreg_offentlig_test_duplikater
+
+# +
+#delreg_offentlig %>%
+#filter(ORGNR %in% c("990647631", "975299309", "998153115","998188423")) %>%  
+#dplyr::select(Foretakstype, Helseregion, RHF, ORGNR_FORETAK, H_VAR1_A, ORGNR, NAVN, NYTT_NAVN,SKJEMA_TYPE, SN07_1, SN07_1_navn, F_POSTNR, F_POSTSTED)
+# -
+
 rapporteringsenheter <- delreg_private_test  %>% 
   mutate(Tjenesteomraade = case_when(
     Skjematype == "381" ~ "TSB",
@@ -265,19 +283,27 @@ rapporteringsenheter <- delreg_private_test  %>%
     Skjematype == "47"  ~ "Rehabilitering",
     Rapporteringsnr == "47" ~ "Rehabilitering",
     Rapporteringsnr == "46P" ~ "Somatikk",
-    Rapporteringsnummer == "45P" ~ "BUP",
-    Rapporteringsnummer == "44P" ~ "VOP",
-    Rapporteringsnummer == "38P" ~ "TSB"))  %>% 
+    Rapporteringsnr == "45P" ~ "BUP",
+    Rapporteringsnr == "44P" ~ "VOP",
+    Rapporteringsnr == "38P" ~ "TSB"))  %>% 
 filter(Tjenesteomraade != "NA")  %>% 
 distinct(Rapporteringsnr, Tjenesteomraade)
 
 delreg_private_tjenesteomraade <- left_join(delreg_private_test, rapporteringsenheter, join_by(Rapporteringsnr))
+
+# +
+#sjekker hvem som ikke har fått verdi på tjenesteområde
+#delreg_private_tjenesteomraade %>%
+#filter(is.na(Tjenesteomraade))
+# -
 
 # ### Sjekker for dubletter i Institusjonsnavn (?)
 
 delreg_private_test_duplikater <- delreg_private_tjenesteomraade %>%
   janitor::get_dupes(Institusjonsnavn)
 print(paste0("Dubletter finnes for: ", unique(delreg_private_test_duplikater$Institusjonsnavn)))
+
+delreg_private_test_duplikater
 
 # Sorterer etter helseregion #
 delreg_private_tjenesteomraade <- delreg_private_tjenesteomraade %>%

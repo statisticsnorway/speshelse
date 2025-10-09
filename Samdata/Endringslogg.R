@@ -19,7 +19,7 @@ suppressPackageStartupMessages({
 # ### Angir aargang, skjema og dato til filene (i prompt, default angir kun standardverdi)
 
 # +
-aargang <- 2022
+aargang <- 2024
 # aargang <- as.numeric(readline("Skriv inn årgang:"))
 
 skjema <- readline("Skriv inn skjema:") # F.eks. 44o
