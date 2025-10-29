@@ -321,6 +321,6 @@ for skj in skjema_type_unik:
         print(80*"-")
         print("Lagret passord masterfil.")
         print(80*"-")
-        
+
 
 

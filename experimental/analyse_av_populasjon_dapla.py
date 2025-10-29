@@ -287,8 +287,4 @@ if til_lagring:
 
 
 
-per[per["ORGNR_FRTK"] == "924212446"]
-
 df_final[(df_final["OPPHOLDSDOGN"] > 0) & (df_final["AARSVERK"].isna())]  # <- Stemmer dette?? Dobbeltsjekk disse
-
-df_final[df_final["ORGNR_FRTK"] == "953557088"]

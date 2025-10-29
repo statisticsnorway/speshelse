@@ -18,6 +18,8 @@ import datetime as dt
 
 import os
 
+from glob import glob
+
 pd.set_option("display.max_columns", None)
 pd.set_option('display.max_rows', 300)
 pd.set_option('display.max_colwidth', None)
@@ -25,7 +27,7 @@ pd.set_option('display.max_colwidth', None)
 conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
 
 # +
-aar4 = 2024
+aar4 = 2025
 aar2 = str(aar4)[-2:]
 
 aar_før4 = aar4 - 1            # året før
@@ -49,13 +51,11 @@ print(siste_dropliste_dato)
 sti = dropliste_sti + siste_dropliste_dato + "/"
 filnavn = os.listdir(sti)[0]
 
-sti += filnavn
+filnavn
 
-sti
+sti = glob(f"{dropliste_sti}/{siste_dropliste_dato}/Brukerliste*")[0]
 
 pop = pd.read_csv(sti, encoding='latin1', sep=";", dtype="object")
-
-len(pop)
 
 pop.sample(3)
 
@@ -71,6 +71,8 @@ altinn = altinn_raw[['IDENT_NR', 'ORGNR', 'ORGNR_FORETAK', 'NAVN']]
 
 # ## Nye enheter
 
+pop.head(3)
+
 sette_sammen = pd.merge(
     altinn,
     pop,
@@ -83,7 +85,11 @@ sette_sammen._merge.map({'both': 'både i delreg altinn og brukerliste',
                                         'right_only': 'kun i brukerliste',
                                         'left_only': 'kun på altinn delreg'}).value_counts()
 
-nye = sette_sammen[(sette_sammen['_merge'] == 'right_only') & (sette_sammen['SKJEMA_TYPE'] == '381 441 451 461 47')]
+sette_sammen["SKJEMA_TYPE"].value_counts()
+
+nye = sette_sammen.loc[(sette_sammen['_merge'] == 'right_only') & (sette_sammen['SKJEMA_TYPE'] == '381 441 451 461 47')]
+
+sette_sammen.head(3)
 
 nye
 
@@ -103,14 +109,11 @@ sporring = f"""
     WHERE DELREG_NR IN ('24{aar2}')
 """
 SFU = pd.read_sql_query(sporring, conn)
-print(f"Rader:    {altinn_raw.shape[0]}\nKolonner: {altinn_raw.shape[1]}")
+print(f"Rader:    {SFU.shape[0]}\nKolonner: {SFU.shape[1]}")
 
 skjematyper_per_foretak = SFU[SFU['H_VAR2_A'] == 'PRIVAT'].groupby(['ORGNR_FORETAK']).SKJEMA_TYPE.unique()
 
-# +
-# skjematyper_per_foretak
-# -
-
+SFU[SFU["ORGNR_FORETAK"] == "816085292"]
 
 
 # +
@@ -127,8 +130,6 @@ skjematyper_per_foretak = SFU[SFU['H_VAR2_A'] == 'PRIVAT'].groupby(['ORGNR_FORET
 # ## Hente inn enheter i siste 20877XX
 
 # ## Bestemme ny populasjon
-
-ny_altinn
 
 # DELREGISTER, IDENTNUMMER, ENHETSTYPE
 #
