@@ -195,6 +195,13 @@ rapporteringsenheter_vof = pd.merge(
 )
 # -
 
+# Ta ut enheter med SB_TYPE == 04. Dette er støtteforetak (ingen pasientaktivitet).
+
+vof = vof[vof["SB_TYPE"] != "04"].rename(columns={
+    "ORGNR_BEDRIFT": "ORGNR",
+    "NAVN_BEDRIFT": "NAVN",
+}).drop(columns=["NAVN_FORETAK", "SB_TYPE"])
+
 # ## Dynarev
 
 # Henter ut SFU og tar senere vare på de som har har non-missing på ```SKJEMA_TYPE```.
@@ -331,13 +338,9 @@ onskede_kolonner = ["USERID", "HELSEREGION", "HELSEREGION_NAVN",
                     "D_PLAS_FJOR"] + orgnr_virk + navn_virk
 # -
 
-# Henter data fra SFU med næringskode ("86.106") og statuskode ("B"). Næringskode i kolonne SN07_1
-
 temp = pd.merge(
     skj38O["ORGNR_FORETAK"],
-    SFUklass[
-        (SFUklass["SN07_1"] == "86.106") &
-        (SFUklass["STATUS"] == "B")]
+    vof[(vof["SN07_1"] == "86.106")][["ORGNR", "ORGNR_FORETAK", "NAVN"]]
     [["ORGNR", "ORGNR_FORETAK", "NAVN"]],
     how="left",
     on="ORGNR_FORETAK",
@@ -359,8 +362,6 @@ skj38O = pd.merge(skj38O, regionoppslag, how="left", on="HELSEREGION")
 
 skj38O = skj38O[onskede_kolonner]
 
-
-
 # ### skj44O (Psykisk helsevern for voksne PHFV)
 
 # Alle offentlige helseforetak foruten ```SUNNAAS```. Bruker ```HF```-tabellen laget i kapittel 2.1.1
@@ -381,19 +382,10 @@ onskede_kolonner = ["USERID", "HELSEREGION", "HELSEREGION_NAVN",
                     "D_PLAS_FJOR"] + orgnr_virk + navn_virk
 # -
 
-# Henter data fra SFU med næringskode ("86.104") og statuskode ("B"). Finner næringskoden i kolonne ```SN07_1```
-
-skj44O['tmp_bool'] = True
-
-finne_virksomheter_df = pd.merge(
-    SFUklass, skj44O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"]
+undervirksomheter_navn_og_kolonner = hjfunk.lag_navn_orgnr_kolonner(
+    vof[vof["SN07_1"] == "86.104"].drop(columns=["SN07_1"])
+    , 20
 )
-finne_virksomheter_df = finne_virksomheter_df.query(
-    'tmp_bool == True and SN07_1 == "86.104" and STATUS == "B"'
-)
-finne_virksomheter_df = finne_virksomheter_df[["ORGNR", "ORGNR_FORETAK", "NAVN"]]
-
-undervirksomheter_navn_og_kolonner = hjfunk.lag_navn_orgnr_kolonner(finne_virksomheter_df, 20)
 
 # +
 skj44O = pd.merge(
@@ -437,17 +429,10 @@ onskede_kolonner = ["USERID", "HELSEREGION", "HELSEREGION_NAVN",
 
 # Henter data fra SFU med næringskode ("86.105") og statuskode ("B"). Finner næringskoden i kolonne ```SN07_1```
 
-skj45O['tmp_bool'] = True
-
-finne_virksomheter_df = pd.merge(
-    SFUklass, skj45O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"]
+undervirksomheter_navn_og_kolonner = hjfunk.lag_navn_orgnr_kolonner(
+    vof[vof["SN07_1"] == "86.105"].drop(columns=["SN07_1"])
+    , 20
 )
-finne_virksomheter_df = finne_virksomheter_df.query(
-    'tmp_bool == True and SN07_1 == "86.105" and STATUS == "B"'
-)
-finne_virksomheter_df = finne_virksomheter_df[["ORGNR", "ORGNR_FORETAK", "NAVN"]]
-
-undervirksomheter_navn_og_kolonner = hjfunk.lag_navn_orgnr_kolonner(finne_virksomheter_df, 20)
 
 skj45O = pd.merge(skj45O, undervirksomheter_navn_og_kolonner, how="left", on="ORGNR_FORETAK")
 
@@ -503,31 +488,16 @@ kolonner = (
 
 # Henter data fra SFU med næringskoder ("86.101") ("86.102") ("86.103") ("86.107"). Finner næringskoden i kolonne ```SN07_1```
 
+virk = pd.merge(
+    vof[vof["SN07_1"].isin(["86.101", "86.102", "86.103", "86.107"])].drop(columns=["SN07_1"]),
+    skj46O,
+    how="inner",
+    on=["ORGNR_FORETAK"]
+)[["ORGNR", "ORGNR_FORETAK", "NAVN", "NAVN_KLASS"]]
 
 
-
-
-# +
-# Oppdater denne i tråd med skj38O (Løst?)
-# +
-skj46O["tmp_bool"] = True
-
-finne_virksomheter_df = pd.merge(
-    SFUklass, skj46O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"]
-)
-finne_virksomheter_df = finne_virksomheter_df[
-    (finne_virksomheter_df['tmp_bool']) &
-    (finne_virksomheter_df['SN07_1'].isin(["86.101", "86.102", "86.103", "86.107"]))
-]
-
-finne_virksomheter_df = finne_virksomheter_df[
-    ["ORGNR", "ORGNR_FORETAK", "NAVN", "NAVN_KLASS"]
-]
-# -
-
-
-finne_virksomheter_df = pd.merge(
-    finne_virksomheter_df,
+virk = pd.merge(
+    virk,
     d_plass_fjor,
     how="left",
     left_on="ORGNR",
@@ -535,43 +505,31 @@ finne_virksomheter_df = pd.merge(
 )
 
 
-finne_virksomheter_df[["SEN_HT_FJOR", "SDGN_HT_FJOR"]] = finne_virksomheter_df[
+virk[["SEN_HT_FJOR", "SDGN_HT_FJOR"]] = virk[
     ["SEN_HT_FJOR", "SDGN_HT_FJOR"]
 ].astype("Int64")
 
-
-finne_virksomheter_df = (
-    finne_virksomheter_df.groupby(["ORGNR_FORETAK", "NAVN_KLASS"])
+virk = (
+    virk.groupby(["ORGNR_FORETAK", "NAVN_KLASS"])
     .sum(numeric_only=True)
     .reset_index()
-)
-finne_virksomheter_df = finne_virksomheter_df.drop(columns=["NAVN_KLASS"])
+).drop(columns=["NAVN_KLASS"])
 
-
-finne_virksomheter_df2 = pd.merge(
-    SFUklass, skj46O, how="left", on=["ORGNR_FORETAK", "NAVN_KLASS", "HELSEREGION"]
-)
-
-finne_virksomheter_df2 = finne_virksomheter_df2.query(
-    'tmp_bool == True and SN07_1 in ["86.101", "86.102", "86.103","86.107",]'
-)
-
-finne_virksomheter_df2 = finne_virksomheter_df2[
-    ["ORGNR", "ORGNR_FORETAK", "NAVN", "NAVN_KLASS"]
-]
-
-
+virk2 = pd.merge(
+    vof[vof["SN07_1"].isin(["86.101", "86.102", "86.103", "86.107"])].drop(columns=["SN07_1"]),
+    skj46O, how="left",
+    on=["ORGNR_FORETAK"]
+)[["ORGNR", "ORGNR_FORETAK", "NAVN", "NAVN_KLASS"]]
 
 undervirksomheter_navn_og_kolonner = hjfunk.lag_navn_orgnr_kolonner(
-    finne_virksomheter_df2, 26, False
+    virk2, 26, False
 )
 
-# +
 skj46O = pd.merge(
     skj46O, undervirksomheter_navn_og_kolonner, how="left", on="ORGNR_FORETAK"
 )
 
-skj46O = pd.merge(skj46O, finne_virksomheter_df, how="left", on="ORGNR_FORETAK")
+skj46O = pd.merge(skj46O, virk, how="left", on="ORGNR_FORETAK")
 
 skj46O["USERID"] = skj46O["ORGNR_FORETAK"]
 skj46O = skj46O.rename(
@@ -913,33 +871,45 @@ skj47.loc[skj47['FORETAK_NAVN'].isnull(),'FORETAK_NAVN'] = skj47['NAVN1']
 # Tar kun vare på de kolonnene jeg spesifiserte i begynnelsen
 skj47 = skj47[kolonner]
 
-
 # # Eksportering til .csv-filer og rapport
 
 # +
-def rapport(skj):
-    rader = eval(skj).shape[0]
-    kolonner = eval(skj).shape[1]
-    rader_med_missing = rader - eval(skj).dropna().shape[0]
-    skl = 100 * "-"
-    s = f"{skl}\n{skj}\t Rader: {rader} \t Kolonner: {kolonner} \t Rader som inneholder minst en missing value: {rader_med_missing} "
-    return s
+droplister = {'skj0X': skj0X,
+ 'skj0Y': skj0Y,
+ 'skj38O': skj38O,
+ 'skj38P': skj38P,
+ 'skj44O': skj44O,
+ 'skj44P': skj44P,
+ 'skj45O': skj45O,
+ 'skj45P': skj45P,
+ 'skj46O': skj46O,
+ 'skj46P': skj46P,
+ 'skj46Pb': skj46Pb,
+ 'skj47': skj47
+}
+
+def rapport(name, df):
+    rader = len(df)
+    kol = df.shape[1]
+    rader_med_missing = (len(df) - len(df.dropna()))
+    return (
+        f"{name:<10} | "
+        f"Rader: {rader:>8,} | "
+        f"Kolonner: {kol:>3} | "
+        f"Rader m/missing: {rader_med_missing:>8,}"
+    )
 
 
-def lagre_dropliste_csv(skj):
-    filnavn = "Dropliste_" + skj + "_" + str(aargang) + "_" + dato_idag + ".csv"
-    eval(skj).to_csv(sti_til_lagring + filnavn, sep=";", encoding="latin1", index=False)
-    print(sti_til_lagring + filnavn, " lagret")
-
-
+for name, df in droplister.items():
+    print(rapport(name, df))
 # -
 
-for x in skjemaer_til_droplister:
-    print(rapport(x))
-
 if lagre_filer:
-    for x in skjemaer_til_droplister:
-        lagre_dropliste_csv(x)
+    for name, df in droplister.items():
+        filnavn = f"Dropliste_{name}_{aargang}_{dato_idag}.csv"
+        filsti = os.path.join(sti_til_lagring, filnavn)
+        df.to_csv(filsti, sep=";", encoding="latin1", index=False)
+        print(f"{filsti} skrevet")
 
 # Lukk tilkoblingen
 conn.close()
