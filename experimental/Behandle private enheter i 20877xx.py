@@ -69,7 +69,7 @@ sporring = f"""
 altinn_raw = pd.read_sql_query(sporring, conn)
 print(f"Rader:    {altinn_raw.shape[0]}\nKolonner: {altinn_raw.shape[1]}")
 
-altinn = altinn_raw[['IDENT_NR', 'ORGNR', 'ORGNR_FORETAK', 'NAVN']]
+altinn = altinn_raw[['IDENT_NR', 'ORGNR', 'ORGNR_FORETAK', 'NAVN', "ENHETS_TYPE"]]
 
 # ## Nye enheter
 
@@ -89,8 +89,6 @@ sette_sammen._merge.map({'both': 'både i delreg altinn og brukerliste',
 
 sette_sammen["SKJEMA_TYPE"].value_counts()
 
-
-
 nye = sette_sammen.loc[(sette_sammen['_merge'] == 'right_only') & (sette_sammen['SKJEMA_TYPE'] == '381 441 451 461 47')]
 
 nye
@@ -99,16 +97,6 @@ ut = sette_sammen.query('_merge == "left_only"').copy()
 
 ut
 
-sporring = f"""
-    SELECT *
-    FROM DSBBASE.DLR_ENHET_I_DELREG
-    WHERE DELREG_NR IN ('24{aar2}')
-"""
-SFU = pd.read_sql_query(sporring, conn)
-print(f"Rader:    {SFU.shape[0]}\nKolonner: {SFU.shape[1]}")
-
-skjematyper_per_foretak = SFU[SFU['H_VAR2_A'] == 'PRIVAT'].groupby(['ORGNR_FORETAK']).SKJEMA_TYPE.unique()
-
 # ## Hente inn enheter i siste 20877XX
 
 # ## Bestemme ny populasjon
@@ -116,7 +104,7 @@ skjematyper_per_foretak = SFU[SFU['H_VAR2_A'] == 'PRIVAT'].groupby(['ORGNR_FORET
 # DELREGISTER, IDENTNUMMER, ENHETSTYPE
 #
 #
-# ORGNUMMER er ikke viktig for kobling av tabeller. IDENTNUMMER kommer fra VoF. 
+# ORGNUMMER er ikke viktig for kobling av tabeller. IDENTNUMMER kommer fra VoF. Pass på å legge inn FORETAK og ikke VIRKSOMHET
 
 # NB: Sett fornuftig filter for å kune sitte igjen med de private foretakene i populasjonen:
 priv_pop = pop[(pop["SKJEMA_TYPE"].str.contains("47")) & (~pop["SKJEMA_TYPE"].str.contains("0X"))].copy()
@@ -141,8 +129,6 @@ sammen['status'] = sammen._merge.map(
 
 sammen[sammen["status"] != "behold"]
 
-# # Eksperimentelt
-
 # ## Gjøre endringer i delreg 20877XX
 
 # Henter inn informasjon om de nye enhetene fra 24XX:
@@ -163,30 +149,20 @@ orgnr_inn = list(sammen[sammen['status'] == 'inn']['ORGNR_FORETAK'].unique())
 
 sammen[sammen['status'] == 'inn']
 
-til_altinn = SFU_enhet[(SFU_enhet['ORGNR_FORETAK'].isin(orgnr_inn)) & SFU_enhet['H_VAR2_N'].notnull()].copy()
+til_altinn = SFU_enhet[(SFU_enhet['IDENT_NR'].isin(["04555155"]))].copy()
 
 til_altinn
+
+
 
 # Omorganiser kun de felles kolonnene, og behold de unike kolonnene som de er
 felles_kol = [col for col in altinn_raw.columns if col in til_altinn.columns]
 til_altinn = til_altinn[felles_kol + [col for col in til_altinn.columns if col not in felles_kol]]
 
-altinn_raw.columns
+len(altinn_raw.columns)
 
-# Dobbeltsjekk at enhetene ikke allerede ligger i delregisteret
+# Dobbeltsjekk at enheten(e) ikke allerede ligger i delregisteret
 assert len(altinn_raw[altinn_raw.ORGNR_FORETAK.isin(orgnr_inn)]) == 0, "Enheter ligger allerede i systemet"
-
-
-def tile_df(df, num_cols, num_rows):
-    n = len(df.columns)
-    num_rows = min(num_rows, len(df))
-
-    for i in range(0, n, num_cols):
-        if i + num_cols < n:
-            display(df.iloc[:, i:i + num_cols].sample(num_rows))
-        else:
-            display(df.iloc[:, i:].sample(num_rows))
-
 
 # ## Tilpasse data som skal inn i delregisteret
 
@@ -236,9 +212,6 @@ sql_ins = (
     indices +
     ")"
 )
-# -
-
-til_altinn["H_VAR1_N"]
 
 # +
 import numpy as np
@@ -315,8 +288,8 @@ except cx_Oracle.DatabaseError as e:
 #     cur.close()
 #     conn.close()
 # -
-# # Legge til enheter i nytt delregister 25468
-# For å sende brev til private helseforetak med oppdrags- og bestillerdokument
+# # Legge til enheter i nytt delregister 25468YY
+# For å sende brev til private helseforetak med oppdrags- og bestillerdokument.
 
 # Definer delregister og enhetstype
 ny_delreg_nr = '25468'  # Delregisteret som du vil legge inn i
