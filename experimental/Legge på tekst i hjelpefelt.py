@@ -14,14 +14,14 @@ pd.set_option('display.max_colwidth', None)
 conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
 
 # +
-aar4 = 2024
+aar4 = 2025
 aar2 = str(aar4)[-2:]
 
 aar_før4 = aar4 - 1            # året før
 aar_før2 = str(aar_før4)[-2:]
 # -
 
-# # Private: 208775yy
+# # Private: 20877yy
 
 sporring = f"""
     SELECT *
@@ -63,6 +63,11 @@ skjematyper_per_foretak['SKJEMA'] = skjematyper_per_foretak['SKJEMA_TYPE2'].str.
 skjematyper_per_foretak['SKJEMA'] = skjematyper_per_foretak['SKJEMA'].str.replace("1", "P")
 skjematyper_per_foretak['SKJEMA'] = skjematyper_per_foretak['SKJEMA'].apply(lambda x: "HELSE" + x)
 skjematyper_per_foretak['FORETAK'] = "(" + skjematyper_per_foretak['ORGNR_FORETAK'] + ") " + skjematyper_per_foretak['NAVN']
+
+skjematyper_per_foretak["SKJEMA"] = skjematyper_per_foretak["SKJEMA"].str.replace("HELSE", "Skjema ")
+
+skjematyper_per_foretak
+
 oppdater_altinn = pd.merge(
     altinn_raw[['IDENT_NR', 'DELREG_NR', 'ENHETS_TYPE', 'ORGNR', 'NAVN']],
     skjematyper_per_foretak[['ORGNR_FORETAK', 'SKJEMA', 'FORETAK']],
@@ -72,7 +77,7 @@ oppdater_altinn = pd.merge(
     indicator=True
 )
 
-
+oppdater_altinn[oppdater_altinn["_merge"] != "both"]
 
 
 
@@ -123,6 +128,8 @@ rows_to_update = [
     for row in oppdater_altinn.itertuples(index=False)
 ]
 # -
+
+rows_to_update
 
 print(sql_update)
 
