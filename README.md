@@ -30,7 +30,7 @@ Før produksjonsløpene kan kjøres må alle kodelistene som omfatter spesialist
 + `KLASS 610`: [Kodeliste for tjenesteområder i spesialisthelsetjenesten](https://www.ssb.no/klass/klassifikasjoner/610)
 + [Korrespondansetabell mellom `KLASS 610` og `KLASS 6`](https://www.ssb.no/klass/klassifikasjoner/610/korrespondanser/898)
 + [Korrespondansetabell mellom `KLASS 610` og `KLASS 603`](https://www.ssb.no/klass/klassifikasjoner/603/korrespondanser/1320)
-+ [Korrespondansetabell mellom `KLASS 610` og `KLASS 604`](https://www.ssb.no/klass/klassifikasjoner/604/versjon/1721/korrespondanser/1262)
++ [Korrespondansetabell mellom `KLASS 610` og `KLASS 604`](https://www.ssb.no/klass/klassifikasjoner/604/versjon/3312/korrespondanser/2797)
 
 ### Regnskap
 + `KLASS 602`: [Kodeliste for funksjonskontoinndeling til helseforetakenes regnskapsdata](https://www.ssb.no/klass/klassifikasjoner/602/)
