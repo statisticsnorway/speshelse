@@ -386,3 +386,34 @@ opptaksomrader_dps_lokasjon_leaflet <- leaflet::leaflet(height=500, width = "100
 opptaksomrader_dps_lokasjon_leaflet
 ```
 
+### Beliggenhet til virksomheter innenfor psykisk helsevern
+
+Denne oversikten er basert på registertopplysninger. Den er ikke endelig og er ment til kvalitetssikringsformål. 
+
+```{r echo=FALSE}
+koordinater_phv <- readxl::read_excel("/buckets/produkt/oppdrag/avstand-til-phv/koordinater-phv_p2025.xlsx") %>% 
+  sf::st_as_sf(coords = c("x", "y"), crs = 25833) %>%
+  sf::st_transform(4326)
+
+icons_phv <- leaflet::makeAwesomeIcon(
+  text = fontawesome::fa("comments"), # brain
+  iconColor = "purple",
+  markerColor = "white"
+)
+
+opptaksomrader_dps_phv_leaflet <- leaflet::leaflet(height=500, width = "100%", options = leaflet::leafletOptions(zoomControl = FALSE)) %>% 
+  leaflet::addTiles() %>%
+  leaflet::addPolygons(stroke = F, data = opptaksomrader_dps_dps,
+                       weight = 1,
+                       fillColor = pal_dps(opptaksomrader_dps_dps$opptak),
+                       fillOpacity = 0.5, smoothFactor = 0.5,
+                       popup = paste0("Opptaksområde: ", opptaksomrader_dps_dps$opptak, " / Befolkning: ", prettyNum(opptaksomrader_dps_dps$personer, big.mark = " ", scientific = FALSE))) %>%
+  leaflet::addAwesomeMarkers(data = koordinater_phv$geometry,
+                             popup = paste0(koordinater_phv$tjeneste_kode, ": ", koordinater_phv$navn_virk_lang, " (", koordinater_phv$arb_opptak_dps_hf, ")"), 
+                             icon = icons_phv)
+
+opptaksomrader_dps_phv_leaflet
+
+```
+
+
