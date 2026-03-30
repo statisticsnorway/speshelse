@@ -73,7 +73,9 @@ akuttmottak <- klassR::GetKlass(683, output_style = "wide", date = c(paste0(aarg
 
 ```{r include=FALSE}
 # Fødested
-fodeavdeling <- klassR::GetKlass(608, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
+
+# OBS: aargang-1 dersom kodelisten ikke har blitt oppdatert for inneværende år
+fodeavdeling <- klassR::GetKlass(608, output_style = "wide", date = c(paste0(aargang-1, "-01-01"))) %>%
   dplyr::rename(region = code1,
                 orgnummer_rhf = code2,
                 rhf = name2,
@@ -93,7 +95,8 @@ fodeavdeling <- klassR::GetKlass(608, output_style = "wide", date = c(paste0(aar
 ```
 
 ```{r include=FALSE}
-fodestue <- klassR::GetKlass(609, output_style = "wide", date = c(paste0(aargang, "-01-01"))) %>%
+# OBS: aargang-1 dersom kodelisten ikke har blitt oppdatert for inneværende år
+fodestue <- klassR::GetKlass(609, output_style = "wide", date = c(paste0(aargang-1, "-01-01"))) %>%
   dplyr::rename(region = code1,
                 orgnummer_rhf = code2,
                 rhf = name2,
@@ -116,27 +119,27 @@ foedested <- rbind(fodeavdeling, fodestue)
 
 ```{r include=FALSE}
 # PHV
-opptaksomrader_phv_rhf <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-phv-rhf-flate_p", aargang, ".parquet")) %>%
+opptaksomrader_phv_rhf <- fellesr::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-phv-rhf-flate_p", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_phv_hf <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-phv-hf-flate_p", aargang, ".parquet")) %>%
+opptaksomrader_phv_hf <- fellesr::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-phv-hf-flate_p", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
 # TSB
-opptaksomrader_tsb_rhf <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-tsb-rhf-flate_p", aargang, ".parquet")) %>%
+opptaksomrader_tsb_rhf <- fellesr::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-tsb-rhf-flate_p", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_tsb_hf <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-tsb-hf-flate_p", aargang, ".parquet")) %>%
+opptaksomrader_tsb_hf <- fellesr::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-tsb-hf-flate_p", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
 # DPS
-opptaksomrader_dps_rhf <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-dps-rhf-flate_p", aargang, ".parquet")) %>%
+opptaksomrader_dps_rhf <- fellesr::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-dps-rhf-flate_p", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_dps_hf <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-dps-hf-flate_p", aargang, ".parquet")) %>%
+opptaksomrader_dps_hf <- fellesr::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-dps-hf-flate_p", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 
-opptaksomrader_dps_dps <- sfarrow::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-dps-lokasjon-flate_p", aargang, ".parquet")) %>%
+opptaksomrader_dps_dps <- fellesr::st_read_parquet(paste0(arbeidsmappe_opptak, "opptaksomrader-dps-lokasjon-flate_p", aargang, ".parquet")) %>%
   sf::st_transform(4326)
 ```
 
