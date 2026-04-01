@@ -114,7 +114,7 @@ pluggy==0.13.1
 portalocker==1.7.0
 prometheus-client @ file:///home/conda/feedstock_root/build_artifacts/prometheus_client_1590412252446/work
 prompt-toolkit @ file:///home/conda/feedstock_root/build_artifacts/prompt-toolkit_1592500439797/work
-protobuf==3.18.3
+protobuf==5.29.6
 psutil @ file:///home/conda/feedstock_root/build_artifacts/psutil_1594826931824/work
 ptyprocess==0.6.0
 py==1.10.0
