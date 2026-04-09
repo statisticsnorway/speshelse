@@ -7,7 +7,7 @@ import datetime as dt
 from vaskify import Detect
 
 # +
-aar4 = 2024
+aar4 = 2025
 aar2 = str(aar4)[-2:]
 
 aar_før4 = aar4 - 1            # året før
@@ -36,6 +36,8 @@ antall_årganger = 2
 n = aar4 - (antall_årganger -1)
 siste_år = [x for x in range(n, aar4 + 1)]
 print(siste_år)
+
+# Pass på at det er ikke er dubletter (Sett AKTIV = "0" dersom foretak har levert flere svar på skjema)
 
 df = pd.DataFrame()
 for år in siste_år:
@@ -100,6 +102,8 @@ if len(hbmet1) > 1:
     show_deviant_records(hbmet1, df)
 else:
     print("Ingen records flagget med HB-metoden")
+
+hbmet1
 
 # ## Døgnplasser `D_HELD`
 

@@ -34,7 +34,7 @@
 # ## Velger årgang
 
 # +
-aargang = 2023
+aargang = 2024
 
 # Næringskoder som skal med
 naring = ["86.101", "86.102", "86.906"]

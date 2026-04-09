@@ -15,7 +15,7 @@ sys.path.insert(0, '..')
 
 import Droplister.hjelpefunksjoner as hjfunk
 
-aar4 = 2024
+aar4 = 2025
 aar2 = str(aar4)[-2:]
 
 # ## Tilgang oracle
@@ -84,13 +84,15 @@ SFU = SFU.drop(columns=[col for col in SFU.columns if "NAVN" in col and col != "
 # Dette er et eget delregister opprettet for kommunikasjon med de private via Altinn. Alle foretak som ikke har blitt innkvittert godkjent, vil få purring. Dvs. alle med missing på KVITT_TYPE får purring.
 
 sporring = f"""
-    SELECT DELREG_NR, IDENT_NR, ENHETS_TYPE, KVITT_TYPE, ORGNR, KVITT_FORMAT, DATO_INNKVITTERING
+    SELECT *
     FROM DSBBASE.DLR_ENHET_I_DELREG
     WHERE DELREG_NR IN ('20877{aar2}')
 """
 altinn = hjfunk.les_sql(sporring, conn)
 print(f"Rader:    {altinn.shape[0]}\nKolonner: {altinn.shape[1]}")
 
+
+altinn[["NAVN", "KVITT_TYPE", "H_VAR1_A","H_VAR2_A","H_VAR3_A"]]
 
 # +
 # altinn = altinn[altinn['KVITT_TYPE'].isna()]
@@ -205,8 +207,6 @@ na_mask = foretak_til_innkvittering_df.KVITT_TYPE.isna()
 foretak_til_innkvittering_df = foretak_til_innkvittering_df[na_mask].copy()
 # -
 
-foretak_til_innkvittering_df
-
 foretak_til_innkvittering_df = df[df["_merge"] == "skal_kvitteres_K"][
     [
         "DELREG_NR",
@@ -224,41 +224,66 @@ foretak_til_innkvittering_df['KVITT_TYPE'] = 'K'
 foretak_til_innkvittering_df['KVITT_FORMAT'] = 'O'
 foretak_til_innkvittering_df['DATO_INNKVITTERING'] = pd.to_datetime(dt.date.today())
 
-len(foretak_til_innkvittering_df)
+# ----
 
 # +
-# Må skrives om! Se neste del av koden. Ikke alle feltene skal oppdateres (Ikke nøklene blant annet)
-#sql_ins = (
-#    "UPDATE INTO DSBBASE"
-#    ".dlr_enhet_i_delreg("
-#    "DELREG_NR,IDENT_NR,ENHETS_TYPE,"
-#    "KVITT_TYPE,KVITT_FORMAT,DATO_INNKVITTERING"
-#    ")"
-#    " VALUES (:1,:2,:3,:4,:5,:6)"
-#)
-#
-#print("Dobbeltsjekk sql-spørringen:")
-#print(sql_ins)
-#
-#rows = [tuple(x) for x in foretak_til_innkvittering_df.values]
+df_kvitt = foretak_til_innkvittering_df.copy()
+
+# Sørg for konsistente typer (Oracle kan være litt følsom)
+df_kvitt["DELREG_NR"] = df_kvitt["DELREG_NR"].astype(str)
+
+# Sett verdier som skal oppdateres
+df_kvitt["KVITT_TYPE"] = "K"
+df_kvitt["KVITT_FORMAT"] = "O"
+df_kvitt["DATO_INNKVITTERING"] = pd.Timestamp(dt.date.today())
+
+# 2) SQL: oppdater bare feltene, bruk nøkler i WHERE
+sql_update_kvitt = """
+UPDATE DSBBASE.DLR_ENHET_I_DELREG
+SET
+    KVITT_TYPE = :1,
+    KVITT_FORMAT = :2,
+    DATO_INNKVITTERING = :3
+WHERE
+    DELREG_NR = :4
+    AND IDENT_NR = :5
+    AND ENHETS_TYPE = :6
+    AND KVITT_TYPE IS NULL
+"""
 # -
 
+print("Dobbeltsjekk sql-spørringen:")
+print(sql_update_kvitt)
 
+# 3) Bygg rows i riktig rekkefølge som matcher :1..:6
+rows = list(
+    df_kvitt[[
+        "KVITT_TYPE",
+        "KVITT_FORMAT",
+        "DATO_INNKVITTERING",
+        "DELREG_NR",
+        "IDENT_NR",
+        "ENHETS_TYPE",
+    ]].itertuples(index=False, name=None)
+)
 
+rows
+
+# 4) Kjør batch update
 if rows:
     conn = engine.raw_connection()
     try:
         cur = conn.cursor()
-        cur.executemany(sql_ins, rows)
+        cur.executemany(sql_update_kvitt, rows)
         conn.commit()
-        print(f"Det er gjort {len(rows)} radendringer. Kontroller i SFU.")
+        print(f"Forsøkte å oppdatere {len(rows)} rader. Sjekk SFU/DB for resultat.")
+    except Exception as e:
+        conn.rollback()
+        raise
     finally:
         conn.close()
-
-
-
-
-
+else:
+    print("Ingen rader å innkvittere.")
 # # Sett skjematype og virksomhetsnummer i hjelpefelt
 
 df2 = df[df['_merge'] == 'skal_ha_purring'][['DELREG_NR', 'IDENT_NR', 'ENHETS_TYPE', 'ORGNR_FORETAK', 'SKJEMA_TYPER', 'ORGNR_SFU']].copy()
@@ -315,3 +340,5 @@ if rows:
         conn.close()
 
 
+
+altinn.loc[altinn["KVITT_FORMAT"].isna()]
