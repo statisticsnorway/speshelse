@@ -1,10 +1,17 @@
+# +
 import pandas as pd
-import cx_Oracle
+
 from sqlalchemy import create_engine
 import getpass
 import datetime as dt
 
 from vaskify import Detect
+
+import sys
+
+sys.path.append("../Droplister")
+
+import hjelpefunksjoner as hjfunk
 
 # +
 aar4 = 2025
@@ -14,20 +21,14 @@ aar_før4 = aar4 - 1            # året før
 aar_før2 = str(aar_før4)[-2:]
 # -
 
-import sys
-
-sys.path.append("../Droplister")
-
-import hjelpefunksjoner as hjfunk
-
 username = getpass.getuser()
 dsn = "DB1P"
 try:
-    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+    engine = create_engine(f"oracle+oracledb://{username}:{password}@{dsn}")
 except:
     print("Passord ikke skrevet inn")
     password = getpass.getpass(prompt='Oracle-passord: ')
-    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+    engine = create_engine(f"oracle+oracledb://{username}:{password}@{dsn}")
 
 # Opprett en tilkobling fra motoren
 conn = engine.connect()
