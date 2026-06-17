@@ -3,6 +3,8 @@ renv::init()
 
 renv::autoload()
 
+# renv::install("statisticsnorway/ssb-fellesr", lock = T)
+
 # # renv::install("tidyverse")
 # library(tidyverse)
 #
