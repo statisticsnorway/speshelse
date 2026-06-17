@@ -5,8 +5,8 @@
 
 # +
 # OBS: slett når funksjonene finnes i fellesr
-source("/ssb/bruker/rdn/hack4ssb-tabellbygger/R/funksjoner_hack.R") 
-source("/ssb/bruker/rdn/hack4ssb-tabellbygger/R/tabellbygger_funksjon.R")
+source("/home/onyxia/work/hack4ssb-tabellbygger/R/funksjoner_hack.R")
+source("/home/onyxia/work/hack4ssb-tabellbygger/R/tabellbygger_funksjon.R")
 
 suppressPackageStartupMessages({
   suppressWarnings(library(tidyverse))
@@ -18,15 +18,15 @@ suppressPackageStartupMessages({
 # ### Oppretter TBML-ID
 
 # +
-# tbml_create_id(kortnavn = "speshelse", 
+# tbml_create_id(kortnavn = "speshelse",
 #               tittel = list("Spesialisthelsetjenesten, nøkkeltall" = "Specialist health service, key figure"))
 # -
 
 # ## Nøkkeltall
 
-tabellbygger(id = "299389", 
-             sporring = "ID:14022,HelseReg:H00,HelseTjenomr:TOT,InntektKostnad:K00,ContentsCode:LopendePriser", 
-             rad_navn = list("Driftskostnader" = "Expenses"), 
+tabellbygger(id = "299389",
+             sporring = "ID:14022,HelseReg:H00,HelseTjenomr:TOT,InntektKostnad:K00,ContentsCode:LopendePriser",
+             rad_navn = list("Driftskostnader" = "Expenses"),
              kategori = "N")
 
 # ## Hovedtallstabell
@@ -53,14 +53,14 @@ tabellbygger(id = "299365",
                              NULL,
                              NULL,
                              "Årsverk" = "Man-years"),
-             rad_fet_skrift = c(1), 
+             rad_fet_skrift = c(1),
              rad_tittel = c(1),
              kolonne_overskrift = list(NULL = NULL,
                                        NULL = NULL,
                                        "Endring i prosent" = "Change in percent",
                                        "Endring i prosent" = "Change in percent"),
              fotnote = list(NULL,
-                            "Tallene som oppgis er i løpende priser. Driftskostnader for 2022 ble rettet 23. juni 2023 kl. 08:00." = "The figures are in current prices. Expenses for 2022 was corrected on 23 June 2023 at 08:00.",
+                            "Tallene som oppgis er i løpende priser." = "The figures are in current prices.",
                             NULL,
                             NULL,
                             NULL,
