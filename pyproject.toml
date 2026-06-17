@@ -1,28 +1,63 @@
-[tool.poetry]
+[project]
 name = "speshelse"
 version = "0.1.0"
-description = ""
-authors = ["Magne F. Myhren <mfm@ssb.no>"]
+description = "Støttefiler for gruppen for Spesialisthelsetjenesten i SSB."
+authors = [
+    { name = "Magne F. Myhren", email = "mfm@ssb.no" }
+]
 license = "MIT"
 readme = "README.md"
-package-mode = false
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "dynaconf >=3.2",
+    "ipykernel >=6.29",
+    "pyarrow >=23.0",
+    "ssb-klass-python >= 0.0.11",
+    "cx-oracle >= 8.3.0",
+    "openpyxl >= 3.1.2",
+    "xlsxwriter >= 3.1.3",
+    "numpy >= 2.2.0",
+    "itables >= 2.2.4",
+    "ssb-fagfunksjoner >= 1.0.7",
+    "ssb-vaskify >= 0.0.3",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.11"
-ssb-klass-python = ">=0.0.11"
-cx-oracle = ">=8.3.0"
-openpyxl = ">=3.1.2"
-xlsxwriter = ">=3.1.3"
-python-dotenv = ">=1.0.0"
-tabulate = ">=0.9.0"
-numpy = ">=2.2.0"
-itables = ">=2.2.4"
-ssb-fagfunksjoner = ">=1.0.7"
-ssb-vaskify = ">=0.0.3"
 
-[tool.poetry.group.dev.dependencies]
-ipykernel = ">=6.15.3"
+[dependency-groups]
+dev = [
+    "pytest>=7.1.3",
+    "pytest-cov>=5.0.0",
+    "black[jupyter]>=25.11.0",
+    "isort>=5.12.0",
+    "pre-commit>=4.4.0",
+    "pre-commit-hooks>=6.0.0",
+]
+
+[tool.poetry]
+requires-poetry = ">=2.2"
+packages = [
+    { include = "config" },
+    { include = "functions", from = "src" },
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.2"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+force_single_line = true
+skip_gitignore = true
+treat_comments_as_code = ["# %%"]
+
+[tool.jupytext]
+formats = "ipynb,auto:percent"
+notebook_metadata_filter = "jupytext.text_representation,-jupytext.text_representation.jupytext_version,-widgets,-varInspector"
+cell_metadata_filter = "-papermill,tags"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.uv]
+exclude-newer = "7 days"

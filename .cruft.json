@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/statisticsnorway/ssb-project-template-stat",
-  "commit": "d812a9210647a93d2cda82086fe0f036f0d07214",
-  "checkout": "1.0.1",
+  "commit": "f4e65906f8ee96999928837c117bc62a604c753c",
+  "checkout": null,
   "context": {
     "cookiecutter": {
       "full_name": "Magne F. Myhren",
@@ -9,7 +9,8 @@
       "project_name": "speshelse",
       "description": "",
       "license_year": "2023",
-      "_template": "https://github.com/statisticsnorway/ssb-project-template-stat"
+      "_template": "https://github.com/statisticsnorway/ssb-project-template-stat",
+      "_commit": "f4e65906f8ee96999928837c117bc62a604c753c"
     }
   },
   "directory": null
