@@ -38,7 +38,7 @@ tabellbygger(id = "299365",
                            "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Dognplass",
                            "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Utskriv",
                            "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Liggedag",
-                           "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Polikliniske",
+                           # "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Polikliniske",
 
                            # "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Dag",
 
@@ -52,7 +52,8 @@ tabellbygger(id = "299365",
                              "Senger/Døgnplasser" = "Beds",
                              NULL,
                              NULL,
-                             NULL,
+
+                             # NULL,
 
                              # NULL,
 
@@ -68,7 +69,8 @@ tabellbygger(id = "299365",
                             NULL,
                             NULL,
                             NULL,
-                            NULL,
+
+                            # NULL,
 
                             # NULL,
 
