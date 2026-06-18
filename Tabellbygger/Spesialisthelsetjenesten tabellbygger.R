@@ -39,7 +39,9 @@ tabellbygger(id = "299365",
                            "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Utskriv",
                            "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Liggedag",
                            "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Polikliniske",
-                           "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Dag",
+
+                           # "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Dag",
+
                            "ID:13954,HelseReg:H00,HelseTjenomr:TOT,Utdanning:TOT,ContentsCode:Arsverk"),
              tid = c("1",
                      "0",
@@ -51,7 +53,9 @@ tabellbygger(id = "299365",
                              NULL,
                              NULL,
                              NULL,
-                             NULL,
+
+                             # NULL,
+
                              "Årsverk" = "Man-years"),
              rad_fet_skrift = c(1),
              rad_tittel = c(1),
@@ -65,5 +69,8 @@ tabellbygger(id = "299365",
                             NULL,
                             NULL,
                             NULL,
-                            NULL,
-                            NULL))
+
+                            # NULL,
+
+                            NULL
+                            ))
