@@ -37,7 +37,6 @@ dev = [
 requires-poetry = ">=2.2"
 packages = [
     { include = "config" },
-    { include = "functions", from = "src" },
 ]
 
 [build-system]
@@ -54,10 +53,6 @@ treat_comments_as_code = ["# %%"]
 formats = "ipynb,auto:percent"
 notebook_metadata_filter = "jupytext.text_representation,-jupytext.text_representation.jupytext_version,-widgets,-varInspector"
 cell_metadata_filter = "-papermill,tags"
-
-[tool.pytest.ini_options]
-pythonpath = ["src"]
-testpaths = ["tests"]
 
 [tool.uv]
 exclude-newer = "7 days"
