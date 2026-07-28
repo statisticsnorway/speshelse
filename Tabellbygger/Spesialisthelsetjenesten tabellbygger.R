@@ -38,8 +38,10 @@ tabellbygger(id = "299365",
                            "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Dognplass",
                            "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Utskriv",
                            "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Liggedag",
-                           "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Polikliniske",
-                           "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Dag",
+                           # "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Polikliniske",
+
+                           # "ID:13942,HelseReg:H00,HelseTjenomr:TOT,ContentsCode:Dag",
+
                            "ID:13954,HelseReg:H00,HelseTjenomr:TOT,Utdanning:TOT,ContentsCode:Arsverk"),
              tid = c("1",
                      "0",
@@ -50,8 +52,11 @@ tabellbygger(id = "299365",
                              "Senger/Døgnplasser" = "Beds",
                              NULL,
                              NULL,
-                             NULL,
-                             NULL,
+
+                             # NULL,
+
+                             # NULL,
+
                              "Årsverk" = "Man-years"),
              rad_fet_skrift = c(1),
              rad_tittel = c(1),
@@ -60,10 +65,14 @@ tabellbygger(id = "299365",
                                        "Endring i prosent" = "Change in percent",
                                        "Endring i prosent" = "Change in percent"),
              fotnote = list(NULL,
-                            "Tallene som oppgis er i løpende priser." = "The figures are in current prices.",
+                            "Tallene som oppgis er i løpende priser. Driftskostnader for 2025 ble rettet 23. juni 2026 kl. 08:00." = "The figures are in current prices. Expenses for 2025 were corrected on 23 June 2026 at 08:00.",
                             NULL,
                             NULL,
                             NULL,
-                            NULL,
-                            NULL,
-                            NULL))
+
+                            # NULL,
+
+                            # NULL,
+
+                            NULL
+                            ))
