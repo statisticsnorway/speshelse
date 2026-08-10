@@ -19,7 +19,7 @@ suppressPackageStartupMessages({
 # ### Angir aargang, skjema og dato til filene (i prompt, default angir kun standardverdi)
 
 # +
-aargang <- 2024
+aargang <- 2025
 # aargang <- as.numeric(readline("Skriv inn årgang:"))
 
 skjema <- readline("Skriv inn skjema:") # F.eks. 44o
@@ -482,3 +482,5 @@ openxlsx::saveWorkbook(wb, paste0(endringslogg_mappe, "/", filnavn_eksport(skjem
 # ### Rydder i global environment ###
 
 rm(list = ls())
+
+

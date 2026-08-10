@@ -5,7 +5,7 @@
 
 # ### Velger årgang
 
-aargang <- 2024
+aargang <- 2025
 
 # +
 options(repr.matrix.max.rows=600, repr.matrix.max.cols=2000)
@@ -49,9 +49,9 @@ skjema45O_filsti <- paste0(aargangsmappe, "Skj45o_", datomarkering, ".txt")
 skjema45P_filsti <- paste0(aargangsmappe, "Skj45p_", datomarkering, ".txt")
 skjema46O_filsti <- paste0(aargangsmappe, "Skj46o_", datomarkering, ".txt")
 skjema46P_filsti <- paste0(aargangsmappe, "Skj46p_", datomarkering, ".txt")
-skjema39_filsti <- paste0(aargangsmappe, "Skj39_", datomarkering, ".txt")
-skjema0X_filsti <- paste0(aargangsmappe, "Skj0X_", datomarkering, ".txt")
-skjema48_filsti <- paste0(aargangsmappe, "Skj48_", datomarkering, ".xlsx")
+#skjema39_filsti <- paste0(aargangsmappe, "Skj39_", datomarkering, ".txt")
+#skjema0X_filsti <- paste0(aargangsmappe, "Skj0X_", datomarkering, ".txt")
+#skjema48_filsti <- paste0(aargangsmappe, "Skj48_", datomarkering, ".xlsx")
 
 
 # ### Logger på Oracle
@@ -88,7 +88,7 @@ tjenesteomrader <- klassR::GetKlass(610, output_level = 2, date = c(paste0(aarga
 
 # ## Laster inn variabelliste per skjema
 
-source(here::here("Samdata", "Variabelliste per skjema.R"))
+source(here::here("Variabelliste per skjema.R"))
 
 # ## Skjema 38O
 
@@ -335,70 +335,75 @@ write.table(skjema46P_skjema, skjema46P_filsti,
 # ## Skjema 48
 
 # +
-skjema48 <- dynarev_uttrekk(delregnr = paste0('24', substr(aargang, 3,4)),
-                             skjema = 'HELSE48',
-                             skjema_cols = T,
-                             dublettsjekk = T,
-                             con_ask = FALSE)
+# # Ny kilde og rutine for Skjema for Samhandlingsleger
+# skjema48 <- dynarev_uttrekk(delregnr = paste0('24', substr(aargang, 3,4)),
+#                              skjema = 'HELSE48',
+#                              skjema_cols = T,
+#                              dublettsjekk = T,
+#                              con_ask = FALSE)
 
-skjema48_skjema <- data.frame(skjema48[1]) %>%
-  dplyr::select(all_of(variabelliste_48))
+# skjema48_skjema <- data.frame(skjema48[1]) %>%
+#   dplyr::select(all_of(variabelliste_48))
 
-skjema48_dubletter <- data.frame(skjema48[2])
+# skjema48_dubletter <- data.frame(skjema48[2])
+
+# +
+# # ### Lagrer filen
+# if (nrow(skjema48_dubletter)==0){
+# openxlsx::write.xlsx(skjema48_skjema, skjema48_filsti,
+#                    rowNames = FALSE,
+#                    showNA = FALSE,
+#                    overwrite=T)
+# }
+
+# +
+# # ### Lagrer filen
+# if (nrow(skjema48_dubletter)==0){
+# write.table(skjema48_skjema, paste0(aargangsmappe, "Skj48_", datomarkering, ".txt"),
+#             sep = "¤",
+#             fileEncoding = encoding,
+#             # col.names = FALSE,
+#             row.names = FALSE,
+#             na = "",
+#             dec = ",",
+#             quote = F)
+# }
 # -
-
-# ### Lagrer filen
-if (nrow(skjema48_dubletter)==0){
-openxlsx::write.xlsx(skjema48_skjema, skjema48_filsti,
-                   rowNames = FALSE,
-                   showNA = FALSE,
-                   overwrite=T)
-}
-
-# ### Lagrer filen
-if (nrow(skjema48_dubletter)==0){
-write.table(skjema48_skjema, paste0(aargangsmappe, "Skj48_", datomarkering, ".txt"),
-            sep = "¤",
-            fileEncoding = encoding,
-            # col.names = FALSE,
-            row.names = FALSE,
-            na = "",
-            dec = ",",
-            quote = F)
-}
 
 # ## Skjema 0X
 #
 # OBS: fjernet kolonnen F551 for 2022. Kan også INST_NR og INST_NAVN slettes?
 
-# Laster inn artskontokoder fra KLASS
-artskontokoder <- klassR::GetKlass(606, output_level = 3, date = c(paste0(aargang, "-01-01"))) %>%
-  dplyr::rename(ART_SEKTOR = code) %>%
-  dplyr::distinct(ART_SEKTOR)
+# +
+# # Laster inn artskontokoder fra KLASS
+# artskontokoder <- klassR::GetKlass(606, output_level = 3, date = c(paste0(aargang, "-01-01"))) %>%
+#   dplyr::rename(ART_SEKTOR = code) %>%
+#   dplyr::distinct(ART_SEKTOR)
 
 # +
-# Dublettsjekk
-skjema0X_dubletter <- fellesr::dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
-                            skjema = "HELSE0X",
-                            skjema_cols = TRUE,
-                            sfu_cols = c("NAVN"),
-                            skjema_sfu_merge = TRUE,
-                            dublettsjekk = c("ENHETS_ID", "FORETAKSNR", "ART_SEKTOR", "FUNKSJON_KAPITTEL"),
-                            raadata = TRUE, # OBS: Samdata skal ha rådata, men reviderte data ligger ikke i Oracle
-                            con_ask = FALSE)
+# # Dublettsjekk
+# skjema0X_dubletter <- fellesr::dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
+#                             skjema = "HELSE0X",
+#                             skjema_cols = TRUE,
+#                             sfu_cols = c("NAVN"),
+#                             skjema_sfu_merge = TRUE,
+#                             dublettsjekk = c("ENHETS_ID", "FORETAKSNR", "ART_SEKTOR", "FUNKSJON_KAPITTEL"),
+#                             raadata = TRUE, # OBS: Samdata skal ha rådata, men reviderte data ligger ikke i Oracle
+#                             con_ask = FALSE)
 
-skjema0X_dubletter <- data.frame(skjema0X_dubletter[2])
-# -
+# skjema0X_dubletter <- data.frame(skjema0X_dubletter[2])
 
-skjema0X_skjema <- dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
-                            skjema = "HELSE0X",
-                            skjema_cols = TRUE,
-                            sfu_cols = c("NAVN"),
-                            skjema_sfu_merge = TRUE,
-                            # dublettsjekk = c("ENHETS_ID", "FORETAKSNR", "ART_SEKTOR", "FUNKSJON_KAPITTEL"),
-                            con_ask = FALSE)
+# +
+# skjema0X_skjema <- dynarev_uttrekk(delregnr = paste0(24, substr(aargang, 3, 4)),
+#                             skjema = "HELSE0X",
+#                             skjema_cols = TRUE,
+#                             sfu_cols = c("NAVN"),
+#                             skjema_sfu_merge = TRUE,
+#                             # dublettsjekk = c("ENHETS_ID", "FORETAKSNR", "ART_SEKTOR", "FUNKSJON_KAPITTEL"),
+#                             con_ask = FALSE)
 
-sort(unique(skjema0X_skjema$REGION))
+# +
+# sort(unique(skjema0X_skjema$REGION))
 
 # +
 # skjema0X_skjema_2021 <- dynarev_uttrekk(delregnr = paste0(24, substr(2019, 3, 4)),
@@ -410,41 +415,47 @@ sort(unique(skjema0X_skjema$REGION))
 #                             con_ask = FALSE)
 
 # unique(skjema0X_skjema_2021$REGION)
+
+# +
+# skjema0X_skjema_2 <- dplyr::full_join(skjema0X_skjema, artskontokoder, by = "ART_SEKTOR")
+
+# +
+# skjema0X_data_long <- skjema0X_skjema_2 %>%
+# select(AARGANG, VERDATO, FORETAKSNR, NAVN, AARGANG, REGION, ART_SEKTOR, FUNKSJON_KAPITTEL, BELOP) %>%
+# dplyr::rename(FINST_NAVN = NAVN, 
+#              FUNK_NR = FUNKSJON_KAPITTEL) %>%
+# dplyr::mutate(INST_NAVN = FINST_NAVN, 
+#              INST_NR = FORETAKSNR, 
+#              ART_SEKTOR = paste0("F", ART_SEKTOR), 
+#              REGION_NR = substr(REGION, 1, 2)) %>%
+# # tidyr::spread(FORETAKSNR, FINST_NAVN, REGION_NR, FUNKSJON_KAPITTEL, ART_SEKTOR) # kolonnene som skal splittes opp noteres her. OBS: duplikater er ikke tillatt
+# tidyr::pivot_wider(id_cols = c("AARGANG", "VERDATO", "FORETAKSNR", "FINST_NAVN", "INST_NAVN", "INST_NR", "REGION_NR", "FUNK_NR"), 
+#                    names_from = ART_SEKTOR,
+#                    values_from = BELOP) %>%
+# filter(!is.na(FORETAKSNR)) %>%
+# dplyr::select(all_of(variabelliste_0X))
+
+# +
+# # Erstatter missing med 0
+# skjema0X_data_long[is.na(skjema0X_data_long)] <- 0
 # -
-
-skjema0X_skjema_2 <- dplyr::full_join(skjema0X_skjema, artskontokoder, by = "ART_SEKTOR")
-
-skjema0X_data_long <- skjema0X_skjema_2 %>%
-select(AARGANG, VERDATO, FORETAKSNR, NAVN, AARGANG, REGION, ART_SEKTOR, FUNKSJON_KAPITTEL, BELOP) %>%
-dplyr::rename(FINST_NAVN = NAVN, 
-             FUNK_NR = FUNKSJON_KAPITTEL) %>%
-dplyr::mutate(INST_NAVN = FINST_NAVN, 
-             INST_NR = FORETAKSNR, 
-             ART_SEKTOR = paste0("F", ART_SEKTOR), 
-             REGION_NR = substr(REGION, 1, 2)) %>%
-# tidyr::spread(FORETAKSNR, FINST_NAVN, REGION_NR, FUNKSJON_KAPITTEL, ART_SEKTOR) # kolonnene som skal splittes opp noteres her. OBS: duplikater er ikke tillatt
-tidyr::pivot_wider(id_cols = c("AARGANG", "VERDATO", "FORETAKSNR", "FINST_NAVN", "INST_NAVN", "INST_NR", "REGION_NR", "FUNK_NR"), 
-                   names_from = ART_SEKTOR,
-                   values_from = BELOP) %>%
-filter(!is.na(FORETAKSNR)) %>%
-dplyr::select(all_of(variabelliste_0X))
-
-# Erstatter missing med 0
-skjema0X_data_long[is.na(skjema0X_data_long)] <- 0
 
 # ### Lagrer filen
 
-if (nrow(skjema0X_dubletter)==0){
-write.table(skjema0X_data_long, skjema0X_filsti,
-            sep = "¤",
-            fileEncoding = encoding,
-            # col.names = FALSE,
-            row.names = FALSE,
-            na = "",
-            dec = ",",
-            quote = F)
-}
+# +
+# if (nrow(skjema0X_dubletter)==0){
+# write.table(skjema0X_data_long, skjema0X_filsti,
+#             sep = "¤",
+#             fileEncoding = encoding,
+#             # col.names = FALSE,
+#             row.names = FALSE,
+#             na = "",
+#             dec = ",",
+#             quote = F)
+# }
 
-skjema0X_filsti
+# +
+# skjema0X_filsti
+# -
 
 
