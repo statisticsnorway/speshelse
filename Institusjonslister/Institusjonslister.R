@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .R
+#       format_name: light
+#       format_version: '1.5'
+#   kernelspec:
+#     display_name: R
+#     language: R
+#     name: ir
+# ---
+
 # # Institusjonslister
 
 # Beskrivelse av scriptet... Sendes til Hdir i forbindelse med Samarbeids-/evalueringsmøte?
@@ -14,7 +27,7 @@ suppressPackageStartupMessages({
 
 # ## Angir årgang og kobler til Oracle
 
-aargang <- 2024
+aargang <- 2026
 
 # Logg på for å få tilgang til Oracle 
 con <- fellesr::dynarev_uttrekk(con_ask = "con") # fellesr::
@@ -96,8 +109,6 @@ helsereg <- rbind(HF, RHF, stotteforetak, oppdrag) %>%
   dplyr::group_by(Helseregion, RHF) %>%
   dplyr::tally()
 
-helsereg
-
 # ## Laster inn delregisteret
 
 # OBS: hent delregnr fra KLASS 610?
@@ -108,9 +119,6 @@ delreg <- fellesr::dynarev_uttrekk(delregnr = c(paste0(24, substr(aargang, 3, 4)
                                    enhets_type = c("FRTK", "BEDR"), 
                                    sfu_cols = T, 
                                    con_ask = F)
-
-delreg %>%
-filter(ORGNR == "918098275")
 
 delreg <- delreg %>%
   dplyr::filter(is.na(KVITT_TYPE)) %>%
@@ -142,11 +150,11 @@ delreg_tester <- delreg %>%
 
 klass_sn <- klassR::GetKlass(6, output_level = 5) %>%
   dplyr::select(-parentCode, -level) %>%
-  dplyr::rename(SN07_1 = code, 
-                SN07_1_navn = name) %>%
-  dplyr::mutate(SN07_1 = as.character(SN07_1))
+  dplyr::rename(SN2025_1 = code, 
+                SN2025_1_navn = name) %>%
+  dplyr::mutate(SN2025_1 = as.character(SN2025_1))
 
-delreg  <- dplyr::left_join(delreg, klass_sn, by = "SN07_1")
+delreg  <- dplyr::left_join(delreg, klass_sn, by = "SN2025_1")
 
 # ## Offentlige RHF, HF og hjelpeforetak
 
@@ -166,7 +174,7 @@ delreg_offentlig <- dplyr::inner_join(offentlig, delreg, by = c("ORGNR_FORETAK")
 delreg_offentlig_test <- delreg_offentlig %>%
   dplyr::select(Foretakstype, Helseregion, RHF, ORGNR_FORETAK, H_VAR1_A, ORGNR, NAVN, NYTT_NAVN,
                 # SKJEMA_TYPE, 
-                SN07_1, SN07_1_navn, F_POSTNR, F_POSTSTED) %>%
+                SN2025_1, SN2025_1_navn, F_POSTNR, F_POSTSTED) %>%
   dplyr::rename(Foretakstype = Foretakstype,
                 Helseregion = Helseregion,
                 Helseregion_navn = RHF,
@@ -176,8 +184,8 @@ delreg_offentlig_test <- delreg_offentlig %>%
                 HF_navn = NAVN,
                 Institusjonsnavn = NYTT_NAVN,
                 # Skjematype = SKJEMA_TYPE,
-                Næringskode = SN07_1,
-                Næringsnavn = SN07_1_navn,
+                Næringskode = SN2025_1,
+                Næringsnavn = SN2025_1_navn,
                 Postnummer = F_POSTNR, 
                 Poststed = F_POSTSTED)
 
@@ -186,14 +194,16 @@ delreg_offentlig_test <- delreg_offentlig %>%
 delreg_offentlig_test <- delreg_offentlig_test %>%
   dplyr::filter(!is.na(Rapporteringsnr))
 
-# Sjekker for dubletter i Institusjonsnavn (?) #
-delreg_offentlig_test_duplikater <- delreg_offentlig_test %>%
-  janitor::get_dupes(Institusjonsnavn)
-print(paste0("Dubletter finnes for: ", unique(delreg_offentlig_test_duplikater$Institusjonsnavn)))
+delreg_offentlig_test %>%
+group_by(Institusjonsnavn) %>%
+filter(n() > 1) %>%
+ungroup()
 
 # Sorterer etter helseregion #
 delreg_offentlig_test <- delreg_offentlig_test %>%
   dplyr::arrange(Helseregion)
+
+delreg_offentlig_test
 
 # ## Lagrer filen
 
@@ -215,7 +225,7 @@ unique(delreg_private$SKJEMA_TYPE)
 
 delreg_private_test <- delreg_private %>%
   select(Foretakstype, Helseregion, RHF, ORGNR_FORETAK, H_VAR1_A, ORGNR, NYTT_NAVN,
-         SKJEMA_TYPE, SN07_1, SN07_1_navn, F_POSTNR, F_POSTSTED, F_KOMMUNENR) %>%
+         SKJEMA_TYPE, SN2025_1, SN2025_1_navn, F_POSTNR, F_POSTSTED, F_KOMMUNENR) %>%
   mutate(FYLKE = substr(F_KOMMUNENR, 1, 2)) %>%
   # Deretter bruk FYLKE i case_when
   mutate(HELSEREGION = case_when(
@@ -236,8 +246,8 @@ delreg_private_test <- delreg_private %>%
                 Bedriftsorgnr = ORGNR,
                 Institusjonsnavn = NYTT_NAVN,
                 Skjematype = SKJEMA_TYPE,
-                Næringskode = SN07_1,
-                Næringsnavn = SN07_1_navn,
+                Næringskode = SN2025_1,
+                Næringsnavn = SN2025_1_navn,
                 Postnummer = F_POSTNR,
                 Poststed = F_POSTSTED)
 
@@ -265,19 +275,27 @@ rapporteringsenheter <- delreg_private_test  %>%
     Skjematype == "47"  ~ "Rehabilitering",
     Rapporteringsnr == "47" ~ "Rehabilitering",
     Rapporteringsnr == "46P" ~ "Somatikk",
-    Rapporteringsnummer == "45P" ~ "BUP",
-    Rapporteringsnummer == "44P" ~ "VOP",
-    Rapporteringsnummer == "38P" ~ "TSB"))  %>% 
+    Rapporteringsnr == "45P" ~ "BUP",
+    Rapporteringsnr == "44P" ~ "VOP",
+    Rapporteringsnr == "38P" ~ "TSB"))  %>% 
 filter(Tjenesteomraade != "NA")  %>% 
 distinct(Rapporteringsnr, Tjenesteomraade)
 
 delreg_private_tjenesteomraade <- left_join(delreg_private_test, rapporteringsenheter, join_by(Rapporteringsnr))
 
+colnames(delreg_private_tjenesteomraade)
+
 # ### Sjekker for dubletter i Institusjonsnavn (?)
 
-delreg_private_test_duplikater <- delreg_private_tjenesteomraade %>%
-  janitor::get_dupes(Institusjonsnavn)
-print(paste0("Dubletter finnes for: ", unique(delreg_private_test_duplikater$Institusjonsnavn)))
+# +
+#delreg_private_test_duplikater <- delreg_private_tjenesteomraade %>%
+#  janitor::get_dupes(Institusjonsnavn)
+#print(paste0("Dubletter finnes for: ", unique(delreg_private_test_duplikater$Institusjonsnavn)))
+# -
+
+delreg_private_tjenesteomraade %>%
+group_by(Bedriftsorgnr) %>%
+filter(n() < 1)
 
 # Sorterer etter helseregion #
 delreg_private_tjenesteomraade <- delreg_private_tjenesteomraade %>%
