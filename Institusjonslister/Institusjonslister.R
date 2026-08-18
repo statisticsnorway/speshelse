@@ -156,6 +156,13 @@ klass_sn <- klassR::GetKlass(6, output_level = 5) %>%
 
 delreg  <- dplyr::left_join(delreg, klass_sn, by = "SN2025_1")
 
+# ## Henter inn poststed fra KLASS
+
+poststed <- klassR::GetKlass(616) %>%
+dplyr::rename(F_POSTNR = code,
+              F_POSTSTED = name) %>%
+dplyr::select(F_POSTNR, F_POSTSTED)
+
 # ## Offentlige RHF, HF og hjelpeforetak
 
 # ### Beholder HF, RHF og hjelpeforetak
@@ -203,14 +210,53 @@ ungroup()
 delreg_offentlig_test <- delreg_offentlig_test %>%
   dplyr::arrange(Helseregion)
 
-delreg_offentlig_test
-
 # ## Lagrer filen
 
 openxlsx::write.xlsx(delreg_offentlig_test,
                      file = paste0(filsti_institusjonslister, aargang, " Offentlige institusjoner spesialisthelsetjenesten (", format(Sys.Date(), "%d%m%y"), ").xlsx"),
                      rowNames = FALSE,
                      showNA = FALSE)
+
+orgnr_foretak <- HF$ORGNR_FORETAK
+
+# ## Alternativ: Henter inn HF-enes virksomheter fra BoF
+
+vof_for <- dplyr::tbl(con, dbplyr::in_schema("DSBBASE", "SSB_FORETAK")) %>%
+dplyr::filter(ORGNR %in% HF$ORGNR_FORETAK) %>%
+dplyr::select(ORGNR, FORETAKS_NR, NAVN) %>%
+dplyr::collect()
+
+vof <- dplyr::tbl(con, dbplyr::in_schema("DSBBASE", "SSB_BEDRIFT")) %>%
+collect()
+
+virksomheter <- vof %>%
+dplyr::inner_join(vof_for, by="FORETAKS_NR") %>%
+dplyr::filter(STATUSKODE == "B") %>%
+dplyr::select(ORGNR.y, NAVN.y, ORGNR.x, KARAKTERISTIKK, F_POSTNR, SN2025_1) %>%
+dplyr::rename(ORGNR_FORETAK = ORGNR.y,
+              NAVN_FORETAK = NAVN.y,
+              ORGNR_VIRKSOMHET = ORGNR.x)
+
+virksomheter_bof <- virksomheter %>%
+dplyr::left_join(klass_sn, by="SN2025_1") %>%
+dplyr::left_join(poststed, by="F_POSTNR") %>%
+dplyr::arrange(NAVN_FORETAK, SN2025_1)
+
+# ### Lagrer filen
+
+openxlsx::write.xlsx(virksomheter_bof,
+                     file = paste0(filsti_institusjonslister, aargang, " Alternativ_institusjoner_HF_(", format(Sys.Date(), "%d%m%y"), ").xlsx"),
+                     rowNames = FALSE,
+                     showNA = FALSE)
+
+# +
+# Tester forskjell mellom alternativet og institusjonsliste hentet fra delregisteret
+nrow(virksomheter_bof)
+nrow(delreg_offentlig_test)
+
+dplyr::full_join(virksomheter_bof, delreg_offentlig_test, join_by(ORGNR_VIRKSOMHET==Bedriftsorgnr)) %>%
+dplyr::filter(is.na(Rapporteringsnr))
+# -
 
 # ## Private (med og uten oppdragsdokument)
 
