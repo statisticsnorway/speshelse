@@ -54,7 +54,8 @@ for spesialisthelsetjenester er følgende:
 + Lage release på Github av koden som ble brukt til publiseringen.
 + Låse delregisteret som ble brukt i publiseringen.
 + Sende ut referat fra arbeidsgruppemøtet senest to uker etter møtet.
-
+### Juli
+☀️
 ### August
 + [Etablere delregister](https://statistics-norway.atlassian.net/wiki/spaces/REIS/pages/3919413938/Opprett+nytt+delregister+i+VoF)
 + [Sende foreløpig populasjon til Helsedirektoratet](https://github.com/statisticsnorway/speshelse/tree/master/Institusjonslister)
@@ -70,17 +71,16 @@ for spesialisthelsetjenester er følgende:
 + [Tilrettelegge for ny rapportering i Hubbus](https://statistics-norway.atlassian.net/wiki/spaces/KOSTRA/pages/4148133900/Tilrettelegge+for+ny+rapportering+i+Hubbus)
 + [Lage prefill og brukerlister](Droplister)
 + Evalueringsmøte med Helsedirektoratet
-  
 ### November
 + Vi tester skjemaene som er i [innrapporteringsportalen](https://www.ssb.no/innrapportering/helseforetak). Testperioden er de to første ukene i november.\
   [Veiledning til testingen finnes her](https://statistics-norway.atlassian.net/wiki/spaces/KOSTRA/pages/5189042443/Testperiode+2026)
-+ Lage [produksjonspassord](https://github.com/statisticsnorway/speshelse/blob/master/Droplister/Brukerlister.py) til rapporteringsperioden til skjemaene som rapporteres i innrapporteringsportalen.
-  
++ Lage [produksjonspassord](https://github.com/statisticsnorway/speshelse/blob/master/Droplister/Brukerlister.py) til rapporteringsperioden til skjemaene som rapporteres i innrapporteringsportalen. 
 ### Desember
 + Oppdatere delregisterene med passord til Altinn-rapporteringen: (26779, 26512, 26492, 26778, 26816)
 + Oppdatere [innrapporteringssiden](https://www.ssb.no/innrapportering/helseforetak). Det gjøres i [Enonic](https://i.ssb.no/xp/admin/tool)
 + Ferdigstille brev til rapportørene
 + Ferdigstille spesifikasjonsskjemaene for HF og RHF, og få lagt dem inn i Altinn.
++ Sende endelig [institusjonsliste](https://github.com/statisticsnorway/speshelse/tree/master/Institusjonslister) til Helsedirektoratet.
 + Oppdatere databehandleravtale med HOD\
   *Databehandleravtalene er lagret her: S330 - Dokumenter\SPESHELSE\9. Støtte og infrastruktur\9.1 Juridisk overbygning*
 
