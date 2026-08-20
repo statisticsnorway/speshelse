@@ -1,3 +1,15 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .md
+      format_name: markdown
+      format_version: '1.3'
+  kernelspec:
+    display_name: ''
+    name: ''
+---
+
 # Spesialisthelsetjenesten
 
 Her finnes programmer som brukes i produksjonssløp for statistikkene som inngår i [Spesialisthelsetjenesten](https://www.ssb.no/helse/helsetjenester/statistikk/spesialisthelsetjenesten). 
@@ -12,12 +24,76 @@ I tillegg ligger programmer relatert til geografiske analyser (GIS) her:
 
 ## Årshjul
 
-I dette repoet ligger hovedsakelig programmer som er felles for alle produksjonsløpene i statistikkområdene. Disse oppgavene er følgende:
-+ [Prefill ("droplister")](https://github.com/statisticsnorway/speshelse/tree/master/Droplister)
-+ [Institusjonslister](https://github.com/statisticsnorway/speshelse/tree/master/Institusjonslister)
-+ [Overføring av skjemadata til Samdata](https://github.com/statisticsnorway/speshelse/tree/master/Samdata)
+I dette repoet ligger hovedsakelig programmer som er felles for alle produksjonsløpene i statistikkområdene. Faste oppgaver knyttet til statistikk
+for spesialisthelsetjenester er følgende:
 
-<img src="./images/Bilde_årshjul_2025.png" width="1200">
+### Januar
++ **Uke 2:** Informasjonsbrev til rapportører
++ Oppdatere samarbeidsavtale med Samdata, og sende signert versjon til HOD.\
+  *Samarbeidsavtalen er lagret her: Statistisk sentralbyrå\S330 - Dokumenter\SPESHELSE\9. Støtte og infrastruktur\9.0 Administrasjon*
++ Kalle inn til årets arbeidsgruppemøter
+### Februar
++ Innrapporteringsfrist **20. februar** for døgnplass-skjemaer, ambulanse, samhandlingsleger og avtalespesialister.
++ Sende påminnelse til rapportører én uke før frist.
++ Samarbeidsmøte om døgnplass-data med Helsedirektoratet.
++ Sende purring på skjema med frist 20.februar, cirka én uke etter fristen. [Purreprogrammer](https://github.com/statisticsnorway/speshelse/tree/master/experimental)
+### Mars
++ **Uke 10:** Første filoverføring av døgnplass-data til Helsedirektoratet. [Program for å lage filer](Samdata)
++ **Uke 11:** Sende andre purring på skjemaer som hadde frist 20.februar.
++ **Uke 12:** Sende påminnelse om regnskaprapportering
++ **Uke 12:** [Melde publisering av spesialisthelsetjeneste-statistikken i uke 25](https://ssbno.sharepoint.com/sites/Kommunikasjonogpublisering/SitePages/Statistikksiden-(ssb.no).aspx)
++ Publisere foreløpige tall i [personell-tabellene](https://github.com/statisticsnorway/stat-speshelse-personell.git).
++ **Uke 13:** Planleggingsmøte om regnskapsdata med Helsedirektoratet.
+### April
++ Frist for regnskapsrapportering:\
+  **1.april:** HF og private med oppdragsdokument\
+  **15.april:** RHF
++ **Uke 15:** Første [filoverføring](Samdata) av regnskapsdata til Helsedirektoratet.
++ **Uke 16:** Andre filoverføring av døgnplassdata til Helsedirektoratet.
++  Planlegge arbeidsgruppemøte i mai/juni. Formøte med HOD én måned før møtet.\
+ *Relevante dokumenter finnes her: Statistisk sentralbyrå\S330 - Dokumenter\SPESHELSE\9. Støtte og infrastruktur\9.3 Møter*
+### Mai
++ Arbeidsgruppemøte i mai/juni. Sakspapirer og agenda sendes ut senest to uker før møtet.
++ **Uke 19:** Samarbeidsmøte om døgnplass-data med Helsedirektoratet.
++ **Uke 19 og 21:** Samarbeidsmøte om regnskapsdata med Helsedirektoratet.
++ Møter med RHF-ene om elimineringer i regnskapene.
++ **Uke 22:** Overføre endelige døgnplass-filer til Helsedirektoratet.
+### Juni
++ Konsolideringsmøte om regnskapsdata – sammenligne tall med Helsedirektoratet
++ **Uke 24:** Overføre endelige regnskapsfiler til Helsedirektoratet.
++ **Uke 25:** Publisere statistikk for spesialisthelsetjenester.
++ Lage release på Github av koden som ble brukt til publiseringen.
++ Låse delregisteret som ble brukt i publiseringen.
++ Sende ut referat fra arbeidsgruppemøtet senest to uker etter møtet.
+
+### August
++ [Etablere delregister](https://statistics-norway.atlassian.net/wiki/spaces/REIS/pages/3919413938/Opprett+nytt+delregister+i+VoF)
++ [Sende foreløpig populasjon til Helsedirektoratet](https://github.com/statisticsnorway/speshelse/tree/master/Institusjonslister)
++ Planlegge arbeidsgruppemøte i september. Formøte med HOD én måned før møtet.\
+ *Relevante dokumenter finnes her: Statistisk sentralbyrå\S330 - Dokumenter\SPESHELSE\9. Støtte og infrastruktur\9.3 Møter*
+### September
++ Arbeidsgruppemøte. Sakspapirer og agenda sendes ut senest to uker før møtet.
+### Oktober
++ Sende ut referat fra arbeidsgruppemøtet innen to uker etter møtet.
++ Oppdatere delregisteret med private institusjon som har avtale med RHF\
+  Informasjon om avtalene ligger på RHF-enes nettsider.\
+  [Program som gir oversikt som kan være nyttig når vi oppdaterer delregisteret](https://github.com/statisticsnorway/speshelse/blob/master/experimental/populasjon_sammenlikne_ny_og_gammel.py)
++ [Tilrettelegge for ny rapportering i Hubbus](https://statistics-norway.atlassian.net/wiki/spaces/KOSTRA/pages/4148133900/Tilrettelegge+for+ny+rapportering+i+Hubbus)
++ [Lage prefill og brukerlister](Droplister)
++ Evalueringsmøte med Helsedirektoratet
+  
+### November
++ Vi tester skjemaene som er i [innrapporteringsportalen](https://www.ssb.no/innrapportering/helseforetak). Testperioden er de to første ukene i november.\
+  [Veiledning til testingen finnes her](https://statistics-norway.atlassian.net/wiki/spaces/KOSTRA/pages/5189042443/Testperiode+2026)
++ Lage [produksjonspassord](https://github.com/statisticsnorway/speshelse/blob/master/Droplister/Brukerlister.py) til rapporteringsperioden til skjemaene som rapporteres i innrapporteringsportalen.
+  
+### Desember
++ Oppdatere delregisterene med passord til Altinn-rapporteringen: (26779, 26512, 26492, 26778, 26816)
++ Oppdatere [innrapporteringssiden](https://www.ssb.no/innrapportering/helseforetak). Det gjøres i [Enonic](https://i.ssb.no/xp/admin/tool)
++ Ferdigstille brev til rapportørene
++ Ferdigstille spesifikasjonsskjemaene for HF og RHF, og få lagt dem inn i Altinn.
++ Oppdatere databehandleravtale med HOD\
+  *Databehandleravtalene er lagret her: S330 - Dokumenter\SPESHELSE\9. Støtte og infrastruktur\9.1 Juridisk overbygning*
 
 ## KLASS
 
