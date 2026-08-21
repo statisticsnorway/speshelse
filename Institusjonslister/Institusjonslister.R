@@ -163,61 +163,7 @@ dplyr::rename(F_POSTNR = code,
               F_POSTSTED = name) %>%
 dplyr::select(F_POSTNR, F_POSTSTED)
 
-# ## Offentlige RHF, HF og hjelpeforetak
-
-# ### Beholder HF, RHF og hjelpeforetak
-
-offentlig <- offentlig %>%
-  dplyr::select(ORGNR_FORETAK, Foretakstype, Helseregion, RHF) # NAVN
-
-delreg$ORGNR_FORETAK <- as.character(delreg$ORGNR_FORETAK)
-delreg_offentlig <- dplyr::inner_join(offentlig, delreg, by = c("ORGNR_FORETAK"))
-
-# +
-# delreg_offentlig %>%
-# filter(ORGNR_FORETAK == "983658776")
-# -
-
-delreg_offentlig_test <- delreg_offentlig %>%
-  dplyr::select(Foretakstype, Helseregion, RHF, ORGNR_FORETAK, H_VAR1_A, ORGNR, NAVN, NYTT_NAVN,
-                # SKJEMA_TYPE, 
-                SN2025_1, SN2025_1_navn, F_POSTNR, F_POSTSTED) %>%
-  dplyr::rename(Foretakstype = Foretakstype,
-                Helseregion = Helseregion,
-                Helseregion_navn = RHF,
-                Foretaksorgnr = ORGNR_FORETAK,
-                Rapporteringsnr = H_VAR1_A,
-                Bedriftsorgnr = ORGNR,
-                HF_navn = NAVN,
-                Institusjonsnavn = NYTT_NAVN,
-                # Skjematype = SKJEMA_TYPE,
-                Næringskode = SN2025_1,
-                Næringsnavn = SN2025_1_navn,
-                Postnummer = F_POSTNR, 
-                Poststed = F_POSTSTED)
-
-# ### Beholder kun enheter med rapporteringsnummer
-
-delreg_offentlig_test <- delreg_offentlig_test %>%
-  dplyr::filter(!is.na(Rapporteringsnr))
-
-delreg_offentlig_test %>%
-group_by(Institusjonsnavn) %>%
-filter(n() > 1) %>%
-ungroup()
-
-# Sorterer etter helseregion #
-delreg_offentlig_test <- delreg_offentlig_test %>%
-  dplyr::arrange(Helseregion)
-
-# ## Lagrer filen
-
-openxlsx::write.xlsx(delreg_offentlig_test,
-                     file = paste0(filsti_institusjonslister, aargang, " Offentlige institusjoner spesialisthelsetjenesten (", format(Sys.Date(), "%d%m%y"), ").xlsx"),
-                     rowNames = FALSE,
-                     showNA = FALSE)
-
-orgnr_foretak <- HF$ORGNR_FORETAK
+# ## Offentlige helseforetak
 
 # ## Alternativ: Henter inn HF-enes virksomheter fra BoF
 
@@ -245,7 +191,7 @@ dplyr::arrange(NAVN_FORETAK, SN2025_1)
 # ### Lagrer filen
 
 openxlsx::write.xlsx(virksomheter_bof,
-                     file = paste0(filsti_institusjonslister, aargang, " Alternativ_institusjoner_HF_(", format(Sys.Date(), "%d%m%y"), ").xlsx"),
+                     file = paste0(filsti_institusjonslister, aargang, " Institusjoner_HF_(", format(Sys.Date(), "%d%m%y"), ").xlsx"),
                      rowNames = FALSE,
                      showNA = FALSE)
 
