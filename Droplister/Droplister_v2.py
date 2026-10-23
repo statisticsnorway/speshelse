@@ -6,7 +6,6 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.15.2
 #   kernelspec:
 #     display_name: speshelse
 #     language: python
@@ -82,7 +81,7 @@ pd.set_option('display.float_format', lambda x: '%.0f' % x)
 # NB! For å lagre filene til angitt sti må `lagre_filer` settes til `True`.
 
 # +
-aargang = 2025
+aargang = 2026
 siste_to_siffer_aargang = str(aargang)[-2:]
 
 aar_for = aargang - 1            # året før
@@ -112,11 +111,11 @@ if lagre_filer:
 username = getpass.getuser()
 dsn = "DB1P"
 try:
-    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+    engine = create_engine(f"oracle+oracledb://{username}:{password}@{dsn}")
 except:
     print("Passord ikke skrevet inn")
     password = getpass.getpass(prompt='Oracle-passord: ')
-    engine = create_engine(f"oracle+cx_oracle://{username}:{password}@{dsn}")
+    engine = create_engine(f"oracle+oracledb://{username}:{password}@{dsn}")
 
 # Opprett en tilkobling fra motoren
 conn = engine.connect()

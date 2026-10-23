@@ -1,4 +1,17 @@
 # -*- coding: utf-8 -*-
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#   kernelspec:
+#     display_name: speshelse
+#     language: python
+#     name: speshelse
+# ---
+
 # # Brukerlister
 # Dette er en oversikt over alle foretak som skal ha skjemaer og hvilke skjemaer de skal få. Også kalt _populasjonsliste_ av KOSTRA-IT.
 #
@@ -12,15 +25,17 @@
 til_lagring = True
 lag_passord = True
 
-aar4 = 2025
+aar4 = 2026
 aar2 = str(aar4)[-2:]
 aarfør4 = aar4-1
 aarfør2 = str(aarfør4)[-2:]
 
+
+
 # +
 import pandas as pd
 from klass import get_classification
-import cx_Oracle
+import oracledb
 import getpass
 import os
 
@@ -30,7 +45,7 @@ pd.set_option('display.float_format', lambda x: '%.0f' % x)
 
 import hjelpefunksjoner as hjfunk
 
-conn = cx_Oracle.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
+conn = oracledb.connect(getpass.getuser()+"/"+getpass.getpass(prompt='Oracle-passord: ')+"@DB1P")
 
 # ## KLASS
 
@@ -143,7 +158,8 @@ PHOB.sample(3)
 # ## Slå sammen til en dataframe som eksporteres til `.csv`
 
 # +
-brukerliste_dfs = [RFSS, RHF, HF, PRIV, PHOB]
+# brukerliste_dfs = [RFSS, RHF, HF, PRIV, PHOB]
+brukerliste_dfs = [HF, PRIV, PHOB]
 brukerliste_df = pd.concat(brukerliste_dfs)
 print("Antall foretak i brukerlisten: ", brukerliste_df.shape[0])
 
