@@ -7,6 +7,7 @@ Spesialisthelsetjensten er inndelt i følgende statistikkområder:
 + [Spesialisthelsetjenesten - Regnskap](https://github.com/statisticsnorway/stat-speshelse-regnskap)
 + [Spesialisthelsetjenesten - Personell](https://github.com/statisticsnorway/stat-speshelse-personell)
 + [Spesialisthelsetjenesten - Aktivitet og tjenester](https://github.com/statisticsnorway/stat-speshelse-aktivitet)
++ [Spesialisthelsetjenesten - Ambulanse](https://github.com/statisticsnorway/stat-speshelse-ambulanse))
 
 I tillegg ligger programmer relatert til geografiske analyser (GIS) her:
 + [Spesialisthelsetjenesten - Geografiske analyser (GIS)](https://github.com/statisticsnorway/stat-speshelse-gis)
