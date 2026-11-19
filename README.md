@@ -72,14 +72,14 @@ for spesialisthelsetjenester er følgende:
 + [Lage prefill og brukerlister](Droplister)
 + Evalueringsmøte med Helsedirektoratet
 ### November
-+ Vi tester skjemaene som er i [innrapporteringsportalen](https://www.ssb.no/innrapportering/helseforetak). Testperioden er de to første ukene i november.\
++ Vi tester skjemaene som er i [innrapporteringsportalen](https://www.ssb.no/innrapportering/helseforetak). Testperioden er de tre første ukene i november.\
   [Veiledning til testingen finnes her](https://statistics-norway.atlassian.net/wiki/spaces/KOSTRA/pages/5189042443/Testperiode+2026)
 + Lage [produksjonspassord](https://github.com/statisticsnorway/speshelse/blob/master/Droplister/Brukerlister.py) til rapporteringsperioden til skjemaene som rapporteres i innrapporteringsportalen. 
 ### Desember
 + Oppdatere delregisterene med passord til Altinn-rapporteringen: (26779, 26512, 26492, 26778, 26816)
 + Oppdatere [innrapporteringssiden](https://www.ssb.no/innrapportering/helseforetak). Det gjøres i [Enonic](https://i.ssb.no/xp/admin/tool)
 + Ferdigstille brev til rapportørene
-+ Ferdigstille spesifikasjonsskjemaene for HF og RHF, og få lagt dem inn i Altinn.
++ Ferdigstille spesifikasjonsskjemaene for HF og RHF i samarbeid med Samdata, og få lagt dem inn i Altinn.
 + Sende endelig [institusjonsliste](https://github.com/statisticsnorway/speshelse/tree/master/Institusjonslister) til Helsedirektoratet.
 + Oppdatere databehandleravtale med HOD\
   *Databehandleravtalene er lagret her: S330 - Dokumenter\SPESHELSE\9. Støtte og infrastruktur\9.1 Juridisk overbygning*
